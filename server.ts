@@ -168,6 +168,212 @@ Ensure the output is strictly valid JSON matching the schema.`;
   }
 });
 
+// ───────────────────────────────────────────────────────────────────────────
+// Public REST API v1
+// All endpoints return JSON in the shape:
+//   { success: true, data: ..., meta: { endpoint, version, generatedAt } }
+//   { success: false, error: { code, message } }
+// ───────────────────────────────────────────────────────────────────────────
+
+import {
+  ApiError,
+  timeNow,
+  timeConvert,
+  dateDiff,
+  dateAdd,
+  unixConvert,
+  isoFormat,
+  dateToWords,
+  listCities,
+  listCountries,
+  countryHolidays,
+  workingHours,
+  meetingBest,
+  cityPair,
+} from "./src/utils/timeApi";
+
+const API_VERSION = "1.0.0";
+
+function ok(res: any, data: any, endpoint: string) {
+  res.json({
+    success: true,
+    data,
+    meta: { endpoint, version: API_VERSION, generatedAt: new Date().toISOString() },
+  });
+}
+
+function err(res: any, e: any, endpoint: string) {
+  if (e instanceof ApiError) {
+    return res.status(e.status).json({
+      success: false,
+      error: { code: e.code, message: e.message },
+      meta: { endpoint, version: API_VERSION, generatedAt: new Date().toISOString() },
+    });
+  }
+  console.error(`[api] ${endpoint} crashed:`, e);
+  return res.status(500).json({
+    success: false,
+    error: { code: "INTERNAL", message: e?.message || "Unknown error" },
+    meta: { endpoint, version: API_VERSION, generatedAt: new Date().toISOString() },
+  });
+}
+
+function cacheSeconds(res: any, secs: number) {
+  res.set("Cache-Control", `public, max-age=${secs}`);
+}
+
+const H =
+  (endpoint: string, ttl: number, fn: (req: any, res: any) => any) =>
+  async (req: any, res: any) => {
+    try {
+      cacheSeconds(res, ttl);
+      const data = await fn(req, res);
+      if (res.headersSent) return;
+      ok(res, data, endpoint);
+    } catch (e) {
+      err(res, e, endpoint);
+    }
+  };
+
+app.get("/api/v1", (_req: any, res: any) => {
+  ok(res, {
+    name: "TimeAndDatePro API",
+    version: API_VERSION,
+    documentation: "/api-docs",
+    sdk: { nodejs: "sdk/node/README.md" },
+    endpoints: [
+      "GET /api/v1/time/now",
+      "GET /api/v1/time/convert",
+      "GET /api/v1/time/diff",
+      "GET /api/v1/time/add",
+      "GET /api/v1/time/unix",
+      "GET /api/v1/time/iso",
+      "GET /api/v1/time/words",
+      "GET /api/v1/cities",
+      "GET /api/v1/cities/:slug",
+      "GET /api/v1/countries",
+      "GET /api/v1/countries/:code",
+      "GET /api/v1/countries/:code/holidays",
+      "GET /api/v1/countries/:code/working-hours",
+      "GET /api/v1/pairs/:from/:to",
+      "GET /api/v1/meeting/best",
+    ],
+  }, "/api/v1");
+});
+
+app.get("/api/v1/health", (_req: any, res: any) =>
+  ok(res, { status: "ok", uptime: process.uptime() }, "/api/v1/health")
+);
+
+app.get("/api/v1/time/now", H("/api/v1/time/now", 0, (req: any) =>
+  timeNow({ tz: req.query.tz as string | undefined, city: req.query.city as string | undefined })
+));
+
+app.get("/api/v1/time/convert", H("/api/v1/time/convert", 0, (req: any) =>
+  timeConvert({
+    from: req.query.from as string,
+    to: req.query.to as string,
+    time: req.query.time as string | undefined,
+    date: req.query.date as string | undefined,
+  })
+));
+
+app.get("/api/v1/time/diff", H("/api/v1/time/diff", 60, (req: any) =>
+  dateDiff({
+    from: req.query.from as string,
+    to: req.query.to as string,
+    mode: ((req.query.mode as string) ?? "calendar") as "calendar" | "business",
+    country: req.query.country as any,
+  })
+));
+
+app.get("/api/v1/time/add", H("/api/v1/time/add", 0, (req: any) =>
+  dateAdd({
+    date: req.query.date as string,
+    years: req.query.years ? +req.query.years : undefined,
+    months: req.query.months ? +req.query.months : undefined,
+    weeks: req.query.weeks ? +req.query.weeks : undefined,
+    days: req.query.days ? +req.query.days : undefined,
+    business: req.query.business === "true",
+    country: req.query.country as any,
+  })
+));
+
+app.get("/api/v1/time/unix", H("/api/v1/time/unix", 0, (req: any) =>
+  unixConvert({
+    value: req.query.value as string,
+    direction: ((req.query.direction as string) ?? "to_date") as "to_date" | "to_unix",
+    unit: req.query.unit as "s" | "ms" | undefined,
+  })
+));
+
+app.get("/api/v1/time/iso", H("/api/v1/time/iso", 60, (req: any) =>
+  isoFormat({
+    date: req.query.date as string,
+    format: req.query.format as any,
+    tz: req.query.tz as string | undefined,
+  })
+));
+
+app.get("/api/v1/time/words", H("/api/v1/time/words", 60, (req: any) =>
+  dateToWords({
+    date: req.query.date as string,
+    lang: req.query.lang as string | undefined,
+  })
+));
+
+app.get("/api/v1/cities", H("/api/v1/cities", 3600, () => listCities()));
+
+app.get("/api/v1/cities/:slug", H("/api/v1/cities/:slug", 3600, (req: any) => {
+  const slug = (req.params.slug as string).toLowerCase();
+  const all = listCities();
+  const found = all.find((c: any) =>
+    c.code.toLowerCase() === slug ||
+    c.name.toLowerCase().replace(/\s+/g, "-") === slug ||
+    c.timezone.toLowerCase() === slug
+  );
+  if (!found) throw new ApiError(404, "UNKNOWN_CITY", `No city matches "${slug}".`);
+  return { ...found, currentTime: timeNow({ tz: found.timezone }) };
+}));
+
+app.get("/api/v1/countries", H("/api/v1/countries", 3600, () => listCountries()));
+
+app.get("/api/v1/countries/:code", H("/api/v1/countries/:code", 3600, (req: any) => {
+  const code = (req.params.code as string).toUpperCase();
+  const all = listCountries();
+  const found = all.find((c: any) => c.code === code);
+  if (!found) throw new ApiError(404, "UNKNOWN_COUNTRY", `Unknown country "${code}".`);
+  return {
+    ...found,
+    holidays: countryHolidays(code).holidays.length,
+    workingHours: workingHours(code, {}).totalHours,
+  };
+}));
+
+app.get("/api/v1/countries/:code/holidays", H("/api/v1/countries/:code/holidays", 86400, (req: any) =>
+  countryHolidays(req.params.code as string, req.query.year ? +req.query.year : undefined)
+));
+
+app.get("/api/v1/countries/:code/working-hours", H("/api/v1/countries/:code/working-hours", 86400, (req: any) =>
+  workingHours(req.params.code as string, {
+    year: req.query.year ? +req.query.year : undefined,
+    hoursPerDay: req.query.hoursPerDay ? +req.query.hoursPerDay : undefined,
+  })
+));
+
+app.get("/api/v1/pairs/:from/:to", H("/api/v1/pairs/:from/:to", 60, (req: any) =>
+  cityPair(req.params.from as string, req.params.to as string)
+));
+
+app.get("/api/v1/meeting/best", H("/api/v1/meeting/best", 0, (req: any) =>
+  meetingBest({
+    cities: String(req.query.cities || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+    workingStart: req.query.start ? +req.query.start : undefined,
+    workingEnd: req.query.end ? +req.query.end : undefined,
+    duration: req.query.duration ? +req.query.duration : undefined,
+  })
+));
+
 // Setup Vite Dev server or static asset production build
 async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
