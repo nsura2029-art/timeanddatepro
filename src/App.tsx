@@ -35,7 +35,6 @@ import AnalogClock from "./components/AnalogClock";
 import TodaySnapshot from "./components/TodaySnapshot";
 import QuickActions from "./components/QuickActions";
 import TimeInsights from "./components/TimeInsights";
-import GlobalSnapshot from "./components/GlobalSnapshot";
 import { TRANSLATIONS } from "./utils/translations";
 import WorldClockDashboard from "./components/WorldClockDashboard";
 import MeetingFinder from "./components/MeetingFinder";
@@ -788,29 +787,6 @@ export default function App() {
               </span>
             </div>
 
-            {/* Country selectors within Meeting Finder */}
-            <div className="hidden md:flex items-center gap-1 bg-[#fafafa] dark:bg-slate-850 p-1 rounded-xl border border-[#e0e0e0] dark:border-slate-700">
-              {[
-                { lang: "en", flag: "🇬🇧", name: "London (/en)" },
-                { lang: "fr", flag: "🇫🇷", name: "Paris (/fr)" },
-                { lang: "zh", flag: "🇨🇳", name: "Beijing (/zh)" },
-                { lang: "ja", flag: "🇯🇵", name: "Tokyo (/ja)" }
-              ].map((item) => (
-                <button
-                  key={item.lang}
-                  onClick={() => navigateToMeetingFinder(item.lang)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                    currentPathRoute?.lang === item.lang
-                      ? "bg-white dark:bg-slate-900 text-[#3f51b5] dark:text-white shadow-sm border border-[#e0e0e0] dark:border-slate-700"
-                      : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
-                  }`}
-                >
-                  <span>{item.flag}</span>
-                  <span>{item.name}</span>
-                </button>
-              ))}
-            </div>
-
             {/* Back Button */}
             <button 
               onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
@@ -889,86 +865,6 @@ export default function App() {
             <span className={`font-display font-bold tracking-tight text-md ${t.text} group-hover:opacity-80 transition-opacity`}>
               Global Time
             </span>
-          </div>
-
-          {/* Country Landing Page Selectors */}
-          <div className="hidden md:flex items-center gap-1 bg-slate-100/80 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
-            <button
-              onClick={() => {
-                if (currentPathRoute?.isMeetingFinder) {
-                  navigateToMeetingFinder("en");
-                } else if (currentPathRoute?.isWorldClock) {
-                  navigateToWorldClock("en");
-                } else {
-                  navigateToRoutePath("en");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                currentPathRoute?.lang === "en"
-                  ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
-                  : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
-              }`}
-            >
-              <span>🇬🇧</span>
-              <span>London (/en)</span>
-            </button>
-            <button
-              onClick={() => {
-                if (currentPathRoute?.isMeetingFinder) {
-                  navigateToMeetingFinder("fr");
-                } else if (currentPathRoute?.isWorldClock) {
-                  navigateToWorldClock("fr");
-                } else {
-                  navigateToRoutePath("fr");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                currentPathRoute?.lang === "fr"
-                  ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
-                  : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
-              }`}
-            >
-              <span>🇫🇷</span>
-              <span>Paris (/fr)</span>
-            </button>
-            <button
-              onClick={() => {
-                if (currentPathRoute?.isMeetingFinder) {
-                  navigateToMeetingFinder("zh");
-                } else if (currentPathRoute?.isWorldClock) {
-                  navigateToWorldClock("zh");
-                } else {
-                  navigateToRoutePath("zh");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                currentPathRoute?.lang === "zh"
-                  ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
-                  : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
-              }`}
-            >
-              <span>🇨🇳</span>
-              <span>Beijing (/zh)</span>
-            </button>
-            <button
-              onClick={() => {
-                if (currentPathRoute?.isMeetingFinder) {
-                  navigateToMeetingFinder("ja");
-                } else if (currentPathRoute?.isWorldClock) {
-                  navigateToWorldClock("ja");
-                } else {
-                  navigateToRoutePath("ja");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                currentPathRoute?.lang === "ja"
-                  ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
-                  : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
-              }`}
-            >
-              <span>🇯🇵</span>
-              <span>Tokyo (/ja)</span>
-            </button>
           </div>
 
           {/* Desktop Navigation Links */}
@@ -1096,12 +992,6 @@ export default function App() {
             >
               Insights
             </button>
-            <button 
-              onClick={() => handleScrollToSection("observatory-section")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
-            >
-              Observatory
-            </button>
           </div>
 
           {/* Sticky Scroll Search Input */}
@@ -1179,13 +1069,6 @@ export default function App() {
               >
                 <TrendingUp size={14} className="text-emerald-500" />
                 <span>Smart Insights</span>
-              </button>
-              <button 
-                onClick={() => handleScrollToSection("observatory-section")}
-                className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
-              >
-                <Search size={14} className="text-purple-500" />
-                <span>Observatory</span>
               </button>
             </div>
 
@@ -1729,17 +1612,13 @@ export default function App() {
               />
             </div>
 
-            {/* Section 5: Global Time Snapshot */}
-            <div id="observatory-section" className="scroll-mt-24">
-              <GlobalSnapshot preferences={preferences} onSearchSelect={handleTrendingSearchClick} />
-            </div>
           </>
         )}
       </main>
 
       {/* 6. COHESIVE SYSTEM FOOTER */}
       <footer className="w-full bg-slate-950 border-t border-slate-900 py-8">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-xs text-slate-500 font-mono">
             &copy; 2026 Global Time & Date Workspace. Designed for modern decentralized distributed teams.
           </div>
@@ -1749,6 +1628,40 @@ export default function App() {
             <span className="hover:text-slate-200 transition cursor-pointer">Security Standards</span>
             <span>•</span>
             <span className="hover:text-slate-200 transition cursor-pointer">API Integration Docs</span>
+          </div>
+          {/* Language Picker */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Language</span>
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1">
+              {[
+                { lang: "en", flag: "🇬🇧", label: "EN" },
+                { lang: "fr", flag: "🇫🇷", label: "FR" },
+                { lang: "zh", flag: "🇨🇳", label: "ZH" },
+                { lang: "ja", flag: "🇯🇵", label: "JA" }
+              ].map((item) => (
+                <button
+                  key={item.lang}
+                  onClick={() => {
+                    if (currentPathRoute?.isMeetingFinder) {
+                      navigateToMeetingFinder(item.lang);
+                    } else if (currentPathRoute?.isWorldClock) {
+                      navigateToWorldClock(item.lang);
+                    } else {
+                      navigateToRoutePath(item.lang);
+                    }
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                    currentPathRoute?.lang === item.lang
+                      ? "bg-slate-700 text-white"
+                      : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  }`}
+                  title={item.lang.toUpperCase()}
+                >
+                  <span>{item.flag}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
