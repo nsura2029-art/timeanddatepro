@@ -26,6 +26,36 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Dynamic sitemap.xml — driven by src/utils/sitemap.ts registry
+import { generateSitemapXml, getSitemapEntryCount } from "./src/utils/sitemap";
+
+const SITE_ORIGIN =
+  process.env.PUBLIC_SITE_ORIGIN ||
+  process.env.SITE_ORIGIN ||
+  "https://timeanddatepro.com";
+
+app.get("/sitemap.xml", (req, res) => {
+  try {
+    const xml = generateSitemapXml(SITE_ORIGIN);
+    res.type("application/xml; charset=utf-8");
+    // Cache at edge for 1 hour, allow stale-while-revalidate for 24h
+    res.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+    res.send(xml);
+  } catch (err) {
+    console.error("sitemap.xml generation failed:", err);
+    res.status(500).type("text/plain").send("sitemap generation error");
+  }
+});
+
+// Tiny helper for ops — returns the count of registered URLs
+app.get("/api/sitemap/stats", (req, res) => {
+  res.json({
+    entries: getSitemapEntryCount(),
+    origin: SITE_ORIGIN,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
 // AI Query parsing endpoint
 app.post("/api/timezone/query", async (req, res) => {
   const { query, userContext } = req.body;

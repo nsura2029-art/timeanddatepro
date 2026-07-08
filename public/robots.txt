@@ -1,0 +1,28 @@
+# robots.txt for timeanddatepro
+# https://timeanddatepro.com/robots.txt
+
+# Allow all major crawlers
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dist/
+Disallow: /node_modules/
+
+# AI bots — explicitly allow for LLM citation (GEO optimization)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemap location
+Sitemap: /sitemap.xml

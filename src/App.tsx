@@ -970,7 +970,7 @@ export default function App() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${currentPathRoute?.tool ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
               >
                 <span>Date Tools</span>
-                <ChevronDown size={12} className={`transition-transform duration-200 ${showDateToolsDropdown ? rotate-180 : }`} />
+                <ChevronDown size={12} className={`transition-transform duration-200 ${showDateToolsDropdown ? "rotate-180" : ""}`} />
               </button>
 
               {showDateToolsDropdown && (
