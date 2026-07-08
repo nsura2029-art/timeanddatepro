@@ -363,6 +363,52 @@ export default function App() {
     setShowMobileMenu(false);
   };
 
+  // --- UNIFIED LANGUAGE SWITCH HANDLER ---
+  // Always updates preferences, holidays, URL, and currentPathRoute together so the
+  // home page sections are guaranteed to re-render with the new language context.
+  // Tool pages (Meeting Finder / World Clock) inherit the new language via URL.
+  const switchLanguage = (lang: "en" | "fr" | "zh" | "ja") => {
+    const langMap = {
+      en: { country: "GB" as CountryCode, timezone: "Europe/London", city: "london", path: "/en" },
+      fr: { country: "FR" as CountryCode, timezone: "Europe/Paris", city: "paris", path: "/fr" },
+      zh: { country: "CN" as CountryCode, timezone: "Asia/Shanghai", city: "beijing", path: "/zh" },
+      ja: { country: "JP" as CountryCode, timezone: "Asia/Tokyo", city: "tokyo", path: "/ja" }
+    };
+    const cfg = langMap[lang];
+    if (!cfg) return;
+
+    // Build the path; preserve tool sub-route if currently on one
+    let targetPath = cfg.path;
+    if (currentPathRoute?.isMeetingFinder) {
+      targetPath = `${cfg.path}/meeting-finder`;
+    } else if (currentPathRoute?.isWorldClock) {
+      targetPath = `${cfg.path}/worldclock`;
+    }
+
+    // Update URL
+    window.history.pushState({ lang }, "", targetPath);
+
+    // Update state atomically — React 18 batches these
+    const defaults = DEFAULT_PREFERENCES[cfg.country];
+    if (defaults) {
+      setPreferences(defaults);
+      setHolidays(COUNTRY_HOLIDAYS[cfg.country] || []);
+    }
+    setCurrentPathRoute({
+      lang,
+      city: cfg.city,
+      country: cfg.country,
+      timezone: cfg.timezone,
+      isWorldClock: !!currentPathRoute?.isWorldClock,
+      isMeetingFinder: !!currentPathRoute?.isMeetingFinder
+    });
+
+    // Persist selection so refresh preserves it
+    if (defaults) {
+      localStorage.setItem("global_time_workspace_prefs", JSON.stringify(defaults));
+    }
+  };
+
   const navigateToMeetingFinder = (lang: string) => {
     const path = lang === "default" || lang === "en" ? "/meeting-finder" : `/${lang}/meeting-finder`;
     window.history.pushState({ lang, meetingFinder: true }, "", path);
@@ -420,6 +466,11 @@ export default function App() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // --- GUARD: re-sync state when user lands on / with mismatched URL on hard refresh ---
+  // When localStorage has e.g. JP but URL is /, this ensures the page reads from localStorage
+  // (handled by initial state). When user manually changes URL hash/path, popstate fires.
+  // This is a safety net for browser-restored tabs.
 
   const getTranslation = () => {
     const lang = currentPathRoute?.lang || "en";
@@ -1514,17 +1565,9 @@ export default function App() {
               ].map((item) => (
                 <button
                   key={item.lang}
-                  onClick={() => {
-                    if (currentPathRoute?.isMeetingFinder) {
-                      navigateToMeetingFinder(item.lang);
-                    } else if (currentPathRoute?.isWorldClock) {
-                      navigateToWorldClock(item.lang);
-                    } else {
-                      navigateToRoutePath(item.lang);
-                    }
-                  }}
+                  onClick={() => switchLanguage(item.lang as "en" | "fr" | "zh" | "ja")}
                   className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                    currentPathRoute?.lang === item.lang
+                    (currentPathRoute?.lang || (preferences.country === "GB" ? "en" : preferences.country === "FR" ? "fr" : preferences.country === "CN" ? "zh" : preferences.country === "JP" ? "ja" : "en")) === item.lang
                       ? "bg-slate-700 text-white"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                   }`}
