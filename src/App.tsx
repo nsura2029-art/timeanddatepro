@@ -766,48 +766,6 @@ export default function App() {
     );
   }
 
-  if (currentPathRoute?.isMeetingFinder) {
-    const targetLang = currentPathRoute.lang || "en";
-    
-    return (
-      <div className="min-h-screen bg-[#fafafa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 antialiased">
-        {/* Sticky Header */}
-        <header className="sticky top-0 z-30 w-full bg-white dark:bg-slate-900 border-b border-[#e0e0e0] dark:border-slate-800 shadow-sm py-4">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-            {/* Brand/Logo */}
-            <div 
-              onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
-              className="flex items-center gap-2.5 shrink-0 cursor-pointer group"
-            >
-              <div className="p-1.5 rounded-lg bg-[#e8eaf6] text-[#3f51b5]">
-                <Globe size={20} className="animate-spin-slow" />
-              </div>
-              <span className="font-display font-bold tracking-tight text-md text-[#212121] dark:text-white group-hover:opacity-80 transition-opacity">
-                Global Time • Meeting Finder
-              </span>
-            </div>
-
-            {/* Back Button */}
-            <button 
-              onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
-              className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-500 hover:text-[#3f51b5] transition duration-200 cursor-pointer"
-            >
-              ← {currentPathRoute.lang === "fr" ? "Retour" : 
-                 currentPathRoute.lang === "zh" ? "返回" : 
-                 currentPathRoute.lang === "ja" ? "戻る" : 
-                 "Back to Home"}
-            </button>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-10 flex flex-col justify-start">
-          <MeetingFinder lang={targetLang} />
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
       
@@ -1479,7 +1437,33 @@ export default function App() {
 
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {currentPathRoute?.isWorldClock ? (
+        {currentPathRoute?.isMeetingFinder ? (
+          <div className="animate-fade-in space-y-6">
+            {/* Back to Home Pill */}
+            <div className="flex items-center justify-between border-b border-slate-200/10 dark:border-slate-800/40 pb-4">
+              <button
+                onClick={() => navigateToRoutePath(currentPathRoute?.lang || "default")}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-mono font-bold text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-all cursor-pointer"
+              >
+                <span>←</span>
+                <span>{currentPathRoute?.lang === "fr" ? "Retour à l'accueil" :
+                       currentPathRoute?.lang === "zh" ? "返回首页" :
+                       currentPathRoute?.lang === "ja" ? "ホームに戻る" :
+                       "Back to Home"}</span>
+              </button>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
+                <Users size={14} className={t.accentText} />
+                <span className="font-semibold uppercase tracking-wider">
+                  {currentPathRoute?.lang === "fr" ? "Planificateur de Réunion" :
+                   currentPathRoute?.lang === "zh" ? "会议规划器" :
+                   currentPathRoute?.lang === "ja" ? "ミーティングプランナー" :
+                   "Meeting Planner"}
+                </span>
+              </div>
+            </div>
+            <MeetingFinder lang={currentPathRoute?.lang || "en"} />
+          </div>
+        ) : currentPathRoute?.isWorldClock ? (
           <div className="animate-fade-in space-y-8">
             {(() => {
               const targetLang = currentPathRoute.lang || "en";
