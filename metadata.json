@@ -1,0 +1,6 @@
+{
+  "name": "Global Time & Date Workspace",
+  "description": "A modern, personalized Time & Date intelligence platform and global time workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
