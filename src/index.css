@@ -1,6 +1,207 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Orbitron:wght@700;900&display=swap');
 @import "tailwindcss";
 
+:root {
+  /* ─── PRIMITIVES ─── */
+  --w-color-white: #ffffff;
+  --w-color-black: #000000;
+  
+  --w-color-blue-50: #e8eaf6;
+  --w-color-blue-100: #c5cae9;
+  --w-color-blue-200: #9fa8da;
+  --w-color-blue-500: #3f51b5;
+  --w-color-blue-600: #3949ab;
+  --w-color-blue-700: #303f9f;
+
+  --w-color-green-50: #e8f5e9;
+  --w-color-green-100: #c8e6c9;
+  --w-color-green-500: #2e7d32;
+  --w-color-green-600: #1b5e20;
+
+  --w-color-cream-50: #f5f5dc;
+  --w-color-cream-100: #e8e0c8;
+  --w-color-cream-500: #6d4c41;
+  --w-color-cream-600: #5d4037;
+
+  --w-color-pink-50: #fce4ec;
+  --w-color-pink-100: #f8bbd9;
+  --w-color-pink-500: #c2185b;
+  --w-color-pink-600: #ad1457;
+
+  --w-color-purple-50: #f3e5f5;
+  --w-color-purple-100: #e1bee7;
+  --w-color-purple-500: #7b1fa2;
+  --w-color-purple-600: #6a1b9a;
+
+  --w-color-teal-50: #e0f2f1;
+  --w-color-teal-100: #b2dfdb;
+  --w-color-teal-500: #00695c;
+  --w-color-teal-600: #004d40;
+
+  --w-color-orange-50: #fff3e0;
+  --w-color-orange-100: #ffe0b2;
+  --w-color-orange-500: #e65100;
+  --w-color-orange-600: #bf360c;
+
+  --w-color-gray-50: #fafafa;
+  --w-color-gray-100: #f5f5f5;
+  --w-color-gray-200: #eeeeee;
+  --w-color-gray-300: #e0e0e0;
+  --w-color-gray-400: #bdbdbd;
+  --w-color-gray-500: #9e9e9e;
+  --w-color-gray-600: #757575;
+  --w-color-gray-700: #616161;
+  --w-color-gray-800: #424242;
+  --w-color-gray-900: #212121;
+
+  --w-color-success: var(--w-color-green-500);
+  --w-color-success-bg: var(--w-color-green-50);
+  --w-color-warning: #f9a825;
+  --w-color-warning-bg: #fffde7;
+  --w-color-danger: #e53935;
+  --w-color-danger-bg: #ffebee;
+  --w-color-info: var(--w-color-blue-500);
+  --w-color-info-bg: var(--w-color-blue-50);
+
+  /* ─── TYPOGRAPHY ─── */
+  --w-font-sans: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --w-text-xs: 11px;
+  --w-text-sm: 12px;
+  --w-text-base: 14px;
+  --w-text-md: 15px;
+  --w-text-lg: 16px;
+  --w-text-xl: 18px;
+  --w-text-2xl: 20px;
+  --w-text-3xl: 24px;
+  --w-text-4xl: 32px;
+  --w-text-5xl: 40px;
+  --w-weight-normal: 400;
+  --w-weight-medium: 500;
+  --w-weight-semibold: 600;
+  --w-weight-bold: 700;
+  --w-leading-tight: 1.2;
+  --w-leading-normal: 1.5;
+  --w-leading-relaxed: 1.7;
+
+  /* ─── SPACING ─── */
+  --w-space-1: 4px;
+  --w-space-2: 8px;
+  --w-space-3: 12px;
+  --w-space-4: 16px;
+  --w-space-5: 20px;
+  --w-space-6: 24px;
+  --w-space-8: 32px;
+  --w-space-10: 40px;
+  --w-space-12: 48px;
+  --w-space-16: 64px;
+  --w-space-20: 80px;
+  --w-space-24: 96px;
+
+  /* ─── RADIUS ─── */
+  --w-radius-sm: 8px;
+  --w-radius-md: 12px;
+  --w-radius-lg: 16px;
+  --w-radius-xl: 20px;
+  --w-radius-2xl: 24px;
+  --w-radius-full: 9999px;
+
+  /* ─── SHADOWS ─── */
+  --w-shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+  --w-shadow-md: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --w-shadow-lg: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --w-shadow-xl: 0 8px 32px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+  --w-shadow-glow-blue: 0 0 0 3px rgba(63,81,181,0.1);
+  --w-shadow-glow-green: 0 0 0 3px rgba(46,125,50,0.1);
+
+  /* ─── TRANSITIONS ─── */
+  --w-transition-fast: 150ms;
+  --w-transition-normal: 200ms;
+  --w-transition-slow: 300ms;
+  --w-ease-default: cubic-bezier(0.4,0,0.2,1);
+  --w-ease-bounce: cubic-bezier(0.34,1.56,0.64,1);
+
+  /* ─── Z-INDEX ─── */
+  --w-z-dropdown: 100;
+  --w-z-sticky: 200;
+  --w-z-modal-backdrop: 300;
+  --w-z-modal: 400;
+  --w-z-tooltip: 500;
+  --w-z-toast: 600;
+
+  /* ─── SEMANTIC ─── */
+  --w-bg-page: var(--w-color-gray-50);
+  --w-bg-surface: var(--w-color-white);
+  --w-bg-surface-elevated: var(--w-color-white);
+  --w-bg-subtle: var(--w-color-gray-100);
+  --w-bg-muted: var(--w-color-gray-200);
+  --w-text-primary: var(--w-color-gray-900);
+  --w-text-secondary: var(--w-color-gray-700);
+  --w-text-tertiary: var(--w-color-gray-500);
+  --w-text-disabled: var(--w-color-gray-400);
+  --w-text-inverse: var(--w-color-white);
+  --w-border-default: var(--w-color-gray-300);
+  --w-border-light: var(--w-color-gray-200);
+  --w-border-focus: var(--w-color-blue-500);
+  --w-accent: var(--w-color-blue-500);
+  --w-accent-hover: var(--w-color-blue-600);
+  --w-accent-bg: var(--w-color-blue-50);
+  --w-accent-text: var(--w-color-blue-500);
+  --w-status-success: var(--w-color-green-500);
+  --w-status-success-bg: var(--w-color-green-50);
+  --w-status-warning: var(--w-color-warning);
+  --w-status-warning-bg: var(--w-color-warning-bg);
+  --w-status-danger: var(--w-color-danger);
+  --w-status-danger-bg: var(--w-color-danger-bg);
+  --w-status-info: var(--w-color-blue-500);
+  --w-status-info-bg: var(--w-color-blue-50);
+
+  /* ─── PASTEL VARIANTS ─── */
+  --w-pastel-blue-bg: var(--w-color-blue-50);
+  --w-pastel-blue-border: var(--w-color-blue-100);
+  --w-pastel-blue-text: var(--w-color-blue-500);
+  --w-pastel-blue-icon: var(--w-color-blue-500);
+  
+  --w-pastel-green-bg: var(--w-color-green-50);
+  --w-pastel-green-border: var(--w-color-green-100);
+  --w-pastel-green-text: var(--w-color-green-500);
+  --w-pastel-green-icon: var(--w-color-green-500);
+  
+  --w-pastel-cream-bg: var(--w-color-cream-50);
+  --w-pastel-cream-border: var(--w-color-cream-100);
+  --w-pastel-cream-text: var(--w-color-cream-500);
+  --w-pastel-cream-icon: var(--w-color-cream-500);
+  
+  --w-pastel-pink-bg: var(--w-color-pink-50);
+  --w-pastel-pink-border: var(--w-color-pink-100);
+  --w-pastel-pink-text: var(--w-color-pink-500);
+  --w-pastel-pink-icon: var(--w-color-pink-500);
+  
+  --w-pastel-purple-bg: var(--w-color-purple-50);
+  --w-pastel-purple-border: var(--w-color-purple-100);
+  --w-pastel-purple-text: var(--w-color-purple-500);
+  --w-pastel-purple-icon: var(--w-color-purple-500);
+  
+  --w-pastel-teal-bg: var(--w-color-teal-50);
+  --w-pastel-teal-border: var(--w-color-teal-100);
+  --w-pastel-teal-text: var(--w-color-teal-500);
+  --w-pastel-teal-icon: var(--w-color-teal-500);
+  
+  --w-pastel-orange-bg: var(--w-color-orange-50);
+  --w-pastel-orange-border: var(--w-color-orange-100);
+  --w-pastel-orange-text: var(--w-color-orange-500);
+  --w-pastel-orange-icon: var(--w-color-orange-500);
+
+  /* ─── LAYOUT ─── */
+  --w-content-max: 1600px;
+  --w-content-narrow: 980px;
+  --w-content-padding: var(--w-space-6);
+  --w-content-padding-sm: var(--w-space-4);
+  --w-header-height: 64px;
+  --w-sidebar-width: 280px;
+  --w-grid-gap: var(--w-space-4);
+  --w-card-padding: var(--w-space-5);
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -17,10 +218,10 @@
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Base body style for premium dark slate aesthetics */
+/* Base body style updated for Widgetly Light/Neutral theme */
 body {
-  background-color: #020617;
-  color: #f1f5f9;
+  background-color: var(--w-bg-page);
+  color: var(--w-text-primary);
   font-family: var(--font-sans);
 }
 
@@ -28,4 +229,54 @@ body {
 .grid-cols-24 {
   grid-template-columns: repeat(24, minmax(0, 1fr));
 }
+
+/* Container at 1600px max */
+.w-container {
+  width: 100%;
+  max-width: var(--w-content-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--w-content-padding);
+  padding-right: var(--w-content-padding);
+}
+
+.w-container-narrow {
+  width: 100%;
+  max-width: var(--w-content-narrow);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--w-content-padding);
+  padding-right: var(--w-content-padding);
+}
+
+@media (max-width: 768px) {
+  .w-container, .w-container-narrow {
+    padding-left: var(--w-content-padding-sm);
+    padding-right: var(--w-content-padding-sm);
+  }
+}
+
+/* Wide layout (1600px+) */
+@media (min-width: 1600px) {
+  .w-container {
+    padding-left: var(--w-space-8);
+    padding-right: var(--w-space-8);
+  }
+}
+
+/* Pastel card utility classes */
+.w-card-blue   { background-color: var(--w-pastel-blue-bg);   border-color: var(--w-pastel-blue-border);   color: var(--w-pastel-blue-text); }
+.w-card-green  { background-color: var(--w-pastel-green-bg);  border-color: var(--w-pastel-green-border);  color: var(--w-pastel-green-text); }
+.w-card-cream  { background-color: var(--w-pastel-cream-bg);  border-color: var(--w-pastel-cream-border);  color: var(--w-pastel-cream-text); }
+.w-card-pink   { background-color: var(--w-pastel-pink-bg);   border-color: var(--w-pastel-pink-border);   color: var(--w-pastel-pink-text); }
+.w-card-purple { background-color: var(--w-pastel-purple-bg); border-color: var(--w-pastel-purple-border); color: var(--w-pastel-purple-text); }
+.w-card-teal   { background-color: var(--w-pastel-teal-bg);   border-color: var(--w-pastel-teal-border);   color: var(--w-pastel-teal-text); }
+.w-card-orange { background-color: var(--w-pastel-orange-bg); border-color: var(--w-pastel-orange-border); color: var(--w-pastel-orange-text); }
+
+/* Status utilities */
+.w-status-good   { background-color: var(--w-status-success-bg); color: var(--w-status-success); border: 1.5px solid var(--w-status-success); }
+.w-status-warn   { background-color: var(--w-status-warning-bg); color: #b06000; border: 1px solid var(--w-status-warning); }
+.w-status-bad    { background-color: var(--w-status-danger-bg);  color: var(--w-status-danger);  border: 1px solid var(--w-status-danger); }
+.w-status-info   { background-color: var(--w-status-info-bg);   color: var(--w-status-info);     border: 1px solid var(--w-status-info); }
+
 

@@ -33,12 +33,12 @@ import {
 import { getTheme, THEME_CONFIGS, ThemeType } from "./utils/theme";
 import AnalogClock from "./components/AnalogClock";
 import TodaySnapshot from "./components/TodaySnapshot";
-import GlobalConnections from "./components/GlobalConnections";
 import QuickActions from "./components/QuickActions";
 import TimeInsights from "./components/TimeInsights";
 import GlobalSnapshot from "./components/GlobalSnapshot";
 import { TRANSLATIONS } from "./utils/translations";
 import WorldClockDashboard from "./components/WorldClockDashboard";
+import MeetingFinder from "./components/MeetingFinder";
 
 const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: string }>> = {
   en: {
@@ -74,20 +74,25 @@ const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: st
 function parseRouteFromPath() {
   const path = window.location.pathname.toLowerCase();
   const isWorldClock = path.endsWith("/worldclock") || path === "/worldclock";
+  const isMeetingFinder = path.endsWith("/meeting-finder") || path === "/meeting-finder";
+
   if (path.startsWith("/fr") || path === "/paris") {
-    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock };
+    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
   }
   if (path.startsWith("/zh") || path.includes("beijing") || path.includes("beging")) {
-    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", isWorldClock };
+    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
   }
   if (path.startsWith("/ja") || path.includes("tokyo")) {
-    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", isWorldClock };
+    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
   }
   if (path.startsWith("/en") || path.includes("london")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock };
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
   }
   if (path === "/worldclock") {
-    return { lang: "en", city: "new_york", country: "US" as CountryCode, timezone: "America/New_York", isWorldClock: true };
+    return { lang: "en", city: "new_york", country: "US" as CountryCode, timezone: "America/New_York", isWorldClock: true, isMeetingFinder: false };
+  }
+  if (path === "/meeting-finder" || path.endsWith("/meeting-finder")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: true };
   }
   return null;
 }
@@ -353,6 +358,46 @@ export default function App() {
       country,
       timezone,
       isWorldClock: true
+    });
+    
+    setShowToolsDropdown(false);
+    setShowMobileMenu(false);
+  };
+
+  const navigateToMeetingFinder = (lang: string) => {
+    const path = lang === "default" || lang === "en" ? "/meeting-finder" : `/${lang}/meeting-finder`;
+    window.history.pushState({ lang, meetingFinder: true }, "", path);
+    
+    let country: CountryCode = "GB";
+    let timezone = "Europe/London";
+
+    if (lang === "fr") {
+      country = "FR";
+      timezone = "Europe/Paris";
+    } else if (lang === "zh") {
+      country = "CN";
+      timezone = "Asia/Shanghai";
+    } else if (lang === "ja") {
+      country = "JP";
+      timezone = "Asia/Tokyo";
+    } else if (lang === "en") {
+      country = "GB";
+      timezone = "Europe/London";
+    }
+
+    const defaults = DEFAULT_PREFERENCES[country];
+    if (defaults) {
+      setPreferences(defaults);
+      setHolidays(COUNTRY_HOLIDAYS[country] || []);
+    }
+
+    setCurrentPathRoute({
+      lang,
+      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
+      country,
+      timezone,
+      isWorldClock: false,
+      isMeetingFinder: true
     });
     
     setShowToolsDropdown(false);
@@ -664,7 +709,7 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 antialiased">
-        <div className="max-w-[1200px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
+        <div className="max-w-[1600px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
           <button 
             onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
             className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition duration-200 cursor-pointer"
@@ -682,7 +727,7 @@ export default function App() {
           </div>
         </div>
 
-        <main className="flex-1 max-w-[1200px] w-full mx-auto px-6 py-12 flex flex-col items-center justify-start space-y-12">
+        <main className="flex-1 max-w-[1600px] w-full mx-auto px-6 py-12 flex flex-col items-center justify-start space-y-12">
           <div className="flex flex-col items-center text-center py-6 select-none">
             <div className="flex items-baseline font-digital">
               <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
@@ -714,8 +759,74 @@ export default function App() {
                 });
               }}
               lang={currentPathRoute.lang || "en"}
+              isWorldClockPage={true}
             />
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (currentPathRoute?.isMeetingFinder) {
+    const targetLang = currentPathRoute.lang || "en";
+    
+    return (
+      <div className="min-h-screen bg-[#fafafa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 antialiased">
+        {/* Sticky Header */}
+        <header className="sticky top-0 z-30 w-full bg-white dark:bg-slate-900 border-b border-[#e0e0e0] dark:border-slate-800 shadow-sm py-4">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+            {/* Brand/Logo */}
+            <div 
+              onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
+              className="flex items-center gap-2.5 shrink-0 cursor-pointer group"
+            >
+              <div className="p-1.5 rounded-lg bg-[#e8eaf6] text-[#3f51b5]">
+                <Globe size={20} className="animate-spin-slow" />
+              </div>
+              <span className="font-display font-bold tracking-tight text-md text-[#212121] dark:text-white group-hover:opacity-80 transition-opacity">
+                Global Time • Meeting Finder
+              </span>
+            </div>
+
+            {/* Country selectors within Meeting Finder */}
+            <div className="hidden md:flex items-center gap-1 bg-[#fafafa] dark:bg-slate-850 p-1 rounded-xl border border-[#e0e0e0] dark:border-slate-700">
+              {[
+                { lang: "en", flag: "🇬🇧", name: "London (/en)" },
+                { lang: "fr", flag: "🇫🇷", name: "Paris (/fr)" },
+                { lang: "zh", flag: "🇨🇳", name: "Beijing (/zh)" },
+                { lang: "ja", flag: "🇯🇵", name: "Tokyo (/ja)" }
+              ].map((item) => (
+                <button
+                  key={item.lang}
+                  onClick={() => navigateToMeetingFinder(item.lang)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                    currentPathRoute?.lang === item.lang
+                      ? "bg-white dark:bg-slate-900 text-[#3f51b5] dark:text-white shadow-sm border border-[#e0e0e0] dark:border-slate-700"
+                      : "text-slate-500 hover:text-slate-950 dark:hover:text-white"
+                  }`}
+                >
+                  <span>{item.flag}</span>
+                  <span>{item.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Back Button */}
+            <button 
+              onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-500 hover:text-[#3f51b5] transition duration-200 cursor-pointer"
+            >
+              ← {currentPathRoute.lang === "fr" ? "Retour" : 
+                 currentPathRoute.lang === "zh" ? "返回" : 
+                 currentPathRoute.lang === "ja" ? "戻る" : 
+                 "Back to Home"}
+            </button>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-10 flex flex-col justify-start">
+          <MeetingFinder lang={targetLang} />
         </main>
       </div>
     );
@@ -783,7 +894,15 @@ export default function App() {
           {/* Country Landing Page Selectors */}
           <div className="hidden md:flex items-center gap-1 bg-slate-100/80 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
             <button
-              onClick={() => navigateToRoutePath("en")}
+              onClick={() => {
+                if (currentPathRoute?.isMeetingFinder) {
+                  navigateToMeetingFinder("en");
+                } else if (currentPathRoute?.isWorldClock) {
+                  navigateToWorldClock("en");
+                } else {
+                  navigateToRoutePath("en");
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                 currentPathRoute?.lang === "en"
                   ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
@@ -794,7 +913,15 @@ export default function App() {
               <span>London (/en)</span>
             </button>
             <button
-              onClick={() => navigateToRoutePath("fr")}
+              onClick={() => {
+                if (currentPathRoute?.isMeetingFinder) {
+                  navigateToMeetingFinder("fr");
+                } else if (currentPathRoute?.isWorldClock) {
+                  navigateToWorldClock("fr");
+                } else {
+                  navigateToRoutePath("fr");
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                 currentPathRoute?.lang === "fr"
                   ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
@@ -805,7 +932,15 @@ export default function App() {
               <span>Paris (/fr)</span>
             </button>
             <button
-              onClick={() => navigateToRoutePath("zh")}
+              onClick={() => {
+                if (currentPathRoute?.isMeetingFinder) {
+                  navigateToMeetingFinder("zh");
+                } else if (currentPathRoute?.isWorldClock) {
+                  navigateToWorldClock("zh");
+                } else {
+                  navigateToRoutePath("zh");
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                 currentPathRoute?.lang === "zh"
                   ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
@@ -816,7 +951,15 @@ export default function App() {
               <span>Beijing (/zh)</span>
             </button>
             <button
-              onClick={() => navigateToRoutePath("ja")}
+              onClick={() => {
+                if (currentPathRoute?.isMeetingFinder) {
+                  navigateToMeetingFinder("ja");
+                } else if (currentPathRoute?.isWorldClock) {
+                  navigateToWorldClock("ja");
+                } else {
+                  navigateToRoutePath("ja");
+                }
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                 currentPathRoute?.lang === "ja"
                   ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm border border-slate-200/60 dark:border-slate-700/80"
@@ -831,16 +974,26 @@ export default function App() {
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-1 xl:gap-2">
             <button 
-              onClick={() => handleScrollToSection("today-section")}
+              onClick={() => {
+                if (currentPathRoute?.isMeetingFinder) {
+                  navigateToRoutePath(currentPathRoute.lang || "default");
+                } else {
+                  handleScrollToSection("today-section");
+                }
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
             >
               Today
             </button>
             <button 
-              onClick={() => handleScrollToSection("connections-section")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
+              onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentPathRoute?.isMeetingFinder
+                  ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm"
+                  : `${t.text} hover:bg-slate-100/50`
+              }`}
             >
-              Connections
+              Meeting Finder
             </button>
 
             {/* Time Tools Dropdown Trigger */}
@@ -1021,13 +1174,6 @@ export default function App() {
                 <span>Today Snapshot</span>
               </button>
               <button 
-                onClick={() => handleScrollToSection("connections-section")}
-                className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
-              >
-                <Globe size={14} className="text-blue-500" />
-                <span>Global Connections</span>
-              </button>
-              <button 
                 onClick={() => handleScrollToSection("insights-section")}
                 className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
               >
@@ -1129,20 +1275,6 @@ export default function App() {
       {!currentPathRoute?.isWorldClock && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
         
-        {/* Country Specific Transparent Flag Background */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 sm:w-1/2 lg:w-[45%] xl:w-[40%] pointer-events-none overflow-hidden select-none z-0 flex justify-end items-stretch">
-          <img 
-            src={`https://flagcdn.com/w1600/${preferences.country === "OTHER" ? "un" : preferences.country.toLowerCase()}.png`}
-            alt=""
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover object-right opacity-35 dark:opacity-25 transition-opacity duration-500"
-            style={{
-              maskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%)",
-              WebkitMaskImage: "linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%)"
-            }}
-          />
-        </div>
-
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
           
           {/* Left Column: Greeting, live clock, details, search */}
@@ -1560,19 +1692,6 @@ export default function App() {
             {/* Section 1: Today in Your Country */}
             <div id="today-section" className="scroll-mt-24">
               <TodaySnapshot preferences={preferences} holidays={holidays} />
-            </div>
-
-            {/* Section 2: Your Global Connections */}
-            <div id="connections-section" className="scroll-mt-24">
-              <GlobalConnections 
-                preferences={preferences} 
-                onUpdateFavorites={(newFavs) => savePreferences({ ...preferences, favoriteCities: newFavs })}
-                onOpenMeetingPlanner={() => {
-                  setActiveToolTab("planner");
-                  const elem = document.getElementById("quick-tools-section");
-                  elem?.scrollIntoView({ behavior: "smooth" });
-                }}
-              />
             </div>
 
             {/* Section 3: Smart Quick Actions / Time Tools */}

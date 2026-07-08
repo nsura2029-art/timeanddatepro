@@ -344,20 +344,20 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
   });
 
   return (
-    <div className={`space-y-12 animate-fade-in ${isWorldClockPage ? "text-slate-800 dark:text-slate-200" : "text-slate-100"}`}>
+    <div className={`space-y-12 animate-fade-in text-slate-800 dark:text-slate-200`}>
       
       {/* SECTION HEADER */}
       {!isWorldClockPage && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/40 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/40 pb-6">
           <div>
             <span className={`text-xs font-mono ${th.accentText} font-semibold uppercase tracking-wider flex items-center gap-1.5`}>
               <Sparkles size={13} className="animate-pulse" />
               {loc.worldClockTitle}
             </span>
-            <h2 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-white mt-1">
+            <h2 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-slate-900 dark:text-white mt-1">
               Command Center Dashboard
             </h2>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
               {loc.worldClockSubtitle}
             </p>
           </div>
@@ -434,7 +434,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
                     </div>
 
                     <div className="text-center">
-                      <div className="text-xs font-bold text-slate-100 truncate max-w-[120px]">
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[120px]">
                         {foundCity.name}
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono tracking-wide mt-0.5">
