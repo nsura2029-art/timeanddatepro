@@ -348,16 +348,16 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
       
       {/* SECTION HEADER */}
       {!isWorldClockPage && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/40 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#e0e0e0] pb-6">
           <div>
-            <span className={`text-xs font-mono ${th.accentText} font-semibold uppercase tracking-wider flex items-center gap-1.5`}>
+            <span className={`text-[10px] font-mono ${th.accentText} font-bold uppercase tracking-wider flex items-center gap-1.5`}>
               <Sparkles size={13} className="animate-pulse" />
               {loc.worldClockTitle}
             </span>
-            <h2 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+            <h2 className="text-2xl md:text-3xl font-sans font-bold tracking-tight text-[#212121] mt-1">
               Command Center Dashboard
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+            <p className="text-xs text-[#9e9e9e] mt-1.5 max-w-2xl">
               {loc.worldClockSubtitle}
             </p>
           </div>
@@ -368,7 +368,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
       {!isWorldClockPage && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <h3 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#9e9e9e] flex items-center gap-2">
               <Clock size={14} className={th.accentText} />
               {loc.personalClocks}
             </h3>
@@ -459,7 +459,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
       )}
 
       {/* FILTER & SORT CONTROLS BAR */}
-      <div className="bg-transparent border border-slate-200 dark:border-slate-800/60 rounded-2xl p-4 md:p-6 space-y-4">
+      <div className="bg-white border border-[#e0e0e0] rounded-2xl p-4 md:p-6 space-y-4 shadow-sm">
         
         {/* Controls Layout */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -482,7 +482,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
                   activeFilter === f.id
                     ? `${th.btnPrimary} shadow-md scale-[1.02]`
-                    : "bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
+                    : "bg-white border border-[#e0e0e0] text-[#616161] hover:text-[#212121] hover:border-[#3f51b5]/40 hover:bg-[#fafafa]"
                 }`}
               >
                 {f.label}
@@ -506,7 +506,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
                   sortBy === s.id
                     ? "bg-sky-500/10 border border-sky-400/30 text-sky-500 dark:text-sky-400 font-semibold"
-                    : "bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    : "bg-white border border-[#e0e0e0] text-[#616161] hover:text-[#212121] hover:bg-[#fafafa] hover:border-[#3f51b5]/40"
                 }`}
               >
                 {s.label}
@@ -523,7 +523,7 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
             placeholder={loc.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-transparent border border-slate-200 dark:border-slate-800 focus:border-sky-500/80 rounded-xl pl-11 pr-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-500 outline-none transition-all"
+            className="w-full bg-[#fafafa] border border-[#e0e0e0] focus:border-[#3f51b5] rounded-xl pl-11 pr-4 py-2.5 text-xs text-[#212121] placeholder-[#9e9e9e] outline-none transition-all"
           />
           {searchQuery && (
             <button 
@@ -546,19 +546,19 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
               const isMenuOpen = activeMenuCard === city.id;
 
               return (
-                <div 
+                <div
                   key={city.id}
-                  className={`relative rounded-xl p-5 flex flex-col justify-between transition-all group ${
+                  className={`relative rounded-2xl p-5 flex flex-col justify-between transition-all group ${
                     isWorldClockPage
                       ? "border-none bg-transparent"
                       : isActiveWorkspace
-                        ? "border border-sky-500/40 bg-transparent"
-                        : "border border-slate-200 dark:border-slate-800/40 bg-transparent hover:border-slate-400 dark:hover:border-slate-600 shadow-sm"
+                        ? "border border-[#3f51b5]/40 bg-white shadow-sm"
+                        : "border border-[#e0e0e0] bg-white hover:border-[#3f51b5]/40 hover:shadow-md shadow-sm"
                   }`}
                 >
                   
                   {/* Card Header */}
-                  <div className={`flex items-center justify-between pb-3 mb-4 ${isWorldClockPage ? "" : "border-b border-slate-100 dark:border-slate-800/40"}`}>
+                  <div className={`flex items-center justify-between pb-3 mb-4 ${isWorldClockPage ? "" : "border-b border-[#eeeeee]"}`}>
                     <div className="flex items-center gap-2">
                       <span className={`font-semibold ${isWorldClockPage ? "text-sm text-slate-800 dark:text-slate-100" : "text-xs text-slate-700 dark:text-slate-200"}`}>
                         {city.fullName}

@@ -166,9 +166,9 @@ export default function TimeInsights({ preferences, onNavigateToTool }: TimeInsi
   return (
     <div className="scroll-mt-20">
       <div className="mb-6">
-        <span className={`text-xs font-mono ${t.accentText} font-semibold uppercase tracking-wider`}>Smart Recommendations</span>
-        <h2 className={`text-2xl font-sans font-semibold ${t.text} tracking-tight mt-1`}>Personalized Time Insights</h2>
-        <p className="text-xs text-slate-400 mt-1">Proactive workspace alerts warning of shifting overlaps and local productivity trends.</p>
+        <span className={`text-[10px] font-mono ${t.accentText} font-bold uppercase tracking-wider`}>Smart Recommendations</span>
+        <h2 className="text-2xl md:text-3xl font-sans font-bold text-[#212121] tracking-tight mt-1">Personalized Time Insights</h2>
+        <p className="text-xs text-[#9e9e9e] mt-1.5">Proactive workspace alerts warning of shifting overlaps and local productivity trends.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -186,24 +186,24 @@ export default function TimeInsights({ preferences, onNavigateToTool }: TimeInsi
           }
 
           return (
-            <div 
+            <div
               key={idx}
-              className={`rounded-xl border ${cardBorder} ${t.cardBg} p-5 shadow-lg flex flex-col justify-between hover:bg-slate-50/40 transition-all`}
+              className={`rounded-2xl border ${cardBorder} bg-white p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all`}
             >
               <div>
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${iconColor}`}>
                     <IconComponent size={18} />
                   </div>
-                  <h3 className={`text-sm font-semibold ${t.text}`}>{ins.title}</h3>
+                  <h3 className="text-sm font-sans font-semibold text-[#212121]">{ins.title}</h3>
                 </div>
-                <p className="text-xs text-slate-400 mt-3.5 leading-relaxed">{ins.text}</p>
+                <p className="text-xs text-[#616161] mt-3.5 leading-relaxed">{ins.text}</p>
               </div>
 
-              <div className={`border-t ${t.border} mt-5 pt-4`}>
-                <button 
+              <div className="border-t border-[#eeeeee] mt-5 pt-4">
+                <button
                   onClick={() => onNavigateToTool(ins.toolId)}
-                  className={`inline-flex items-center gap-1.5 text-xs ${t.accentText} hover:opacity-80 font-semibold transition cursor-pointer`}
+                  className={`inline-flex items-center gap-1.5 text-xs ${t.accentText} hover:opacity-80 font-bold transition cursor-pointer`}
                 >
                   <span>{ins.actionText}</span>
                   <ArrowRight size={12} />

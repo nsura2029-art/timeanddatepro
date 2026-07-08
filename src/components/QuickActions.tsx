@@ -286,20 +286,20 @@ export default function QuickActions({
       {/* Search Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <span className={`text-xs font-mono ${th.accentText} font-semibold uppercase tracking-wider`}>Productivity Engine</span>
-          <h2 className={`text-3xl font-sans font-semibold tracking-tight ${th.text} mt-1`}>Smart Quick Actions</h2>
-          <p className="text-sm text-slate-400 mt-1">SaaS-grade utilities that pre-integrate your local holiday context and timezone preferences.</p>
+          <span className={`text-[10px] font-mono ${th.accentText} font-bold uppercase tracking-wider`}>Productivity Engine</span>
+          <h2 className="text-2xl md:text-3xl font-sans font-bold text-[#212121] tracking-tight mt-1">Smart Quick Actions</h2>
+          <p className="text-xs text-[#9e9e9e] mt-1.5">SaaS-grade utilities that pre-integrate your local holiday context and timezone preferences.</p>
         </div>
         {selectedTool && (
-          <button 
+          <button
             onClick={() => {
               setSelectedTool(null);
               if (onCloseTab) onCloseTab();
             }}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg border ${th.border} bg-slate-50 text-slate-600 hover:text-slate-900 transition`}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-[#e0e0e0] bg-white text-[#616161] hover:text-[#212121] hover:border-[#3f51b5]/40 transition"
           >
             <X size={15} />
-            <span className="text-xs font-medium font-mono">Close Tool</span>
+            <span className="text-xs font-bold font-mono">Close Tool</span>
           </button>
         )}
       </div>
@@ -308,19 +308,19 @@ export default function QuickActions({
       {!selectedTool ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {toolsList.map((t) => (
-            <div 
+            <div
               key={t.id}
               onClick={() => setSelectedTool(t.id)}
-              className={`group p-5 rounded-xl border ${th.border} ${th.cardBg} ${th.borderHover} hover:bg-slate-50/40 transition-all cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5`}
+              className={`group p-5 rounded-2xl border border-[#e0e0e0] bg-white hover:border-[#3f51b5]/40 hover:shadow-md transition-all cursor-pointer shadow-sm hover:-translate-y-0.5`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-lg ${t.color}`}>
+                <div className={`p-2.5 rounded-xl ${t.color}`}>
                   <t.icon size={22} />
                 </div>
-                <h3 className={`text-lg font-medium ${th.text} group-hover:text-blue-500 transition`}>{t.name}</h3>
+                <h3 className={`text-base font-sans font-semibold text-[#212121] group-hover:${th.accentText} transition`}>{t.name}</h3>
               </div>
-              <p className="text-xs text-slate-400 mt-3.5 leading-relaxed">{t.desc}</p>
-              <div className={`flex items-center gap-1.5 text-xs ${th.accentText} mt-4 font-semibold group-hover:translate-x-1 transition-transform`}>
+              <p className="text-xs text-[#616161] mt-3.5 leading-relaxed">{t.desc}</p>
+              <div className={`flex items-center gap-1.5 text-xs ${th.accentText} mt-4 font-bold group-hover:translate-x-1 transition-transform`}>
                 <span>Launch Workspace</span>
                 <span className="font-mono">→</span>
               </div>
@@ -328,8 +328,8 @@ export default function QuickActions({
           ))}
         </div>
       ) : (
-        <div className={`rounded-xl border ${th.border} ${th.cardBg} p-6 md:p-8 shadow-2xl relative`}>
-          
+        <div className={`rounded-3xl border border-[#e0e0e0] bg-white p-6 md:p-8 shadow-xl relative`}>
+
           {/* Tool Close corner button */}
           <button 
             onClick={() => {
@@ -497,7 +497,7 @@ export default function QuickActions({
                 </div>
 
                 {/* 24 hour boxes */}
-                <div className="grid grid-cols-24 gap-1 min-w-[600px]">
+                <div className="grid grid-cols-[repeat(24,minmax(0,1fr))] gap-1 min-w-[600px]">
                   {Array.from({ length: 24 }).map((_, hIndex) => {
                     const status = getHourOverlapStatus(hIndex);
                     let color = "bg-rose-500/20 border-rose-500/10 text-slate-500";
