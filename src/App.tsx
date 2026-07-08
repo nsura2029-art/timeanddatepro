@@ -229,7 +229,6 @@ export default function App() {
   
   // Real-time states
   const [liveDate, setLiveDate] = useState(new Date());
-  const [isSticky, setIsSticky] = useState(false);
   const [syncData, setSyncData] = useState<{
     offsetSeconds: number;
     accuracySeconds: number;
@@ -485,10 +484,17 @@ export default function App() {
     const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
     const detectedCountry = detectCountryFromTimezone(browserTz);
 
+    // Only show the "change location" banner when the BROWSER language is non-English.
+    // English-speaking users land straight on the detected home locale without prompting.
+    const browserLang = (navigator.language || (navigator as any).userLanguage || "en")
+      .toLowerCase()
+      .split("-")[0];
+    const isEnglishBrowser = browserLang === "en";
+
     if (savedPrefs) {
       setShowBanner(false);
     } else {
-      if (!bannerDismissed && detectedCountry !== "OTHER") {
+      if (!bannerDismissed && detectedCountry !== "OTHER" && !isEnglishBrowser) {
         setShowBanner(true);
       }
     }
@@ -549,18 +555,8 @@ export default function App() {
     fetchSyncData();
   }, [preferences.timezone, preferences.countryName]);
 
-  // --- STICKY NAV DETECTOR ---
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 220) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // --- STICKY NAV: now always-on, no scroll detector needed ---
+  // Kept as a placeholder for any future scroll-aware behaviors.
 
   // --- ACTION HANDLERS ---
   const savePreferences = (newPrefs: CountryPreferences) => {
@@ -746,26 +742,26 @@ export default function App() {
       
       {/* 1. AUTO LOCALIZATION NOTIFICATION BANNER */}
       {showBanner && (
-        <div className="w-full bg-blue-600/90 text-white py-3 px-4 border-b border-blue-500/20 text-center text-xs md:text-sm font-medium flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in z-40 sticky top-0 backdrop-blur-md">
+        <div className="w-full bg-[#3f51b5] text-white py-3 px-4 border-b border-[#303f9f]/40 text-center text-xs md:text-sm font-medium flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in z-40 sticky top-0 backdrop-blur-md shadow-sm">
           <span>
             Looks like you're in <strong>{preferences.countryName}</strong>. Continue in {preferences.language} or English?
           </span>
-          <div className="flex gap-2">
-            <button 
+          <div className="flex gap-2 flex-wrap justify-center">
+            <button
               onClick={() => handleBannerAction("local")}
-              className="px-3 py-1 bg-white text-blue-600 font-semibold rounded hover:bg-slate-100 transition text-[11px]"
+              className="px-3.5 py-1.5 bg-white text-[#3f51b5] font-bold rounded-lg hover:bg-[#e8eaf6] transition text-[11px] border border-[#e8eaf6]"
             >
               Continue in {preferences.language.split("/")[0]}
             </button>
-            <button 
+            <button
               onClick={() => handleBannerAction("english")}
-              className="px-3 py-1 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded transition text-[11px] border border-blue-500/30"
+              className="px-3.5 py-1.5 bg-[#303f9f] hover:bg-[#1a237e] text-white font-bold rounded-lg transition text-[11px] border border-white/20"
             >
               Use English
             </button>
-            <button 
+            <button
               onClick={() => handleBannerAction("change")}
-              className="px-3 py-1 bg-transparent hover:bg-blue-500 text-white font-semibold rounded transition text-[11px] border border-white/20"
+              className="px-3.5 py-1.5 bg-transparent hover:bg-white/10 text-white font-bold rounded-lg transition text-[11px] border border-white/30"
             >
               Change Location
             </button>
@@ -773,12 +769,8 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. STICKY TOP SEARCH/NAVIGATION BAR */}
-      <nav className={`w-full z-30 transition-all duration-300 border-b ${
-        isSticky 
-          ? `sticky top-0 ${t.bg === "bg-white" ? "bg-white/85 shadow-sm" : "bg-slate-950/85 shadow-lg"} backdrop-blur-md ${t.border} py-3` 
-          : "bg-transparent border-transparent py-5"
-      }`}>
+      {/* 2. STABLE STICKY TOP NAVIGATION BAR — always visible, MeetingFinder palette */}
+      <nav className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-[#e0e0e0] py-3 shadow-sm transition-shadow">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           
           {/* Brand/Logo */}
@@ -927,9 +919,8 @@ export default function App() {
             </button>
           </div>
 
-          {/* Sticky Scroll Search Input */}
-          {isSticky && (
-            <div className={`hidden md:flex items-center max-w-xs xl:max-w-md w-full bg-slate-50/80 border ${t.border} rounded-lg py-1 px-2.5 shadow-inner focus-within:border-blue-500/80 transition animate-fade-in`}>
+          {/* AI Command Search Input — always visible (md+) */}
+          <div className="hidden md:flex items-center max-w-xs xl:max-w-md w-full bg-[#fafafa] border border-[#e0e0e0] rounded-lg py-1 px-2.5 focus-within:border-[#3f51b5] transition">
               <Search size={14} className="text-slate-400 mr-2" />
               <input 
                 type="text"
@@ -945,8 +936,7 @@ export default function App() {
               >
                 ASK
               </button>
-            </div>
-          )}
+          </div>
 
           {/* Preferences Settings & Mobile Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2">
