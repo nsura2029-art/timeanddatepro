@@ -1,8 +1,9 @@
 node_modules/
-build/
 dist/
-coverage/
-.DS_Store
-*.log
-.env*
-!.env.example
+server.js
+.env
+.env.local
+
+# SDK build artifacts only — source is tracked
+sdk/**/dist/
+sdk/**/node_modules/

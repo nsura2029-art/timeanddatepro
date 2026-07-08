@@ -1,0 +1,45 @@
+{
+  "name": "@timeanddatepro/sdk",
+  "version": "0.1.0",
+  "description": "Official Node.js client for the TimeAndDatePro REST API. Time zone conversion, meeting planning, holidays, working hours, date arithmetic — all in one tiny zero-dependency package.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test dist/__tests__/*.test.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "timezone",
+    "time",
+    "date",
+    "calendar",
+    "meeting-planner",
+    "iso8601",
+    "unix-timestamp",
+    "holidays",
+    "world-clock",
+    "api",
+    "sdk"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
