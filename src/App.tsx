@@ -188,17 +188,15 @@ export default function App() {
   const [preferences, setPreferences] = useState<CountryPreferences>(() => {
     const route = parseRouteFromPath();
     if (route) {
+      // On /<lang> URLs, the URL is the source of truth — use that language's defaults.
       const defaults = DEFAULT_PREFERENCES[route.country];
       if (defaults) return defaults;
     }
-    const savedPrefs = localStorage.getItem("global_time_workspace_prefs");
+    // At root URL (/), use BROWSER timezone detection, not localStorage.
+    // This way clicking the EN footer flag doesn't pollute the home page with UK content
+    // for a user whose browser is in the US.
     const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
     const detectedCountry = detectCountryFromTimezone(browserTz);
-    if (savedPrefs) {
-      try {
-        return JSON.parse(savedPrefs) as CountryPreferences;
-      } catch (e) {}
-    }
     const defaults = DEFAULT_PREFERENCES[detectedCountry] || DEFAULT_PREFERENCES.OTHER;
     return {
       ...defaults,
@@ -211,15 +209,9 @@ export default function App() {
     if (route) {
       return COUNTRY_HOLIDAYS[route.country] || [];
     }
-    const savedPrefs = localStorage.getItem("global_time_workspace_prefs");
+    // At root URL (/), use browser detection for holidays too.
     const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
     const detectedCountry = detectCountryFromTimezone(browserTz);
-    if (savedPrefs) {
-      try {
-        const parsed = JSON.parse(savedPrefs) as CountryPreferences;
-        return COUNTRY_HOLIDAYS[parsed.country] || COUNTRY_HOLIDAYS.OTHER;
-      } catch (e) {}
-    }
     return COUNTRY_HOLIDAYS[detectedCountry] || COUNTRY_HOLIDAYS.OTHER;
   });
 
@@ -402,10 +394,11 @@ export default function App() {
       isMeetingFinder: !!currentPathRoute?.isMeetingFinder
     });
 
-    // Persist selection so refresh preserves it
-    if (defaults) {
-      localStorage.setItem("global_time_workspace_prefs", JSON.stringify(defaults));
-    }
+    // Note: we deliberately do NOT write to localStorage here.
+    // The URL (/<lang>) is the source of truth for language/country.
+    // localStorage is reserved for explicit user saves (settings panel, banner actions).
+    // This prevents footer language clicks from polluting the home page experience
+    // when the user navigates back to /.
   };
 
   const navigateToMeetingFinder = (lang: string) => {
