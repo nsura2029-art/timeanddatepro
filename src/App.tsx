@@ -690,82 +690,6 @@ export default function App() {
   const offsetData = getTimezoneOffsetAndAbbr(preferences.timezone, liveDate);
   const t = getTheme(preferences.theme);
 
-  if (currentPathRoute?.isWorldClock) {
-    const targetLang = currentPathRoute.lang || "en";
-    const targetCountry = currentPathRoute.country || "GB";
-    const locInfo = LOCALIZED_NAMES[targetLang]?.[targetCountry] || LOCALIZED_NAMES.en[targetCountry] || { city: "London", country: "United Kingdom" };
-    const offsetInfo = getTimezoneOffsetAndAbbr(currentPathRoute.timezone, liveDate);
-    const relativeTime = getRelativeDayAndOffset(currentPathRoute.timezone, preferences.timezone, liveDate);
-
-    const formatted = formatLocalTime(liveDate, preferences.timeFormat, currentPathRoute.timezone);
-    const ampmMatch = formatted.match(/^(.*?)\s*(AM|PM)$/i);
-    let timeDigits = formatted;
-    let ampmText = "";
-    if (ampmMatch) {
-      timeDigits = ampmMatch[1];
-      ampmText = ampmMatch[2].toLowerCase();
-    }
-
-    return (
-      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-blue-500/20 antialiased">
-        <div className="max-w-[1600px] w-full mx-auto px-6 pt-8 flex items-center justify-between">
-          <button 
-            onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
-            className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition duration-200 cursor-pointer"
-          >
-            ← {currentPathRoute.lang === "fr" ? "Retour" : 
-               currentPathRoute.lang === "zh" ? "返回" : 
-               currentPathRoute.lang === "ja" ? "戻る" : 
-               "Back to Home"}
-          </button>
-          
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>{locInfo.city}</span>
-            <span>•</span>
-            <span className="uppercase">{offsetInfo.abbr}</span>
-          </div>
-        </div>
-
-        <main className="flex-1 max-w-[1600px] w-full mx-auto px-6 py-12 flex flex-col items-center justify-start space-y-12">
-          <div className="flex flex-col items-center text-center py-6 select-none">
-            <div className="flex items-baseline font-digital">
-              <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-                {timeDigits}
-              </span>
-              {ampmText && (
-                <span className="text-xl sm:text-2xl md:text-3xl ml-2 text-slate-500 font-digital font-medium lowercase">
-                  {ampmText}
-                </span>
-              )}
-            </div>
-
-            <div className="text-sm sm:text-md md:text-lg font-sans text-slate-500 mt-4 tracking-normal font-medium">
-              {relativeTime.day}, {relativeTime.offset}
-            </div>
-          </div>
-
-          <div className="w-full border-t border-slate-100 dark:border-slate-900 my-4" />
-
-          <div className="w-full">
-            <WorldClockDashboard 
-              preferences={preferences} 
-              onSelectTimezone={(tz, country, cName) => {
-                savePreferences({
-                  ...preferences,
-                  timezone: tz,
-                  country,
-                  countryName: cName
-                });
-              }}
-              lang={currentPathRoute.lang || "en"}
-              isWorldClockPage={true}
-            />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
       
@@ -809,7 +733,7 @@ export default function App() {
           {/* Brand/Logo */}
           <div 
             onClick={() => {
-              if (currentPathRoute?.isWorldClock) {
+              if (currentPathRoute?.isWorldClock || currentPathRoute?.isMeetingFinder) {
                 navigateToRoutePath(currentPathRoute.lang || "default");
               } else {
                 handleScrollToSection("today-section");
@@ -1113,7 +1037,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isWorldClock && (
+      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
         
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
@@ -1438,29 +1362,7 @@ export default function App() {
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
         {currentPathRoute?.isMeetingFinder ? (
-          <div className="animate-fade-in space-y-6">
-            {/* Back to Home Pill */}
-            <div className="flex items-center justify-between border-b border-slate-200/10 dark:border-slate-800/40 pb-4">
-              <button
-                onClick={() => navigateToRoutePath(currentPathRoute?.lang || "default")}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-mono font-bold text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-all cursor-pointer"
-              >
-                <span>←</span>
-                <span>{currentPathRoute?.lang === "fr" ? "Retour à l'accueil" :
-                       currentPathRoute?.lang === "zh" ? "返回首页" :
-                       currentPathRoute?.lang === "ja" ? "ホームに戻る" :
-                       "Back to Home"}</span>
-              </button>
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
-                <Users size={14} className={t.accentText} />
-                <span className="font-semibold uppercase tracking-wider">
-                  {currentPathRoute?.lang === "fr" ? "Planificateur de Réunion" :
-                   currentPathRoute?.lang === "zh" ? "会议规划器" :
-                   currentPathRoute?.lang === "ja" ? "ミーティングプランナー" :
-                   "Meeting Planner"}
-                </span>
-              </div>
-            </div>
+          <div className="animate-fade-in">
             <MeetingFinder lang={currentPathRoute?.lang || "en"} />
           </div>
         ) : currentPathRoute?.isWorldClock ? (
@@ -1473,36 +1375,22 @@ export default function App() {
               
               return (
                 <div className="space-y-8">
-                  {/* Top Header with Back Button */}
-                  <div className="flex items-center justify-between border-b border-slate-200/10 dark:border-slate-800/40 pb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl sm:text-3xl">
-                        {targetCountry === "FR" ? "🇫🇷" :
-                         targetCountry === "CN" ? "🇨🇳" :
-                         targetCountry === "JP" ? "🇯🇵" :
-                         targetCountry === "US" ? "🇺🇸" : "🇬🇧"}
-                      </span>
-                      <div>
-                        <h1 className="text-xl sm:text-2xl font-sans font-bold tracking-tight">
-                          {locInfo.city}, {locInfo.country}
-                        </h1>
-                        <p className="text-xs text-slate-400">
-                          {currentPathRoute.timezone} • {offsetInfo.offsetStr} ({offsetInfo.abbr})
-                        </p>
-                      </div>
+                  {/* Top Header (city + timezone info, no back button) */}
+                  <div className="flex items-center gap-3 border-b border-slate-200/10 dark:border-slate-800/40 pb-4">
+                    <span className="text-2xl sm:text-3xl">
+                      {targetCountry === "FR" ? "🇫🇷" :
+                       targetCountry === "CN" ? "🇨🇳" :
+                       targetCountry === "JP" ? "🇯🇵" :
+                       targetCountry === "US" ? "🇺🇸" : "🇬🇧"}
+                    </span>
+                    <div>
+                      <h1 className="text-xl sm:text-2xl font-sans font-bold tracking-tight">
+                        {locInfo.city}, {locInfo.country}
+                      </h1>
+                      <p className="text-xs text-slate-400">
+                        {currentPathRoute.timezone} • {offsetInfo.offsetStr} ({offsetInfo.abbr})
+                      </p>
                     </div>
-                    <button 
-                      onClick={() => navigateToRoutePath(currentPathRoute.lang || "default")}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg border ${t.border} bg-white text-slate-700 hover:text-slate-900 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white shadow-sm transition cursor-pointer text-xs font-semibold`}
-                    >
-                      <ChevronRight size={14} className="rotate-180" />
-                      <span>
-                        {currentPathRoute.lang === "fr" ? "Retour à l'accueil" : 
-                         currentPathRoute.lang === "zh" ? "返回主页" : 
-                         currentPathRoute.lang === "ja" ? "ホームに戻る" : 
-                         "Back to Home"}
-                      </span>
-                    </button>
                   </div>
 
                   {/* Gigantic 7-Segment LED Digital Clock Section */}
@@ -1549,6 +1437,7 @@ export default function App() {
                       });
                     }}
                     lang={currentPathRoute.lang || "en"}
+                    isWorldClockPage={true}
                   />
                 </div>
               );
