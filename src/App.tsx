@@ -18,7 +18,11 @@ import {
   Users,
   CalendarDays,
   Hourglass,
-  Terminal
+  Terminal,
+  FileCode,
+  CalendarRange,
+  Type,
+  Plus
 } from "lucide-react";
 import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
 import { 
@@ -38,6 +42,13 @@ import TimeInsights from "./components/TimeInsights";
 import { TRANSLATIONS } from "./utils/translations";
 import WorldClockDashboard from "./components/WorldClockDashboard";
 import MeetingFinder from "./components/MeetingFinder";
+import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
+import UnixTimestampConverter from "./components/tools/UnixTimestampConverter";
+import ISO8601Formatter from "./components/tools/ISO8601Formatter";
+import DateAddSubtract from "./components/tools/DateAddSubtract";
+import DateDifference from "./components/tools/DateDifference";
+import DateToWords from "./components/tools/DateToWords";
+import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 
 const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: string }>> = {
   en: {
@@ -72,26 +83,40 @@ const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: st
 
 function parseRouteFromPath() {
   const path = window.location.pathname.toLowerCase();
-  const isWorldClock = path.endsWith("/worldclock") || path === "/worldclock";
-  const isMeetingFinder = path.endsWith("/meeting-finder") || path === "/meeting-finder";
+  const isWorldClock = path.endsWith("/worldclock") && !path.match(/\/[a-z]{2}\/worldclock/);
+  const isMeetingFinder = path.endsWith("/meeting-finder") && !path.match(/\/[a-z]{2}\/meeting-finder/);
+
+  // Check for /<lang>/<tool> sub-routes first
+  const toolRoute = parseToolPath(path);
+  if (toolRoute) {
+    return {
+      lang: toolRoute.lang,
+      city: toolRoute.lang === "en" ? "london" : toolRoute.lang === "fr" ? "paris" : toolRoute.lang === "zh" ? "beijing" : "tokyo",
+      country: toolRoute.lang === "en" ? "GB" : toolRoute.lang === "fr" ? "FR" : toolRoute.lang === "zh" ? "CN" : "JP",
+      timezone: toolRoute.lang === "en" ? "Europe/London" : toolRoute.lang === "fr" ? "Europe/Paris" : toolRoute.lang === "zh" ? "Asia/Shanghai" : "Asia/Tokyo",
+      isWorldClock: false,
+      isMeetingFinder: false,
+      tool: toolRoute.tool
+    };
+  }
 
   if (path.startsWith("/fr") || path === "/paris") {
-    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
+    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
   }
   if (path.startsWith("/zh") || path.includes("beijing") || path.includes("beging")) {
-    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
+    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
   }
   if (path.startsWith("/ja") || path.includes("tokyo")) {
-    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
+    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
   }
   if (path.startsWith("/en") || path.includes("london")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock, isMeetingFinder: path.includes("/meeting-finder") };
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
   }
   if (path === "/worldclock") {
-    return { lang: "en", city: "new_york", country: "US" as CountryCode, timezone: "America/New_York", isWorldClock: true, isMeetingFinder: false };
+    return { lang: "en", city: "new_york", country: "US" as CountryCode, timezone: "America/New_York", isWorldClock: true, isMeetingFinder: false, tool: undefined };
   }
   if (path === "/meeting-finder" || path.endsWith("/meeting-finder")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: true };
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: true, tool: undefined };
   }
   return null;
 }
@@ -243,6 +268,7 @@ export default function App() {
 
   // Navigation & Dropdown states
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
+  const [showDateToolsDropdown, setShowDateToolsDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Scroll visibility refs
@@ -374,6 +400,8 @@ export default function App() {
       targetPath = `${cfg.path}/meeting-finder`;
     } else if (currentPathRoute?.isWorldClock) {
       targetPath = `${cfg.path}/worldclock`;
+    } else if (currentPathRoute?.tool) {
+      targetPath = `${cfg.path}/${currentPathRoute.tool}`;
     }
 
     // Update URL
@@ -391,14 +419,44 @@ export default function App() {
       country: cfg.country,
       timezone: cfg.timezone,
       isWorldClock: !!currentPathRoute?.isWorldClock,
-      isMeetingFinder: !!currentPathRoute?.isMeetingFinder
-    });
+      isMeetingFinder: !!currentPathRoute?.isMeetingFinder,
+      tool: currentPathRoute?.tool
+    } as any);
 
     // Note: we deliberately do NOT write to localStorage here.
     // The URL (/<lang>) is the source of truth for language/country.
     // localStorage is reserved for explicit user saves (settings panel, banner actions).
     // This prevents footer language clicks from polluting the home page experience
     // when the user navigates back to /.
+  };
+
+  // --- NAVIGATE TO A TOOL PAGE (/lang/tool-slug) ---
+  const navigateToTool = (tool: ToolSlug) => {
+    const lang = currentPathRoute?.lang || preferences.country === "GB" ? "en" : preferences.country === "FR" ? "fr" : preferences.country === "CN" ? "zh" : preferences.country === "JP" ? "ja" : "en";
+    const path = `/${lang}/${tool}`;
+    window.history.pushState({ lang, tool }, "", path);
+    const cfg = lang === "en" ? { country: "GB" as CountryCode, timezone: "Europe/London", city: "london" } :
+                lang === "fr" ? { country: "FR" as CountryCode, timezone: "Europe/Paris", city: "paris" } :
+                lang === "zh" ? { country: "CN" as CountryCode, timezone: "Asia/Shanghai", city: "beijing" } :
+                                  { country: "JP" as CountryCode, timezone: "Asia/Tokyo", city: "tokyo" };
+    const defaults = DEFAULT_PREFERENCES[cfg.country];
+    if (defaults) {
+      setPreferences(defaults);
+      setHolidays(COUNTRY_HOLIDAYS[cfg.country] || []);
+    }
+    setCurrentPathRoute({
+      lang,
+      city: cfg.city,
+      country: cfg.country,
+      timezone: cfg.timezone,
+      isWorldClock: false,
+      isMeetingFinder: false,
+      tool
+    } as any);
+    setShowToolsDropdown(false);
+    setShowDateToolsDropdown(false);
+    setShowMobileMenu(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const navigateToMeetingFinder = (lang: string) => {
@@ -904,6 +962,89 @@ export default function App() {
               )}
             </div>
 
+            {/* Date & Time Tools Dropdown Trigger */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowDateToolsDropdown(!showDateToolsDropdown)}
+                onMouseEnter={() => setShowDateToolsDropdown(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${currentPathRoute?.tool ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
+              >
+                <span>Date Tools</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${showDateToolsDropdown ? rotate-180 : }`} />
+              </button>
+
+              {showDateToolsDropdown && (
+                <div 
+                  className={`absolute left-0 mt-1.5 w-72 rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
+                  onMouseLeave={() => setShowDateToolsDropdown(false)}
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
+                    Date & Time Calculators
+                  </div>
+                  <button 
+                    onClick={() => navigateToTool("holidays")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-[#e8f5e9]/60 transition-colors cursor-pointer`}
+                  >
+                    <Calendar size={13} className="text-[#2e7d32]" />
+                    <div>
+                      <div className="font-semibold">Holiday & Working Hours</div>
+                      <div className="text-[10px] text-slate-400">Country holidays + annual work hours</div>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => navigateToTool("unix")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-sky-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Terminal size={13} className="text-sky-500" />
+                    <div>
+                      <div className="font-semibold">Unix Timestamp</div>
+                      <div className="text-[10px] text-slate-400">Epoch seconds / milliseconds live</div>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => navigateToTool("iso8601")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors cursor-pointer`}
+                  >
+                    <FileCode size={13} className="text-indigo-500" />
+                    <div>
+                      <div className="font-semibold">ISO 8601 Formatter</div>
+                      <div className="text-[10px] text-slate-400">RFC 3339, 2822, week, ordinal day</div>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => navigateToTool("date-math")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-amber-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Plus size={13} className="text-amber-500" />
+                    <div>
+                      <div className="font-semibold">Date Add / Subtract</div>
+                      <div className="text-[10px] text-slate-400">Business days, weeks, months, years</div>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => navigateToTool("date-diff")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-purple-50/60 transition-colors cursor-pointer`}
+                  >
+                    <CalendarRange size={13} className="text-purple-500" />
+                    <div>
+                      <div className="font-semibold">Date Difference</div>
+                      <div className="text-[10px] text-slate-400">Calendar & working-day breakdown</div>
+                    </div>
+                  </button>
+                  <button 
+                    onClick={() => navigateToTool("date-words")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-pink-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Type size={13} className="text-pink-500" />
+                    <div>
+                      <div className="font-semibold">Date to Words</div>
+                      <div className="text-[10px] text-slate-400">Natural language, relative time</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button 
               onClick={() => handleScrollToSection("insights-section")}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
@@ -1395,7 +1536,17 @@ export default function App() {
 
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {currentPathRoute?.isMeetingFinder ? (
+        {currentPathRoute?.tool ? (
+          <div className="animate-fade-in">
+            {currentPathRoute.tool === "holidays" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "working-hours" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "unix" && <UnixTimestampConverter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "iso8601" && <ISO8601Formatter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-math" && <DateAddSubtract lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
+          </div>
+        ) : currentPathRoute?.isMeetingFinder ? (
           <div className="animate-fade-in">
             <MeetingFinder lang={currentPathRoute?.lang || "en"} />
           </div>
