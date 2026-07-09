@@ -23,10 +23,22 @@ import {
 interface Props {
   liveDate: Date;
   cities: CityEntry[];
+  /** Codes that are visibly part of the favorites row above.
+   * Includes BOTH the curated defaults (always on) AND the user's
+   * localStorage additions. Click toggles user-added only — defaults
+   * can't be removed, so this distinction matters for the click handler.
+   */
   favoriteCodes?: string[];
+  /** Codes of just the curated defaults (so we know what's removable). */
+  defaultCodes?: string[];
 }
 
-export function TopPopularCities({ liveDate, cities, favoriteCodes = [] }: Props) {
+export function TopPopularCities({
+  liveDate,
+  cities,
+  favoriteCodes = [],
+  defaultCodes = [],
+}: Props) {
   if (!cities || cities.length === 0) return null;
 
   return (
@@ -43,6 +55,7 @@ export function TopPopularCities({ liveDate, cities, favoriteCodes = [] }: Props
             city={c}
             liveDate={liveDate}
             isFavorite={favoriteCodes.includes(c.code)}
+            isDefault={defaultCodes.includes(c.code)}
           />
         ))}
       </div>
@@ -54,19 +67,32 @@ function PopularCityCard({
   city,
   liveDate,
   isFavorite,
+  isDefault,
 }: {
   city: CityEntry;
   liveDate: Date;
   isFavorite: boolean;
+  /** True if this city is one of the curated defaults (not removable). */
+  isDefault: boolean;
 }) {
   const hh = formatTimeHHMMSSShared(liveDate, city.timezone);
   const sub = formatSubsecShared(liveDate);
   const offset = formatShortOffsetShared(liveDate, city.timezone);
 
+  // For default cities, show the filled star but the card is not
+  // interactive (no click to remove). The visual still shows them as
+  // "favorite" so the user can spot them at a glance.
+  const star = isFavorite ? "★" : "☆";
+  const starClass = `fav-star${isFavorite ? " filled" : ""}`;
+
   return (
     <button
       type="button"
-      className={`tdp-city-card${isFavorite ? " is-favorite" : ""}`}
+      className={`tdp-city-card${isFavorite ? " is-favorite" : ""}${
+        isDefault ? " tdp-city-card--default-mark" : ""
+      }`}
+      // Default cards still dispatch the event, but the App.tsx handler
+      // is no-op for them (it only manages user-added).
       onClick={() => {
         if (typeof window === "undefined") return;
         window.dispatchEvent(
@@ -74,9 +100,11 @@ function PopularCityCard({
         );
       }}
       aria-label={
-        isFavorite
-          ? `Remove ${city.name} from favorites`
-          : `Add ${city.name} to favorites`
+        isDefault
+          ? `${city.name} — already in your default favorites`
+          : isFavorite
+            ? `Remove ${city.name} from favorites`
+            : `Add ${city.name} to favorites`
       }
       aria-pressed={isFavorite}
       style={{ all: "unset", cursor: "pointer" }}
@@ -92,13 +120,7 @@ function PopularCityCard({
         {hh}<span className="subsec">.{sub}</span>
       </div>
       <div className="tz">{city.timezone.split("/").slice(-1)[0]} · UTC{offset}</div>
-      {/* Star: filled = already a favorite, hollow = click to add */}
-      <span
-        className={`fav-star${isFavorite ? " filled" : ""}`}
-        aria-hidden="true"
-      >
-        {isFavorite ? "★" : "☆"}
-      </span>
+      <span className={starClass} aria-hidden="true">{star}</span>
     </button>
   );
 }

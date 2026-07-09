@@ -1,19 +1,26 @@
 // src/components/landing/FiveCitiesFavorites.tsx
 // Live ticking city cards — the user's favorites. One component = one purpose.
 //
-// Renders every city in the favorites list (no hard 5-cap). The grid wraps
-// to the next row when the user adds beyond 5 cities via TopPopularCities,
-// so a 6th, 7th... favorite shows up on the next row visually.
+// Two visual groups in one continuous grid:
+//   - **Defaults** (row 1): the curated 5 cities from browse/home.topFive.
+//     Always shown, never removed. No click, no star indicator — these
+//     are the "starting lineup" every user gets on first visit.
+//   - **User-added** (rows 2+): every city the user has clicked in
+//     TopPopularCities. Click any card to remove it from the list.
+//     Filled star indicator on each card; click handler dispatches
+//     `tdp:add-city` to remove.
 //
-// Source: list of CityEntry passed in from LandingPage (resolved from
-// localStorage tdp_user_cities + the browse/home topFive fallback).
+// Layout: a single 5-col grid that wraps naturally. Defaults take row 1
+// (and any overflow on smaller screens). User additions fill the next
+// row, then the next, etc. — exactly the "next row" UX from user feedback.
+//
+// Source: defaults come from LandingPage's browse/home.topFive fallback;
+// user-added codes come from localStorage tdp_user_cities (resolved via
+// browse/home.topTwenty → CITY_BY_CODE in LandingPage).
+//
 // Each card ticks off the parent's `liveDate` prop (same Date instance as
 // the hero clock) so all cities re-render in lockstep with the DSEG14
 // hero — no multiplied timers, no drift.
-//
-// Clicking a card emits a `tdp:add-city` event with the city code; the
-// App-level listener toggles it OUT of the favorites list (so a filled
-// star becomes a hollow star).
 
 import React from "react";
 import type { CityEntry } from "../../data/cities";
@@ -25,11 +32,19 @@ import {
 
 interface Props {
   liveDate: Date;
-  cities: CityEntry[];
+  /** Curated 5 — always shown in row 1, non-interactive. */
+  defaults: CityEntry[];
+  /** Cities the user has added by clicking TopPopularCities — removable. */
+  userAdded: CityEntry[];
 }
 
-export function FiveCitiesFavorites({ liveDate, cities }: Props) {
-  if (!cities || cities.length === 0) return null;
+export function FiveCitiesFavorites({ liveDate, defaults, userAdded }: Props) {
+  if (defaults.length === 0 && userAdded.length === 0) return null;
+
+  const totalCount = defaults.length + userAdded.length;
+  const addedNote = userAdded.length > 0
+    ? ` · click ★ to remove your additions`
+    : " · click ★ in Top 20 to add your own";
 
   return (
     <section className="tdp-section" aria-label="Your favorite cities">
@@ -37,20 +52,51 @@ export function FiveCitiesFavorites({ liveDate, cities }: Props) {
         <span className="tag" style={{ background: "var(--accent-coral)", color: "white" }}>★</span>
         Your favorite cities
         <span className="meta">
-          {cities.length} LIVE · ticking every second
-          <span className="meta-hint"> · click ★ to remove</span>
+          {totalCount} LIVE · ticking every second
+          <span className="meta-hint">{addedNote}</span>
         </span>
       </div>
       <div className="tdp-cities-row">
-        {cities.map((c) => (
-          <CityTickerCard key={c.code} city={c} liveDate={liveDate} />
+        {/* Row 1 — curated defaults. Non-interactive. */}
+        {defaults.map((c) => (
+          <DefaultCityTickerCard key={`d-${c.code}`} city={c} liveDate={liveDate} />
+        ))}
+        {/* Rows 2+ — user-added. Click ★ to remove. */}
+        {userAdded.map((c) => (
+          <RemovableCityTickerCard key={`u-${c.code}`} city={c} liveDate={liveDate} />
         ))}
       </div>
     </section>
   );
 }
 
-function CityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date }) {
+function DefaultCityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date }) {
+  const hh = formatTimeHHMMSSShared(liveDate, city.timezone);
+  const sub = formatSubsecShared(liveDate);
+  const offset = formatShortOffsetShared(liveDate, city.timezone);
+
+  // Default card — no click, no star (always-on, can't be removed).
+  return (
+    <div
+      className="tdp-city-card tdp-city-card--default"
+      aria-label={`${city.name} — always in your favorites`}
+    >
+      <div className="row-top">
+        <span className="live-dot" aria-hidden="true" />
+        <span>LIVE</span>
+        <span className="tz" style={{ marginLeft: "auto" }}>{city.countryCode}</span>
+      </div>
+      <div className="city">{city.name}</div>
+      <div className="country">{city.country}</div>
+      <div className="clock">
+        {hh}<span className="subsec">.{sub}</span>
+      </div>
+      <div className="tz">{city.timezone.split("/").slice(-1)[0]} · UTC{offset}</div>
+    </div>
+  );
+}
+
+function RemovableCityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date }) {
   const hh = formatTimeHHMMSSShared(liveDate, city.timezone);
   const sub = formatSubsecShared(liveDate);
   const offset = formatShortOffsetShared(liveDate, city.timezone);
@@ -65,7 +111,7 @@ function CityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date })
           new CustomEvent("tdp:add-city", { detail: { code: city.code } })
         );
       }}
-      aria-label={`Remove ${city.name} from favorites`}
+      aria-label={`Remove ${city.name} from your favorites`}
       style={{ all: "unset", cursor: "pointer" }}
     >
       <div className="row-top">
@@ -79,7 +125,7 @@ function CityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date })
         {hh}<span className="subsec">.{sub}</span>
       </div>
       <div className="tz">{city.timezone.split("/").slice(-1)[0]} · UTC{offset}</div>
-      {/* Filled star — clicking removes from favorites */}
+      {/* Filled star — click to remove from user-added */}
       <span className="fav-star filled" aria-hidden="true">★</span>
     </button>
   );

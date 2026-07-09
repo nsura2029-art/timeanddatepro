@@ -521,6 +521,26 @@
   color: var(--accent-primary-deep);
 }
 
+/* Default-row card — non-interactive, no remove star, no click handler.
+ * Visually distinct enough to read as "system default" but identical
+ * dimensions so the grid stays aligned when the user adds the 6th card.
+ */
+.tdp-city-card--default {
+  cursor: default;
+  /* Faint dotted outline so it's distinguishable from added cards at a
+   * glance, but still in the same family. */
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+/* In Top 20, the default city is still shown as favorite (filled star)
+ * but the card needs to be marked as un-removable. We hide the cursor:
+ * hover lifts but click is a no-op since App.tsx only handles
+ * non-default codes.
+ */
+.tdp-city-card--default-mark {
+  cursor: default;
+}
+
 /* CityDetailCard ------------------------------------------------------------ */
 .tdp-wc-row {
   display: grid;

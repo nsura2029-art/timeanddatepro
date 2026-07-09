@@ -46,20 +46,24 @@ export function LandingPage({
   const topFive: CityEntry[] = homeData?.topFive ?? [];
   const topTwenty: CityEntry[] = homeData?.topTwenty ?? [];
 
-  // Resolve favorite codes → CityEntry[] for FiveCitiesFavorites.
+  // Resolve user-added favorite codes → CityEntry[].
   // Lookup priority: browse/home topTwenty (has freshest live ticker data)
-  // → CITY_BY_CODE (covers everything else). Falls back to topFive if
-  // the user has no favorites yet — preserves the curated default.
-  const favorites: CityEntry[] = favoriteCodes.length > 0
-    ? favoriteCodes
-        .map((code) => {
-          const from20 = topTwenty.find((c) => c.code === code);
-          if (from20) return from20;
-          const byCode = CITY_BY_CODE[code];
-          return byCode as CityEntry | undefined;
-        })
-        .filter((c): c is CityEntry => Boolean(c))
-    : topFive;
+  // → CITY_BY_CODE (covers everything else).
+  const userAdded: CityEntry[] = favoriteCodes
+    .map((code) => {
+      const from20 = topTwenty.find((c) => c.code === code);
+      if (from20) return from20;
+      const byCode = CITY_BY_CODE[code];
+      return byCode as CityEntry | undefined;
+    })
+    .filter((c): c is CityEntry => Boolean(c));
+
+  // Defaults (always shown in row 1) + user-added (rows 2+).
+  // Filter out any user-added that happen to also be in defaults so we
+  // don't render the same card twice.
+  const defaultSet = new Set(topFive.map((c) => c.code));
+  const userAddedFiltered = userAdded.filter((c) => !defaultSet.has(c.code));
+  const allFavorites: CityEntry[] = [...topFive, ...userAddedFiltered];
   const homeCity: CityEntry | undefined = homeData?.home
     ? {
         code: "WLC",
@@ -95,8 +99,12 @@ export function LandingPage({
       />
 
       {/* Favorite cities --------------------------------------- */}
-      {favorites.length > 0 && (
-        <FiveCitiesFavorites liveDate={liveDate} cities={favorites} />
+      {allFavorites.length > 0 && (
+        <FiveCitiesFavorites
+          liveDate={liveDate}
+          defaults={topFive}
+          userAdded={userAddedFiltered}
+        />
       )}
 
       {/* Featured city (home) ----------------------------------- */}
@@ -113,6 +121,7 @@ export function LandingPage({
           liveDate={liveDate}
           cities={topTwenty}
           favoriteCodes={favoriteCodes}
+          defaultCodes={topFive.map((c) => c.code)}
         />
       )}
 

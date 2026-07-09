@@ -405,12 +405,11 @@ export default function App() {
   // VITE_LANDING_V2 is on.
   const homeData = useHomeData(preferences.countryCode, "WLC");
 
-  // T4+: Favorite cities list — driven by FiveCitiesFavorites + TopPopularCities.
+  // T4+: User-added cities — driven by FiveCitiesFavorites (row 2+) +
+  // TopPopularCities. Defaults (the curated 5) are NOT stored here; they
+  // come from the API's topFive and are always shown in row 1.
   // Persisted to localStorage so the user's picks survive page reloads.
-  // FiveCitiesFavorites dispatches `tdp:add-city` and TopPopularCities does
-  // the same — both toggle a city in/out of the list. The favorites grid
-  // grows past 5 (cards wrap to the next row, per user feedback).
-  const [favoriteCodes, setFavoriteCodes] = useState<string[]>(() => {
+  const [userFavoriteCodes, setUserFavoriteCodes] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("tdp_user_cities");
       const parsed = raw ? JSON.parse(raw) : [];
@@ -426,22 +425,20 @@ export default function App() {
       const e = ev as CustomEvent<{ code: string }>;
       const code = e.detail?.code;
       if (!code) return;
-      setFavoriteCodes((prev) => {
+      setUserFavoriteCodes((prev) => {
         if (prev.includes(code)) {
-          // Toggle off — remove from favorites
+          // Toggle off — remove from user-added
           const next = prev.filter((c) => c !== code);
           try { localStorage.setItem("tdp_user_cities", JSON.stringify(next)); } catch {}
           return next;
         }
-        // Add to favorites (append at end so it appears as the "next row" card)
+        // Add to user-added (append at end so it appears as the "next row" card)
         const next = [...prev, code];
         try { localStorage.setItem("tdp_user_cities", JSON.stringify(next)); } catch {}
         return next;
       });
     }
     function handleSwapCity(ev: Event) {
-      // Same as add for now — toggles inclusion. Phase 2: scroll the
-      // swapped-out city into view and animate.
       handleAddCity(ev);
     }
     window.addEventListener("tdp:add-city", handleAddCity as EventListener);
@@ -1617,7 +1614,7 @@ export default function App() {
           countryName={preferences.countryName}
           lang={(currentPathRoute?.lang as "en" | "fr" | "zh" | "ja" | undefined) ?? "en"}
           homeData={homeData.status === "ok" ? homeData.data : null}
-          favoriteCodes={favoriteCodes}
+          favoriteCodes={userFavoriteCodes}
         />
       )}
       {import.meta.env?.VITE_LANDING_V2 !== "true" && (
