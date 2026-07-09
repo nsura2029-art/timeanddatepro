@@ -2,8 +2,6 @@ import React, { useState, useMemo } from "react";
 import { Calendar, Clock, Sun } from "lucide-react";
 import { COUNTRY_HOLIDAYS, CountryCode } from "../../data/countries";
 import ToolSdkPanel from "./ToolSdkPanel";
-import ApiVerifyChip from "./ApiVerifyChip";
-import { holidayHoursVerify } from "../../utils/apiToolMap";
 import { getToolI18n } from "../../utils/toolTranslations";
 
 interface Props { lang?: string; }
@@ -174,7 +172,6 @@ console.log(\`\${hours.workingDays} working days → \${hours.totalHours} hours\
 curl "https://timeanddatepro.com/api/v1/countries/US/working-hours?year=2026"`}
         docsHref="/docs/integrations/holiday-hours"
       />
-      <ApiVerifyChip config={holidayHoursVerify} state={{ country: "US", year }} />
     </div>
   );
 }

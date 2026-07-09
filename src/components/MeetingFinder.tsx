@@ -19,8 +19,6 @@ import {
   ChevronDown
 } from "lucide-react";
 import ToolSdkPanel from "./tools/ToolSdkPanel";
-import ApiVerifyChip from "./tools/ApiVerifyChip";
-import { meetingFinderVerify } from "../utils/apiToolMap";
 import { LocationPicker } from "./common/LocationPicker";
 import { CITY_BY_CODE } from "../data/cities";
 import { flagFor } from "../data/flags";
@@ -1139,10 +1137,6 @@ result.topSlots.slice(0, 3).forEach((slot) => {
 });`}
         curlCode={`curl "https://timeanddatepro.com/api/v1/meeting/best?cities=NYC,LDN,TYO&start=9&end=17&duration=60"`}
         docsHref="/docs/integrations/meeting-finder"
-      />
-      <ApiVerifyChip
-        config={meetingFinderVerify}
-        state={{ cities: participants.slice(0, 5).map((p: any) => p.code || "NYC"), start: 9, end: 17 }}
       />
     </div>
   );

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Type, Clock, Calendar } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
-import ApiVerifyChip from "./ApiVerifyChip";
-import { dateWordsVerify } from "../../utils/apiToolMap";
 
 interface Props { lang?: string; }
 
@@ -178,7 +176,6 @@ console.log(result.output); // "mercredi 8 juillet 2026"`}
         curlCode={`curl "https://timeanddatepro.com/api/v1/time/words?date=2026-07-08&lang=fr"`}
         docsHref="/docs/integrations/date-to-words"
       />
-      <ApiVerifyChip config={dateWordsVerify} state={{ date: dateStr, lang }} />
     </div>
   );
 }

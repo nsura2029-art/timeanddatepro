@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Copy, Check, FileCode } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
-import ApiVerifyChip from "./ApiVerifyChip";
-import { isoVerify } from "../../utils/apiToolMap";
 
 interface Props { lang?: string; }
 
@@ -93,7 +91,6 @@ console.log(week.output); // "2026-W28"`}
 curl "https://timeanddatepro.com/api/v1/time/iso?date=2026-07-08&format=week"`}
         docsHref="/docs/integrations/iso8601-formatter"
       />
-      <ApiVerifyChip config={isoVerify} state={{ date: dateStr, format: "rfc3339", tz: "UTC" }} />
     </div>
   );
 }

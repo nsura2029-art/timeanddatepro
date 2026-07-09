@@ -3,8 +3,6 @@ import { Plus, Minus, Calendar } from "lucide-react";
 import { COUNTRY_HOLIDAYS } from "../../data/countries";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
-import ApiVerifyChip from "./ApiVerifyChip";
-import { dateMathVerify } from "../../utils/apiToolMap";
 
 interface Props { lang?: string; }
 
@@ -138,7 +136,6 @@ await client.time.add({
         curlCode={`curl "https://timeanddatepro.com/api/v1/time/add?date=2026-07-08&days=14&business=true&country=US"`}
         docsHref="/docs/integrations/date-math"
       />
-      <ApiVerifyChip config={dateMathVerify} state={{ date: startDate, days: value, business: businessOnly, country: "US" }} />
     </div>
   );
 }
