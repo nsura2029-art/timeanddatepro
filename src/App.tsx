@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Globe, 
-  Settings, 
-  Search, 
-  HelpCircle, 
-  X, 
-  Clock, 
-  Calendar, 
-  Check, 
+import {
+  Globe,
+  Settings,
+  Search,
+  HelpCircle,
+  X,
+  Clock,
+  Calendar,
+  Check,
   ChevronRight,
   TrendingUp,
   AlertCircle,
@@ -28,14 +28,14 @@ import {
   Braces
 } from "lucide-react";
 import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
-import { 
-  DEFAULT_PREFERENCES, 
-  COUNTRY_HOLIDAYS, 
-  CITY_DATA, 
-  detectCountryFromTimezone, 
-  formatLocalDate, 
-  formatLocalTime, 
-  getTimezoneOffsetAndAbbr 
+import {
+  DEFAULT_PREFERENCES,
+  COUNTRY_HOLIDAYS,
+  CITY_DATA,
+  detectCountryFromTimezone,
+  formatLocalDate,
+  formatLocalTime,
+  getTimezoneOffsetAndAbbr
 } from "./data/countries";
 import { getTheme, THEME_CONFIGS, ThemeType } from "./utils/theme";
 import AnalogClock from "./components/AnalogClock";
@@ -52,6 +52,7 @@ import ISO8601Formatter from "./components/tools/ISO8601Formatter";
 import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
+import TimeZoneConverter from "./components/tools/TimeZoneConverter";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 import DocsPage from "./pages/docs/DocsPage";
 
@@ -202,17 +203,17 @@ function getFriendlyTimeDifference(targetTz: string, baseTz: string, date: Date)
   const targetOffset = getTimezoneOffsetInHours(targetTz, date);
   const baseOffset = getTimezoneOffsetInHours(baseTz, date);
   const diff = targetOffset - baseOffset;
-  
+
   if (diff === 0) {
     return "Same time";
   }
-  
+
   const absDiff = Math.abs(diff);
   const hours = Math.floor(absDiff);
   const mins = Math.round((absDiff - hours) * 60);
-  
+
   const timeStr = mins > 0 ? `${hours}h ${mins}m` : `${hours} ${hours === 1 ? "hr" : "hrs"}`;
-  
+
   if (diff > 0) {
     return `${timeStr} ahead`;
   } else {
@@ -224,16 +225,16 @@ function getRelativeDayAndOffset(targetTz: string, baseTz: string, date: Date): 
   try {
     const formatterTarget = new Intl.DateTimeFormat("en-US", { timeZone: targetTz, year: "numeric", month: "numeric", day: "numeric" });
     const formatterBase = new Intl.DateTimeFormat("en-US", { timeZone: baseTz, year: "numeric", month: "numeric", day: "numeric" });
-    
+
     const targetStr = formatterTarget.format(date);
     const baseStr = formatterBase.format(date);
-    
+
     const targetDateObj = new Date(targetStr);
     const baseDateObj = new Date(baseStr);
-    
+
     const diffTime = targetDateObj.getTime() - baseDateObj.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    
+
     let dayLabel = "Today";
     if (diffDays === 1) {
       dayLabel = "Tomorrow";
@@ -244,15 +245,15 @@ function getRelativeDayAndOffset(targetTz: string, baseTz: string, date: Date): 
     } else if (diffDays < -1) {
       dayLabel = `${Math.abs(diffDays)} days ago`;
     }
-    
+
     const targetOffset = getTimezoneOffsetInHours(targetTz, date);
     const baseOffset = getTimezoneOffsetInHours(baseTz, date);
     const diffHours = targetOffset - baseOffset;
-    
+
     const sign = diffHours >= 0 ? "+" : "-";
     const absHours = Math.abs(diffHours);
     const hoursStr = Number.isInteger(absHours) ? absHours.toString() : absHours.toFixed(1);
-    
+
     return {
       day: dayLabel,
       offset: `${sign}${hoursStr} H`
@@ -269,7 +270,7 @@ export default function App() {
   const [preferences, setPreferences] = useState<CountryPreferences>(() => {
     const route = parseRouteFromPath();
     if (route) {
-      // On /<lang> URLs, the URL is the source of truth — use that language's defaults.
+      // On /<lang> URLs, the URL is the source of truth - use that language's defaults.
       const defaults = DEFAULT_PREFERENCES[route.country];
       if (defaults) return defaults;
     }
@@ -299,7 +300,7 @@ export default function App() {
   const [showBanner, setShowBanner] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"general" | "design">("general");
-  
+
   // Real-time states
   const [liveDate, setLiveDate] = useState(new Date());
   const [syncData, setSyncData] = useState<{
@@ -423,10 +424,10 @@ export default function App() {
       setPreferences(defaults);
       setHolidays(COUNTRY_HOLIDAYS[country] || []);
     }
-    setCurrentPathRoute({ 
-      lang, 
-      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo", 
-      country, 
+    setCurrentPathRoute({
+      lang,
+      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
+      country,
       timezone,
       isWorldClock: false
     });
@@ -435,7 +436,7 @@ export default function App() {
   const navigateToWorldClock = (lang: string) => {
     const path = `/${lang}/worldclock`;
     window.history.pushState({ lang, worldClock: true }, "", path);
-    
+
     let country: CountryCode = "GB";
     let timezone = "Europe/London";
 
@@ -458,7 +459,7 @@ export default function App() {
       setPreferences(defaults);
       setHolidays(COUNTRY_HOLIDAYS[country] || []);
     }
-    
+
     setCurrentPathRoute({
       lang,
       city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
@@ -466,7 +467,7 @@ export default function App() {
       timezone,
       isWorldClock: true
     });
-    
+
     setShowToolsDropdown(false);
     setShowMobileMenu(false);
   };
@@ -498,7 +499,7 @@ export default function App() {
     // Update URL
     window.history.pushState({ lang }, "", targetPath);
 
-    // Update state atomically — React 18 batches these
+    // Update state atomically - React 18 batches these
     const defaults = DEFAULT_PREFERENCES[cfg.country];
     if (defaults) {
       setPreferences(defaults);
@@ -553,7 +554,7 @@ export default function App() {
   const navigateToMeetingFinder = (lang: string) => {
     const path = lang === "default" || lang === "en" ? "/meeting-finder" : `/${lang}/meeting-finder`;
     window.history.pushState({ lang, meetingFinder: true }, "", path);
-    
+
     let country: CountryCode = "GB";
     let timezone = "Europe/London";
 
@@ -585,7 +586,7 @@ export default function App() {
       isWorldClock: false,
       isMeetingFinder: true
     });
-    
+
     setShowToolsDropdown(false);
     setShowMobileMenu(false);
   };
@@ -675,7 +676,7 @@ export default function App() {
       // Default high fidelity location name mapped beautifully from active preference timezone
       const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
       const currentActiveTz = preferences.timezone;
-      
+
       // If the active timezone matches standard East Coast/Florida, default beautifully to Wesley Chapel
       if (currentActiveTz === "America/New_York" || browserTz === "America/New_York") {
         setSyncData({
@@ -797,7 +798,7 @@ export default function App() {
         if (targetToolId) {
           setActiveToolTab(targetToolId);
           setPrefilledParams(data.detectedParameters);
-          
+
           // Smooth scroll to Quick Actions section
           setTimeout(() => {
             const element = document.getElementById("quick-tools-section");
@@ -879,14 +880,14 @@ export default function App() {
   const offsetData = getTimezoneOffsetAndAbbr(preferences.timezone, liveDate);
   const t = getTheme(preferences.theme);
 
-  // ---- /docs/* early return — DocLayout renders its own header, no marketing chrome. ----
+  // ---- /docs/* early return - DocLayout renders its own header, no marketing chrome. ----
   if (isDocsPath) {
     return <DocsPage pathname={browserPath} />;
   }
 
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
-      
+
       {/* 1. AUTO LOCALIZATION NOTIFICATION BANNER */}
       {showBanner && (
         <div className="w-full bg-[#3f51b5] text-white py-3 px-4 border-b border-[#303f9f]/40 text-center text-xs md:text-sm font-medium flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in z-40 sticky top-0 backdrop-blur-md shadow-sm">
@@ -916,12 +917,12 @@ export default function App() {
         </div>
       )}
 
-      {/* 2. STABLE STICKY TOP NAVIGATION BAR — always visible, MeetingFinder palette */}
+      {/* 2. STABLE STICKY TOP NAVIGATION BAR - always visible, MeetingFinder palette */}
       <nav className="sticky top-0 z-30 w-full bg-white/95 backdrop-blur-md border-b border-[#e0e0e0] py-3 shadow-sm transition-shadow">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          
+
           {/* Brand/Logo */}
-          <div 
+          <div
             onClick={() => {
               if (currentPathRoute?.isWorldClock || currentPathRoute?.isMeetingFinder) {
                 navigateToRoutePath(currentPathRoute.lang || "default");
@@ -941,7 +942,7 @@ export default function App() {
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center gap-1 xl:gap-2">
-            <button 
+            <button
               onClick={() => {
                 if (currentPathRoute?.isMeetingFinder) {
                   navigateToRoutePath(currentPathRoute.lang || "default");
@@ -953,7 +954,7 @@ export default function App() {
             >
               Today
             </button>
-            <button 
+            <button
               onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
                 currentPathRoute?.isMeetingFinder
@@ -991,7 +992,7 @@ export default function App() {
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
                     Select Workspace Tool
                   </div>
-                  <button 
+                  <button
                     onClick={() => navigateToWorldClock(currentPathRoute?.lang || "en")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors cursor-pointer`}
                   >
@@ -1001,17 +1002,18 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Interactive localized global clock grid</div>
                     </div>
                   </button>
-                  <button 
-                    onClick={() => handleLaunchTool("converter")}
+                  <button
+                    onClick={() => navigateToRoutePath(currentPathRoute?.lang || "en")}
+                    onClickCapture={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-blue-50/60 transition-colors cursor-pointer`}
                   >
                     <ArrowRightLeft size={13} className="text-blue-500" />
                     <div>
                       <div className="font-semibold">Time Zone Converter</div>
-                      <div className="text-[10px] text-slate-400">Convert any city or custom timezone</div>
+                      <div className="text-[10px] text-slate-400">Full converter + live clocks + overlap grid</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleLaunchTool("planner")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
                   >
@@ -1021,7 +1023,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Align global teammates effortlessly</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleLaunchTool("business")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-amber-50/60 transition-colors cursor-pointer`}
                   >
@@ -1031,7 +1033,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Exclude local weekends & holidays</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleLaunchTool("diff")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-purple-50/60 transition-colors cursor-pointer`}
                   >
@@ -1041,7 +1043,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Calculate exact days/weeks/months</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleLaunchTool("countdown")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-rose-50/60 transition-colors cursor-pointer`}
                   >
@@ -1051,7 +1053,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Watch precision countdown clocks</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleLaunchTool("unix")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-sky-50/60 transition-colors cursor-pointer`}
                   >
@@ -1091,7 +1093,7 @@ export default function App() {
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
                     Date & Time Calculators
                   </div>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("holidays")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-[#e8f5e9]/60 transition-colors cursor-pointer`}
                   >
@@ -1101,7 +1103,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Country holidays + annual work hours</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("unix")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-sky-50/60 transition-colors cursor-pointer`}
                   >
@@ -1111,7 +1113,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Epoch seconds / milliseconds live</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("iso8601")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors cursor-pointer`}
                   >
@@ -1121,7 +1123,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">RFC 3339, 2822, week, ordinal day</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("date-math")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-amber-50/60 transition-colors cursor-pointer`}
                   >
@@ -1131,7 +1133,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Business days, weeks, months, years</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("date-diff")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-purple-50/60 transition-colors cursor-pointer`}
                   >
@@ -1141,7 +1143,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Calendar & working-day breakdown</div>
                     </div>
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigateToTool("date-words")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-pink-50/60 transition-colors cursor-pointer`}
                   >
@@ -1155,7 +1157,7 @@ export default function App() {
               )}
             </div>
 
-            {/* APIs Dropdown — Node.js SDK + REST endpoints + per-tool integration guides */}
+            {/* APIs Dropdown - Node.js SDK + REST endpoints + per-tool integration guides */}
             <div
               ref={apisDropdownRef}
               className="relative"
@@ -1232,10 +1234,10 @@ export default function App() {
             </button>
           </div>
 
-          {/* AI Command Search Input — always visible (md+) */}
+          {/* AI Command Search Input - always visible (md+) */}
           <div className="hidden md:flex items-center max-w-xs xl:max-w-md w-full bg-[#fafafa] border border-[#e0e0e0] rounded-lg py-1 px-2.5 focus-within:border-[#3f51b5] transition">
               <Search size={14} className="text-slate-400 mr-2" />
-              <input 
+              <input
                 type="text"
                 placeholder="Ask AI: Convert 3 PM NY to India..."
                 value={aiQuery}
@@ -1243,7 +1245,7 @@ export default function App() {
                 onKeyDown={(e) => e.key === "Enter" && executeAIQuery(aiQuery)}
                 className={`w-full bg-transparent text-xs ${t.text === "text-slate-900" ? "text-slate-800" : "text-slate-200"} outline-none border-none py-1 placeholder-slate-400`}
               />
-              <button 
+              <button
                 onClick={() => executeAIQuery(aiQuery)}
                 className={`px-2 py-0.5 ${t.btnPrimary} rounded text-[10px] font-bold font-mono transition`}
               >
@@ -1253,7 +1255,7 @@ export default function App() {
 
           {/* Preferences Settings & Mobile Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <button 
+            <button
               onClick={() => {
                 setSettingsTab("design");
                 setShowSettings(true);
@@ -1265,7 +1267,7 @@ export default function App() {
               <span className="text-[11px] font-mono font-medium hidden xl:inline">Design themes</span>
             </button>
 
-            <button 
+            <button
               onClick={() => {
                 setSettingsTab("general");
                 setShowSettings(true);
@@ -1278,7 +1280,7 @@ export default function App() {
             </button>
 
             {/* Hamburger menu button for mobile/tablet */}
-            <button 
+            <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className={`lg:hidden p-2 rounded-lg bg-slate-50/80 border ${t.border} ${t.text} hover:bg-slate-100 transition cursor-pointer`}
               title="Toggle Menu"
@@ -1292,14 +1294,14 @@ export default function App() {
         {showMobileMenu && (
           <div className={`lg:hidden border-t ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-950"} p-4 space-y-4 animate-fade-in shadow-xl`}>
             <div className="grid grid-cols-2 gap-2">
-              <button 
+              <button
                 onClick={() => handleScrollToSection("today-section")}
                 className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
               >
                 <Clock size={14} className={t.accentText} />
                 <span>Today Snapshot</span>
               </button>
-              <button 
+              <button
                 onClick={() => handleScrollToSection("insights-section")}
                 className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
               >
@@ -1314,7 +1316,7 @@ export default function App() {
                 Launch Workspace Tool
               </div>
               <div className="space-y-1.5">
-                <button 
+                <button
                   onClick={() => navigateToWorldClock(currentPathRoute?.lang || "en")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1324,7 +1326,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("converter")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1334,7 +1336,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("planner")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1344,7 +1346,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("business")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1354,7 +1356,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("diff")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1364,7 +1366,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("countdown")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1374,7 +1376,7 @@ export default function App() {
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
-                <button 
+                <button
                   onClick={() => handleLaunchTool("unix")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1393,9 +1395,9 @@ export default function App() {
       {/* 3. HERO CONTAINER SECTION */}
       {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
-        
+
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
-          
+
           {/* Left Column: Greeting, live clock, details, search */}
           <div className="lg:col-span-6 space-y-6">
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${t.badgeClass} text-[10px] font-mono font-semibold uppercase tracking-wider`}>
@@ -1417,7 +1419,7 @@ export default function App() {
               <div className="absolute top-0 right-0 p-3 opacity-5 text-slate-500">
                 <Clock size={110} />
               </div>
-              
+
               <div className="flex flex-col gap-1.5">
                 {/* Clock synchronization status message */}
                 {syncData && (
@@ -1442,8 +1444,8 @@ export default function App() {
                     </div>
                     <div className="text-[11.5px] font-semibold text-slate-700 mt-0.5">
                       {currentPathRoute?.lang === "fr" && <>Heure à <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>Paris, France</span> actuellement :</>}
-                      {currentPathRoute?.lang === "zh" && <>当前 <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>中国北京</span> 的时间：</>}
-                      {currentPathRoute?.lang === "ja" && <>現在の <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>東京、日本</span> の時刻：</>}
+                      {currentPathRoute?.lang === "zh" && <>当前 <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>中国北京</span> 的时间:</>}
+                      {currentPathRoute?.lang === "ja" && <>現在の <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>東京、日本</span> の時刻:</>}
                       {(!currentPathRoute || currentPathRoute?.lang === "en") && (
                         <>
                           Time in <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>{currentPathRoute ? (currentPathRoute.lang === "en" ? "London, United Kingdom" : "Wesley Chapel, Florida, United States") : "Wesley Chapel, Florida, United States"}</span> now:
@@ -1485,7 +1487,7 @@ export default function App() {
                     );
                   })()}
                 </div>
-                
+
                 {/* Date Display */}
                 <span className={`text-sm font-semibold ${t.textMuted} mt-2 flex items-center gap-2`}>
                   <Calendar size={14} className={t.accentText} />
@@ -1494,7 +1496,7 @@ export default function App() {
 
                 {/* Tz abbrev & offset details */}
                 <span className={`text-xs ${t.textMuted} opacity-80 mt-1.5 font-mono`}>
-                  {offsetData.abbr} — Coordinated Universal Time Offset: <strong className={t.accentText}>{offsetData.offsetStr}</strong>
+                  {offsetData.abbr} - Coordinated Universal Time Offset: <strong className={t.accentText}>{offsetData.offsetStr}</strong>
                 </span>
               </div>
             </div>
@@ -1503,7 +1505,7 @@ export default function App() {
             <div className="max-w-xl">
               <div className={`relative flex items-center bg-slate-50/85 border-2 ${t.border} rounded-xl py-1.5 px-3 shadow-md focus-within:ring-1 focus-within:ring-offset-0 focus-within:ring-slate-300 transition`}>
                 <Search className="text-slate-400 mr-2.5" size={18} />
-                <input 
+                <input
                   type="text"
                   placeholder="Ask anything: Convert 3 PM NY to Singapore, schedule a meeting..."
                   value={aiQuery}
@@ -1511,7 +1513,7 @@ export default function App() {
                   onKeyDown={(e) => e.key === "Enter" && executeAIQuery(aiQuery)}
                   className={`w-full bg-transparent text-sm ${t.text === "text-slate-900" ? "text-slate-800" : "text-slate-200"} outline-none border-none py-1 placeholder-slate-400`}
                 />
-                <button 
+                <button
                   onClick={() => executeAIQuery(aiQuery)}
                   className={`px-4 py-1.5 ${t.btnPrimary} font-bold text-xs rounded-lg transition shrink-0 cursor-pointer`}
                 >
@@ -1545,7 +1547,7 @@ export default function App() {
                   </span>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-4 gap-4 sm:gap-5 items-stretch p-1">
                 {[
                   { city: "london", name: "London", timezone: "Europe/London", country: "GB" },
@@ -1587,20 +1589,20 @@ export default function App() {
                         <span>{displayClock.country === "US" ? "🇺🇸" : displayClock.country === "GB" ? "🇬🇧" : displayClock.country === "FR" ? "🇫🇷" : displayClock.country === "CN" ? "🇨🇳" : "🇯🇵"}</span>
                         <span className="truncate max-w-[55px] sm:max-w-[65px]">{displayClock.name}</span>
                       </div>
-                      
+
                       {/* Small Analog Clock */}
                       <div className="my-2 flex justify-center items-center">
-                        <AnalogClock 
-                          date={liveDate} 
-                          timezone={displayClock.timezone} 
-                          country={displayClock.country} 
+                        <AnalogClock
+                          date={liveDate}
+                          timezone={displayClock.timezone}
+                          country={displayClock.country}
                           countryName={displayClock.name}
-                          theme={preferences.theme} 
-                          size="sm" 
-                          hideLabel={true} 
+                          theme={preferences.theme}
+                          size="sm"
+                          hideLabel={true}
                         />
                       </div>
-                      
+
                       {/* Dynamic Local Time & Friendly Offset message */}
                       <div className="text-center space-y-0.5 mt-2 w-full border-t border-slate-100/10 dark:border-slate-800/40 pt-2">
                         <div className="text-[10px] sm:text-[11px] font-mono font-bold text-indigo-500 dark:text-indigo-400">
@@ -1619,9 +1621,9 @@ export default function App() {
               {(() => {
                 const activeCityName = CITY_DATA[preferences.timezone]?.name || "Wesley Chapel";
                 let adviceStr = "";
-                
+
                 if (preferences.timezone.includes("London")) {
-                  adviceStr = "Your London workspace is perfectly positioned between Asia and North America. Paris is 1 hour ahead (very close collaboration), Beijing is 7 hours ahead, and New York is 5 hours behind. Ideal window for joint syncs is 1:00 PM – 5:00 PM BST.";
+                  adviceStr = "Your London workspace is perfectly positioned between Asia and North America. Paris is 1 hour ahead (very close collaboration), Beijing is 7 hours ahead, and New York is 5 hours behind. Ideal window for joint syncs is 1:00 PM - 5:00 PM BST.";
                 } else if (preferences.timezone.includes("Paris") || preferences.timezone.includes("Berlin")) {
                   adviceStr = "Your Paris/Berlin workspace is highly synchronous with Europe and Africa. London is 1 hour behind, Beijing is 6 hours ahead, and New York is 6 hours behind. Best overlap with US teams starts from 3:00 PM CET.";
                 } else if (preferences.timezone.includes("Shanghai") || preferences.timezone.includes("Beijing")) {
@@ -1667,13 +1669,13 @@ export default function App() {
       {aiResult && !aiLoading && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full animate-fade-in">
           <div className="rounded-xl border border-blue-500/20 bg-slate-900 p-6 shadow-xl relative">
-            <button 
+            <button
               onClick={() => setAiResult(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition"
             >
               <X size={16} />
             </button>
-            
+
             <div className="flex items-center gap-2 text-xs font-mono text-blue-400 uppercase font-semibold">
               <Globe size={13} />
               <span>AI Workspace Parsing result</span>
@@ -1688,7 +1690,7 @@ export default function App() {
                 <span className="text-[10px] text-slate-500 font-mono">
                   Intent detected: <strong>{aiResult.intent}</strong> • Autoloaded params prefilled
                 </span>
-                <button 
+                <button
                   onClick={() => {
                     const mappedToolIds: Record<string, string> = {
                       "open_converter": "converter",
@@ -1724,6 +1726,7 @@ export default function App() {
             {currentPathRoute.tool === "date-math" && <DateAddSubtract lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
           </div>
         ) : currentPathRoute?.isMeetingFinder ? (
           <div className="animate-fade-in">
@@ -1736,7 +1739,7 @@ export default function App() {
               const targetCountry = currentPathRoute.country || "GB";
               const locInfo = LOCALIZED_NAMES[targetLang]?.[targetCountry] || LOCALIZED_NAMES.en[targetCountry] || { city: "London", country: "United Kingdom" };
               const offsetInfo = getTimezoneOffsetAndAbbr(currentPathRoute.timezone, liveDate);
-              
+
               return (
                 <div className="space-y-8">
                   {/* Top Header (city + timezone info, no back button) */}
@@ -1761,7 +1764,7 @@ export default function App() {
                   <div className="bg-transparent rounded-2xl border border-slate-200 dark:border-slate-800/80 p-8 sm:p-12 relative overflow-hidden select-none">
                     {/* Retro-cyber grid/glow design background lines */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08)_0%,transparent_70%)] pointer-events-none" />
-                    
+
                     <div className="relative text-center space-y-4">
                       <span className="inline-block text-[10px] sm:text-xs font-mono font-bold tracking-widest text-emerald-500/70 uppercase bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                         {currentPathRoute.lang === "fr" ? "HORLOGE NATIONALE DE PRÉCISION" :
@@ -1790,8 +1793,8 @@ export default function App() {
                   </div>
 
                   {/* World Clock Dashboard Component */}
-                  <WorldClockDashboard 
-                    preferences={preferences} 
+                  <WorldClockDashboard
+                    preferences={preferences}
                     onSelectTimezone={(tz, country, cName) => {
                       savePreferences({
                         ...preferences,
@@ -1816,10 +1819,10 @@ export default function App() {
 
             {/* Section 3: Smart Quick Actions / Time Tools */}
             <div id="quick-tools-section" className="scroll-mt-24">
-              <QuickActions 
-                preferences={preferences} 
-                holidays={holidays} 
-                activeTab={activeToolTab || undefined} 
+              <QuickActions
+                preferences={preferences}
+                holidays={holidays}
+                activeTab={activeToolTab || undefined}
                 onCloseTab={() => {
                   setActiveToolTab(null);
                   setPrefilledParams(null);
@@ -1839,8 +1842,8 @@ export default function App() {
 
             {/* Section 4: Personalized Time Insights */}
             <div id="insights-section" className="scroll-mt-24">
-              <TimeInsights 
-                preferences={preferences} 
+              <TimeInsights
+                preferences={preferences}
                 onNavigateToTool={(toolId) => {
                   setActiveToolTab(toolId);
                   const elem = document.getElementById("quick-tools-section");
@@ -1899,7 +1902,7 @@ export default function App() {
       {showSettings && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
           <div className="relative w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl flex flex-col max-h-[90vh]">
-            
+
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div>
                 <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
@@ -1907,7 +1910,7 @@ export default function App() {
                 </h3>
                 <p className="text-xs text-slate-400">Customize default locales, language rendering, calendars and workspace preferences.</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowSettings(false)}
                 className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition"
               >
@@ -1917,21 +1920,21 @@ export default function App() {
 
             {/* TAB SELECTOR HEADER */}
             <div className="flex border-b border-slate-800/80 mt-3 mb-4 gap-4 text-xs font-mono">
-              <button 
+              <button
                 onClick={() => setSettingsTab("general")}
                 className={`pb-2 px-1 font-semibold transition ${
-                  settingsTab === "general" 
-                    ? `border-b-2 ${t.accentText} border-cyan-500` 
+                  settingsTab === "general"
+                    ? `border-b-2 ${t.accentText} border-cyan-500`
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 General Config
               </button>
-              <button 
+              <button
                 onClick={() => setSettingsTab("design")}
                 className={`pb-2 px-1 font-semibold transition flex items-center gap-1.5 ${
-                  settingsTab === "design" 
-                    ? `border-b-2 ${t.accentText} border-cyan-500` 
+                  settingsTab === "design"
+                    ? `border-b-2 ${t.accentText} border-cyan-500`
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -1942,7 +1945,7 @@ export default function App() {
 
             {/* Form scrollable container */}
             <div className="overflow-y-auto py-2 flex-1 space-y-4 pr-1">
-              
+
               {settingsTab === "design" ? (
                 <div className="space-y-4 animate-fade-in">
                   <div className="mb-1">
@@ -1959,7 +1962,7 @@ export default function App() {
                       const isSelected = (preferences.theme || "slate") === themeKey;
 
                       return (
-                        <div 
+                        <div
                           key={themeKey}
                           onClick={() => {
                             setPreferences({
@@ -1968,16 +1971,16 @@ export default function App() {
                             });
                           }}
                           className={`group rounded-xl border p-3.5 shadow-sm cursor-pointer transition-all duration-200 flex items-center justify-between gap-4 ${
-                            isSelected 
-                              ? `border-slate-400 bg-slate-800/50 ring-1 ring-cyan-500/20` 
+                            isSelected
+                              ? `border-slate-400 bg-slate-800/50 ring-1 ring-cyan-500/20`
                               : `border-slate-800 bg-slate-900/20 hover:border-slate-700 hover:bg-slate-900/40`
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             {/* Radio indicator */}
                             <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${
-                              isSelected 
-                                ? "border-cyan-400 bg-cyan-400/10 text-cyan-400" 
+                              isSelected
+                                ? "border-cyan-400 bg-cyan-400/10 text-cyan-400"
                                 : "border-slate-600 group-hover:border-slate-400"
                             }`}>
                               {isSelected && <Check size={10} strokeWidth={3} />}
@@ -2005,7 +2008,7 @@ export default function App() {
                   {/* Country Selection */}
                   <div>
                     <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Primary Country / Profile</label>
-                    <select 
+                    <select
                       value={preferences.country}
                       onChange={(e) => {
                         const countryCode = e.target.value as CountryCode;
@@ -2040,7 +2043,7 @@ export default function App() {
                   {/* Timezone selection */}
                   <div>
                     <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Base Workstation Timezone ID</label>
-                    <select 
+                    <select
                       value={preferences.timezone}
                       onChange={(e) => setPreferences({ ...preferences, timezone: e.target.value })}
                       className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500 font-mono"
@@ -2056,7 +2059,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Date Format style</label>
-                      <select 
+                      <select
                         value={preferences.dateFormat}
                         onChange={(e) => setPreferences({ ...preferences, dateFormat: e.target.value as any })}
                         className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
@@ -2070,7 +2073,7 @@ export default function App() {
 
                     <div>
                       <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Time Format style</label>
-                      <select 
+                      <select
                         value={preferences.timeFormat}
                         onChange={(e) => setPreferences({ ...preferences, timeFormat: e.target.value as any })}
                         className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
@@ -2085,7 +2088,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">First Day of Week</label>
-                      <select 
+                      <select
                         value={preferences.firstDayOfWeek}
                         onChange={(e) => setPreferences({ ...preferences, firstDayOfWeek: e.target.value as any })}
                         className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
@@ -2109,10 +2112,10 @@ export default function App() {
                     <div className="flex gap-4 items-center bg-slate-950 p-3.5 border border-slate-800 rounded-lg">
                       <div className="flex-1">
                         <span className="text-[10px] font-mono text-slate-500">Core start hour: {preferences.workingHoursStart}:00</span>
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max="23" 
+                        <input
+                          type="range"
+                          min="0"
+                          max="23"
                           value={preferences.workingHoursStart}
                           onChange={(e) => setPreferences({ ...preferences, workingHoursStart: parseInt(e.target.value) })}
                           className="w-full accent-blue-500 h-1 bg-slate-800 rounded"
@@ -2120,10 +2123,10 @@ export default function App() {
                       </div>
                       <div className="flex-1">
                         <span className="text-[10px] font-mono text-slate-500">Core end hour: {preferences.workingHoursEnd}:00</span>
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max="23" 
+                        <input
+                          type="range"
+                          min="0"
+                          max="23"
                           value={preferences.workingHoursEnd}
                           onChange={(e) => setPreferences({ ...preferences, workingHoursEnd: parseInt(e.target.value) })}
                           className="w-full accent-blue-500 h-1 bg-slate-800 rounded"
@@ -2137,7 +2140,7 @@ export default function App() {
             </div>
 
             <div className="pt-4 border-t border-slate-800 flex justify-end gap-2.5">
-              <button 
+              <button
                 onClick={() => {
                   // Revert to detected browser default state
                   localStorage.removeItem("global_time_workspace_prefs");
@@ -2148,7 +2151,7 @@ export default function App() {
               >
                 Reset Default
               </button>
-              <button 
+              <button
                 onClick={() => {
                   savePreferences(preferences);
                   setShowSettings(false);
