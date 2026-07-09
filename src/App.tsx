@@ -64,6 +64,8 @@ import { CITY_BY_CODE } from "./data/cities";
 import DocsPage from "./pages/docs/DocsPage";
 import AdminApp from "./pages/admin/AdminApp";
 import { LandingHeroHorizon } from "./components/landing/LandingHeroHorizon";
+import { LandingPage } from "./components/landing/LandingPage";
+import { useHomeData } from "./hooks/useHomeData";
 
 export interface ApiColumnItem {
   href: string;
@@ -397,6 +399,11 @@ export default function App() {
 
   // Scroll visibility refs
   const headerRef = useRef<HTMLDivElement | null>(null);
+
+  // T4: home data for the v2 landing (hero + 5 sections). Hooks must be
+  // called unconditionally, but the hook itself does no work unless
+  // VITE_LANDING_V2 is on.
+  const homeData = useHomeData(preferences.countryCode, "WLC");
   // Per-dropdown refs for click-outside-to-close
   const toolsDropdownRef = useRef<HTMLDivElement | null>(null);
   const dateToolsDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -1555,13 +1562,17 @@ export default function App() {
       {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
-        <LandingHeroHorizon
+        <LandingPage
           liveDate={liveDate}
           timezone={preferences.timezone}
           country={preferences.countryCode}
           cityName={CITY_DATA[preferences.timezone]?.name || "Wesley Chapel"}
           countryName={preferences.countryName}
           lang={(currentPathRoute?.lang as "en" | "fr" | "zh" | "ja" | undefined) ?? "en"}
+          homeData={homeData.status === "ok" ? homeData.data : null}
+          favoriteCodes={(() => {
+            try { return JSON.parse(localStorage.getItem("tdp_user_cities") || "[]"); } catch { return []; }
+          })()}
         />
       )}
       {import.meta.env?.VITE_LANDING_V2 !== "true" && (
@@ -1987,6 +1998,12 @@ export default function App() {
           </div>
         ) : (
           <>
+            {/* T4: When VITE_LANDING_V2 is on, LandingPage composes its
+                own hero + 5 sections (FiveCitiesFavorites, CityDetailCard,
+                ExploreMore, TopPopularCities, QuoteBlock) and we skip the
+                legacy inline sections entirely. */}
+            {import.meta.env?.VITE_LANDING_V2 === "true" ? null : (
+              <>
             {/* Section 1: Today in Your Country */}
             <div id="today-section" className="scroll-mt-24">
               <TodaySnapshot preferences={preferences} holidays={holidays} />
@@ -2026,6 +2043,8 @@ export default function App() {
                 }}
               />
             </div>
+              </>
+            )}
 
           </>
         )}

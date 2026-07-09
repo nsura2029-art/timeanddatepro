@@ -37,6 +37,10 @@
   --hero-text: #0f172a;
   --hero-text-muted: #475569;
   --hero-rule: rgba(15, 23, 42, 0.08);
+  --section-rule: rgba(15, 23, 42, 0.06);
+  --ticker-card-bg: rgba(99, 102, 241, 0.04);
+  --quote-text: #1e293b;
+  --quote-author: #64748b;
   --hero-fg-font: 'Inter', system-ui, -apple-system, sans-serif;
   --hero-mono-font: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 }
@@ -285,4 +289,491 @@
     font-size: 12px;
     padding: 14px 16px;
   }
+}
+
+/* ============================================================================
+ * T4.x SECTIONS — FiveCitiesFavorites, CityDetailCard, ExploreMore,
+ * TopPopularCities, QuoteBlock
+ *
+ * One source of truth for tokens. No hard borders — sections are separated
+ * by rules and whitespace. Whitespace > boxes.
+ * ============================================================================ */
+
+/* Shared section wrapper ---------------------------------------------------- */
+.tdp-section {
+  font-family: var(--hero-fg-font);
+  color: var(--hero-text);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 24px;
+  border-bottom: 1px solid var(--section-rule);
+}
+
+.tdp-section:last-of-type {
+  border-bottom: none;
+}
+
+.tdp-section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hero-text);
+}
+
+.tdp-section-label .tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary-deep);
+  font-size: 11px;
+}
+
+.tdp-section-label .meta {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--hero-text-muted);
+  text-transform: none;
+}
+
+/* FiveCitiesFavorites ------------------------------------------------------- */
+.tdp-cities-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .tdp-cities-row { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .tdp-cities-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+.tdp-city-card {
+  background: var(--ticker-card-bg);
+  border-radius: 12px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: background 200ms ease, transform 200ms ease;
+  cursor: pointer;
+  font-family: var(--hero-fg-font);
+}
+
+.tdp-city-card:hover {
+  background: rgba(5, 150, 105, 0.06);
+  transform: translateY(-1px);
+}
+
+.tdp-city-card .row-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hero-text-muted);
+}
+
+.tdp-city-card .row-top .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: tdp-ping 2.4s infinite;
+}
+
+.tdp-city-card .city {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--hero-text);
+}
+
+.tdp-city-card .country {
+  font-size: 11px;
+  color: var(--hero-text-muted);
+}
+
+.tdp-city-card .clock {
+  font-family: var(--hero-mono-font);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--seven);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+.tdp-city-card .clock .subsec {
+  font-size: 0.65em;
+  opacity: 0.55;
+  margin-left: 1px;
+}
+
+.tdp-city-card .tz {
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* CityDetailCard ------------------------------------------------------------ */
+.tdp-wc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .tdp-wc-row { grid-template-columns: 1fr; gap: 24px; }
+}
+
+.tdp-wc-left .wc-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--accent-primary-deep);
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tdp-wc-left .wc-label .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: tdp-ping 2.4s infinite;
+}
+
+.tdp-wc-left .wc-city {
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 16px 0 4px;
+  color: var(--hero-text);
+}
+
+.tdp-wc-left .wc-country {
+  font-size: 14px;
+  color: var(--hero-text-muted);
+}
+
+.tdp-sun-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.tdp-sun-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.06);
+  font-size: 12px;
+  color: var(--hero-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.tdp-sun-pill strong {
+  color: var(--accent-primary-deep);
+  font-weight: 700;
+}
+
+.tdp-wc-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+  font-size: 13px;
+  align-items: center;
+}
+
+.tdp-wc-actions a {
+  color: var(--accent-primary-deep);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 150ms ease;
+}
+
+.tdp-wc-actions a:hover {
+  border-bottom-color: var(--accent-primary-deep);
+}
+
+.tdp-wc-actions .sep {
+  color: var(--hero-text-muted);
+  opacity: 0.5;
+}
+
+.tdp-wc-sun-display {
+  background: var(--ticker-card-bg);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.tdp-wc-sun-display .title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hero-text-muted);
+  margin-bottom: 14px;
+}
+
+.tdp-wc-sun-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tdp-wc-sun-cell {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.tdp-wc-sun-cell .label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hero-text-muted);
+  margin-bottom: 6px;
+}
+
+.tdp-wc-sun-cell .val {
+  display: block;
+  font-family: var(--hero-mono-font);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--seven);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-wc-sun-cell .val.up { color: var(--accent-warm); }
+.tdp-wc-sun-cell .val.down { color: var(--accent-tertiary); }
+
+.tdp-wc-sun-cell .sub {
+  display: block;
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  margin-top: 4px;
+  font-family: var(--hero-mono-font);
+  letter-spacing: 0.02em;
+}
+
+/* ExploreMore (hooks) ------------------------------------------------------- */
+.tdp-hooks {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 1000px) {
+  .tdp-hooks { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 540px) {
+  .tdp-hooks { grid-template-columns: repeat(2, 1fr); }
+}
+
+.tdp-hook {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: transparent;
+  border-radius: 10px;
+  font-family: var(--hero-fg-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hero-text);
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease;
+  cursor: pointer;
+}
+
+.tdp-hook:hover {
+  background: rgba(5, 150, 105, 0.06);
+  color: var(--accent-primary-deep);
+}
+
+.tdp-hook .ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--accent-primary-deep);
+  flex-shrink: 0;
+}
+
+/* TopPopularCities --------------------------------------------------------- */
+.tdp-popular-sub {
+  font-size: 13px;
+  color: var(--hero-text-muted);
+  margin: -12px 0 20px;
+}
+
+.tdp-pop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 1000px) {
+  .tdp-pop-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 700px) {
+  .tdp-pop-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 420px) {
+  .tdp-pop-grid { grid-template-columns: 1fr; }
+}
+
+.tdp-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 150ms ease;
+  font-family: var(--hero-fg-font);
+}
+
+.tdp-pop-row:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.tdp-pop-row .rank {
+  font-family: var(--hero-mono-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--hero-text-muted);
+  width: 18px;
+  text-align: right;
+}
+
+.tdp-pop-row .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hero-text);
+}
+
+.tdp-pop-row .country {
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-pop-row .clock {
+  font-family: var(--hero-mono-font);
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+.tdp-pop-row.is-favorite .name {
+  color: var(--accent-primary-deep);
+}
+
+/* QuoteBlock ---------------------------------------------------------------- */
+.tdp-quote {
+  text-align: center;
+  padding: 64px 24px 72px;
+  font-family: var(--hero-fg-font);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.tdp-quote .eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent-primary-deep);
+  margin-bottom: 14px;
+}
+
+.tdp-quote .text {
+  font-size: clamp(20px, 2.6vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  color: var(--quote-text);
+  margin: 0;
+}
+
+.tdp-quote .text::before { content: "\201C"; color: var(--accent-primary); margin-right: 4px; }
+.tdp-quote .text::after  { content: "\201D"; color: var(--accent-primary); margin-left: 4px; }
+
+.tdp-quote .author {
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--quote-author);
+  font-family: var(--hero-mono-font);
+}
+
+/* Scroll reveal -------------------------------------------------------------- */
+.tdp-section {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: tdp-rise 600ms ease-out forwards;
+}
+
+.tdp-section:nth-of-type(2) { animation-delay: 80ms; }
+.tdp-section:nth-of-type(3) { animation-delay: 140ms; }
+.tdp-section:nth-of-type(4) { animation-delay: 200ms; }
+.tdp-section:nth-of-type(5) { animation-delay: 260ms; }
+.tdp-section:nth-of-type(6) { animation-delay: 320ms; }
+
+@keyframes tdp-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tdp-section { opacity: 1; transform: none; animation: none; }
+  .tdp-city-card .row-top .live-dot { animation: none; }
+}
+
+/* Section responsive --------------------------------------------------------- */
+@media (max-width: 640px) {
+  .tdp-section { padding: 40px 16px; }
+  .tdp-quote { padding: 48px 16px 56px; }
 }
