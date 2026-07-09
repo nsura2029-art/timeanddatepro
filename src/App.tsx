@@ -512,8 +512,10 @@ export default function App() {
       targetPath = `${cfg.path}/meeting-finder`;
     } else if (currentPathRoute?.isWorldClock) {
       targetPath = `${cfg.path}/worldclock`;
-    } else if (currentPathRoute?.tool) {
-      targetPath = `${cfg.path}/${currentPathRoute.tool}`;
+    } else if (currentPathRoute?.tool || currentPathRoute?.pair) {
+      targetPath = currentPathRoute?.pair
+        ? `/${currentPathRoute.lang}/${currentPathRoute.pair.slug}`
+        : `${cfg.path}/${currentPathRoute.tool}`;
     }
 
     // Update URL
@@ -1098,7 +1100,7 @@ export default function App() {
                 onMouseEnter={() => setShowDateToolsDropdown(true)}
                 aria-haspopup="menu"
                 aria-expanded={showDateToolsDropdown}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${currentPathRoute?.tool ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${currentPathRoute?.tool || currentPathRoute?.pair ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
               >
                 <span>Date Tools</span>
                 <ChevronDown size={12} className={`transition-transform duration-200 ${showDateToolsDropdown ? "rotate-180" : ""}`} />
@@ -1412,7 +1414,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && (
+      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
 
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
