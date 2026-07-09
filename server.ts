@@ -277,6 +277,13 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/currency/rates",
       "GET /api/v1/currency/convert",
       "GET /api/v1/currency/codes",
+      // Wikipedia enrichment
+      "GET /api/v1/news/by-country",
+      "GET /api/v1/news/by-category",
+      "GET /api/v1/news/global",
+      "GET /api/v1/news/feeds",
+      "GET /api/v1/history/by-country",
+      "GET /api/v1/history/countries",
     ],
   }, "/api/v1");
 });
@@ -594,6 +601,56 @@ app.get(
 );
 
 app.get("/api/v1/currency/codes", H("/api/v1/currency/codes", 86400, () => CURRENCIES));
+
+// === Wikipedia enrichment APIs (Phase B) ================================
+// News (RSS-driven) and country-specific history. Public, cached 15 min
+// for news, 1 day for history (Wikipedia refresh cadence).
+import {
+  newsByCountry,
+  newsByCategory,
+  newsGlobal,
+  _internalClearNewsCache,
+  listFeeds,
+} from "./src/utils/newsApi";
+import { historyByCountry, listSupportedCountries as listHistoryCountries } from "./src/utils/countryHistoryApi";
+
+app.get("/api/v1/news/by-country", H("/api/v1/news/by-country", 900, async (req: any) => {
+  const country = (req.query.country as string) || "US";
+  const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 12, 30));
+  return await newsByCountry(country, limit);
+}));
+
+app.get("/api/v1/news/by-category", H("/api/v1/news/by-category", 900, async (req: any) => {
+  const category = (req.query.category as string) || "world";
+  const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 12, 30));
+  return await newsByCategory(category, limit);
+}));
+
+app.get("/api/v1/news/global", H("/api/v1/news/global", 900, async (req: any) => {
+  const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 50));
+  return await newsGlobal(limit);
+}));
+
+app.get("/api/v1/news/feeds", H("/api/v1/news/feeds", 3600, () => ({
+  feeds: listFeeds(),
+  count: listFeeds().length,
+})));
+
+app.get(
+  "/api/v1/history/by-country",
+  H("/api/v1/history/by-country", 86400, async (req: any) => {
+    const country = (req.query.country as string) || "US";
+    const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+    const day = req.query.day ? parseInt(req.query.day as string) : undefined;
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 12, 50));
+    return await historyByCountry({ country, month, day, limit });
+  })
+);
+
+app.get(
+  "/api/v1/history/countries",
+  H("/api/v1/history/countries", 86400, () => listHistoryCountries())
+);
 
 // === Setup Vite Dev server or static asset production build
 async function setupVite() {

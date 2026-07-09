@@ -1,11 +1,12 @@
 // src/data/news/newsFeeds.ts
-// RSS feeds for the news section. Manually curated for time/date relevance.
-// Source: Public RSS feeds from major outlets. Free to use with attribution.
-// Cache-Control: max-age=900 (15 minutes) for news freshness.
+// Curated RSS feeds indexed by (a) topical category for the global feed,
+// and (b) country code for the new /api/v1/news/by-country?country=US endpoint.
+// Sources: public RSS feeds from major news outlets, free with attribution.
 
 import type { NewsFeed } from "../../types/newsFeed";
 
 export const NEWS_FEEDS: NewsFeed[] = [
+  // ── Global topical feeds ─────────────────────────────────────────────
   {
     id: "nyt-world",
     name: "New York Times — World",
@@ -45,7 +46,7 @@ export const NEWS_FEEDS: NewsFeed[] = [
   {
     id: "reuters-world",
     name: "Reuters — World News",
-    url: "https://www.reutersagency.com/feed/?best-topics=world&post_type=best",
+    url: "https://www.reutersagency.com/feed/?best-topics=world&post-type=best",
     category: "world",
     homepage: "https://www.reuters.com/world",
     language: "en",
@@ -61,43 +62,237 @@ export const NEWS_FEEDS: NewsFeed[] = [
     attribution: "Associated Press",
   },
   {
-    id: "espn-soccer",
-    name: "ESPN — Soccer",
-    url: "https://www.espn.com/espn/rss/soccer/news",
-    category: "sports",
-    homepage: "https://www.espn.com/soccer/",
-    language: "en",
-    attribution: "ESPN",
-  },
-  {
-    id: "espn-tennis",
-    name: "ESPN — Tennis",
-    url: "https://www.espn.com/espn/rss/tennis/news",
-    category: "sports",
-    homepage: "https://www.espn.com/tennis/",
-    language: "en",
-    attribution: "ESPN",
-  },
-  {
-    id: "verge-tech",
-    name: "The Verge — Tech",
+    id: "verge",
+    name: "The Verge",
     url: "https://www.theverge.com/rss/index.xml",
-    category: "tech",
+    category: "technology",
     homepage: "https://www.theverge.com",
     language: "en",
     attribution: "The Verge",
   },
   {
-    id: "arstechnica",
+    id: "ars-technica",
     name: "Ars Technica",
     url: "https://feeds.arstechnica.com/arstechnica/index",
-    category: "tech",
+    category: "technology",
     homepage: "https://arstechnica.com",
     language: "en",
     attribution: "Ars Technica",
   },
+  {
+    id: "espn-top",
+    name: "ESPN — Top Headlines",
+    url: "https://www.espn.com/espn/rss/news",
+    category: "sports",
+    homepage: "https://www.espn.com",
+    language: "en",
+    attribution: "ESPN",
+  },
+  {
+    id: "bbc-tech",
+    name: "BBC News — Technology",
+    url: "https://feeds.bbci.co.uk/news/technology/rss.xml",
+    category: "technology",
+    homepage: "https://www.bbc.com/news/technology",
+    language: "en",
+    attribution: "BBC",
+  },
+  // ── Per-country feeds (drives /api/v1/news/by-country?country=XX) ──
+  {
+    id: "bbc-uk",
+    name: "BBC News — UK",
+    url: "https://feeds.bbci.co.uk/news/uk/rss.xml",
+    country: "GB",
+    category: "world",
+    homepage: "https://www.bbc.com/news/uk",
+    language: "en",
+    attribution: "BBC",
+  },
+  {
+    id: "nyt-us",
+    name: "New York Times — U.S.",
+    url: "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+    country: "US",
+    category: "world",
+    homepage: "https://www.nytimes.com/section/us",
+    language: "en",
+    attribution: "The New York Times",
+  },
+  {
+    id: "lemonde-fr",
+    name: "Le Monde — International",
+    url: "https://www.lemonde.fr/international/rss_full.xml",
+    country: "FR",
+    category: "world",
+    homepage: "https://www.lemonde.fr/international",
+    language: "fr",
+    attribution: "Le Monde",
+  },
+  {
+    id: "tagesschau-de",
+    name: "Tagesschau — Schlagzeilen",
+    url: "https://www.tagesschau.de/xml/rss2_https/",
+    country: "DE",
+    category: "world",
+    homepage: "https://www.tagesschau.de",
+    language: "de",
+    attribution: "Tagesschau (ARD)",
+  },
+  {
+    id: "elpais-es",
+    name: "El País — Internacional",
+    url: "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais/portada",
+    country: "ES",
+    category: "world",
+    homepage: "https://elpais.com",
+    language: "es",
+    attribution: "El País",
+  },
+  {
+    id: "ansa-it",
+    name: "ANSA — Mondo",
+    url: "https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml",
+    country: "IT",
+    category: "world",
+    homepage: "https://www.ansa.it",
+    language: "it",
+    attribution: "ANSA",
+  },
+  {
+    id: "nhk-jp",
+    name: "NHK World — News",
+    url: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+    country: "JP",
+    category: "world",
+    homepage: "https://www3.nhk.or.jp/news",
+    language: "ja",
+    attribution: "NHK World",
+  },
+  {
+    id: "xinhua-cn",
+    name: "Xinhua — World",
+    url: "https://www.xinhuanet.com/english/rss/worldrss.xml",
+    country: "CN",
+    category: "world",
+    homepage: "https://www.xinhuanet.com/english",
+    language: "en",
+    attribution: "Xinhua",
+  },
+  {
+    id: "hindustan-in",
+    name: "Hindustan Times — Top News",
+    url: "https://www.hindustantimes.com/feeds/rss/top-news/rssfeed.xml",
+    country: "IN",
+    category: "world",
+    homepage: "https://www.hindustantimes.com",
+    language: "en",
+    attribution: "Hindustan Times",
+  },
+  {
+    id: "globo-br",
+    name: "O Globo — Mundo",
+    url: "https://oglobo.globo.com/mundo/rss.xml",
+    country: "BR",
+    category: "world",
+    homepage: "https://oglobo.globo.com",
+    language: "pt",
+    attribution: "O Globo",
+  },
+  {
+    id: "reuters-au",
+    name: "ABC News Australia — Top",
+    url: "https://www.abc.net.au/news/feed/51120/rss.xml",
+    country: "AU",
+    category: "world",
+    homepage: "https://www.abc.net.au/news",
+    language: "en",
+    attribution: "ABC News Australia",
+  },
+  {
+    id: "cbc-ca",
+    name: "CBC — Top Stories",
+    url: "https://www.cbc.ca/webfeed/rss/topstories.xml",
+    country: "CA",
+    category: "world",
+    homepage: "https://www.cbc.ca",
+    language: "en",
+    attribution: "CBC",
+  },
+  {
+    id: "mex-deportes",
+    name: "El Universal — México",
+    url: "https://www.eluniversal.com.mx/rss.xml",
+    country: "MX",
+    category: "world",
+    homepage: "https://www.eluniversal.com.mx",
+    language: "es",
+    attribution: "El Universal",
+  },
+  {
+    id: "korea-hr",
+    name: "Yonhap — News",
+    url: "https://en.yna.co.kr/RSS/news.xml",
+    country: "KR",
+    category: "world",
+    homepage: "https://en.yna.co.kr",
+    language: "en",
+    attribution: "Yonhap News",
+  },
+  {
+    id: "ria-ru",
+    name: "TASS — World",
+    url: "https://tass.com/rss/v2.xml",
+    country: "RU",
+    category: "world",
+    homepage: "https://tass.com",
+    language: "en",
+    attribution: "TASS",
+  },
+  {
+    id: "nrc-nl",
+    name: "NL Times — Top",
+    url: "https://nltimes.nl/rss/top",
+    country: "NL",
+    category: "world",
+    homepage: "https://nltimes.nl",
+    language: "en",
+    attribution: "NL Times",
+  },
+  {
+    id: "abc-es-ar",
+    name: "ABC.es — España",
+    url: "https://www.abc.es/rss/feeds/abc_Internacional.xml",
+    country: "ES",
+    category: "world",
+    homepage: "https://www.abc.es",
+    language: "es",
+    attribution: "ABC.es",
+  },
 ];
 
-export function getNewsFeedsByCategory(category: NewsFeed["category"]): NewsFeed[] {
+/** Look up a feed by id (e.g. 'bbc-world') */
+export function findFeed(id: string): NewsFeed | undefined {
+  return NEWS_FEEDS.find((f) => f.id === id);
+}
+
+/** All feeds for a country code (ISO 3166-1 alpha-2). Falls back to global. */
+export function feedsForCountry(country: string): NewsFeed[] {
+  const cc = country.toUpperCase();
+  const matched = NEWS_FEEDS.filter((f) => (f.country || "").toUpperCase() === cc);
+  return matched.length > 0 ? matched : NEWS_FEEDS.filter((f) => !f.country);
+}
+
+/** All feeds for a category (e.g. 'technology', 'sports') */
+export function feedsForCategory(category: string): NewsFeed[] {
   return NEWS_FEEDS.filter((f) => f.category === category);
 }
+
+/** Curated category list — useful for autocomplete and UI selectors. */
+export const NEWS_CATEGORIES = [
+  "world",
+  "technology",
+  "science",
+  "sports",
+  "business",
+  "entertainment",
+] as const;

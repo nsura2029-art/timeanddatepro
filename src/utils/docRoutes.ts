@@ -66,6 +66,13 @@ export const DOC_SECTIONS: DocSection[] = [
       { slug: "currency/rates", title: "GET /currency/rates", description: "Exchange rates against a chosen base" },
       { slug: "currency/convert", title: "GET /currency/convert", description: "Convert amount between two currencies" },
       { slug: "currency/codes", title: "GET /currency/codes", description: "Catalog of supported ISO 4217 codes" },
+      // Wikipedia enrichment
+      { slug: "news/by-country", title: "GET /news/by-country", description: "Top news headlines for a specific country" },
+      { slug: "news/by-category", title: "GET /news/by-category", description: "Top news headlines for a category (world, tech, science)" },
+      { slug: "news/global", title: "GET /news/global", description: "Aggregated top headlines across all sources" },
+      { slug: "news/feeds", title: "GET /news/feeds", description: "Catalog of curated RSS sources" },
+      { slug: "history/by-country", title: "GET /history/by-country", description: "Wikipedia 'On This Day' filtered by country" },
+      { slug: "history/countries", title: "GET /history/countries", description: "ISO codes with curated country history coverage" },
       // Cities
       { slug: "cities", title: "GET /cities", description: "Index of supported cities + aliases" },
       { slug: "cities/:slug", title: "GET /cities/:slug", description: "City detail with live clock" },
