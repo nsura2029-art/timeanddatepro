@@ -24,7 +24,15 @@ import { STATIC_RATES_EUR } from "../data/currency/staticRates";
 
 const ECB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 const ECB_HISTORY_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml";
-const TTL_MS = Number(process.env.CURRENCY_TTL_MS) || 6 * 60 * 60 * 1000; // 6h
+
+// TTL is only meaningful server-side (in-memory cache). The browser path
+// hits `/api/v1/currency/*` instead and never reads `process`. Guarded so
+// module-load doesn't crash in the browser (which has no `process`).
+const TTL_MS = (() => {
+  if (typeof process === "undefined" || !process.env) return 6 * 60 * 60 * 1000;
+  const v = Number(process.env.CURRENCY_TTL_MS);
+  return Number.isFinite(v) && v > 0 ? v : 6 * 60 * 60 * 1000;
+})();
 
 export interface RateTable {
   base: string;            // always EUR for the raw fetch — conversion handles other bases

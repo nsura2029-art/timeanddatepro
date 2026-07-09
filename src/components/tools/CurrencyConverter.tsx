@@ -15,7 +15,11 @@ import {
   TrendingUp, AlertCircle, Loader2
 } from "lucide-react";
 import { CURRENCIES, type CurrencyInfo } from "../../data/currency/currencies";
-import { convertCurrency, getAllRatesAgainstBase, TOP_PAIRS } from "../../utils/currencyApi";
+// Browser-side: we MUST go through the server API. The shared currencyApi
+// module hits ECB directly with `fetch`, which gets CORS-blocked in the
+// browser (ECB doesn't set ACAO headers). Server-side (admin triggers) the
+// module functions are still used directly.
+import { TOP_PAIRS } from "../../utils/currencyApi";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
 
@@ -56,7 +60,7 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
   const fromInfo = useMemo(() => CURRENCIES.find((c) => c.code === from)!, [from]);
   const toInfo = useMemo(() => CURRENCIES.find((c) => c.code === to)!, [to]);
 
-  // Convert whenever inputs change
+  // Convert whenever inputs change — via /api/v1/currency/convert
   useEffect(() => {
     if (!amount || amount <= 0) {
       setResult(null);
@@ -65,10 +69,26 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    convertCurrency({ amount, from, to })
+    fetch(`/api/v1/currency/convert?amount=${amount}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
       .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((j) => {
         if (cancelled) return;
-        setResult(r as ConvertResult);
+        const d = j?.data;
+        if (!d) throw new Error("empty response");
+        setResult({
+          amount: d.amount,
+          from: d.from,
+          to: d.to,
+          rate: d.rate,
+          result: d.result,
+          date: d.date,
+          source: d.source,
+          inverse: d.inverse,
+          formatted: d.formatted,
+        } as ConvertResult);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -81,11 +101,26 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
     };
   }, [amount, from, to]);
 
-  // Load all rates against `from` for the table view
+  // Load all rates against `from` for the table view — via /api/v1/currency/rates
   useEffect(() => {
     let cancelled = false;
-    getAllRatesAgainstBase(from)
-      .then((r) => !cancelled && setTable(r as RateTableResult))
+    fetch(`/api/v1/currency/rates?base=${encodeURIComponent(from)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((j) => {
+        if (cancelled) return;
+        const d = j?.data;
+        if (!d) {
+          setTable(null);
+          return;
+        }
+        setTable({
+          base: d.base,
+          date: d.date,
+          source: d.source,
+          fetchedAt: d.fetchedAt,
+          rates: d.rates,
+        } as RateTableResult);
+      })
       .catch(() => !cancelled && setTable(null));
     return () => {
       cancelled = true;
