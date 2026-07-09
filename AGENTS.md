@@ -16,9 +16,9 @@
 - `src/admin/` is the SQLite-backed control-room panel. `/admin/*` is auth-gated; the link in the topnav is visible to everyone but the API surface requires an `admin` role.
 
 ## Admin panel quick-ref (Phase C)
-- URL: `/admin` (or `/admin/dashboard`, `/admin/api-status`, `/admin/cache`).
+- URL: `/admin` (or `/admin/dashboard`, `/admin/api-status`, `/admin/cache`, `/admin/triggers`).
 - Default creds: from `ADMIN_USER` / `ADMIN_PASS` env, OR on first boot a random 18-char password is written to `./.admin-credentials` (mode 0600) — copy + rotate + delete.
-- DB: `data/tdp.db` (SQLite, WAL). Swap-in for Cloudflare D1 at deploy time (`src/admin/db.ts` is the only layer to replace).
+- DB: `data/tdp.db` via Node's built-in `node:sqlite` (no native build — works on Windows/Mac/Linux). Requires Node ≥22.5; `--experimental-sqlite` is set via NODE_OPTIONS in `package.json` scripts.
 - Login endpoint: `POST /api/admin/login`. Bootstrap (no auth): `GET /api/admin/bootstrap`. Authed endpoints under `/api/admin/authed/{dashboard,api-status,categories,endpoints,cache/invalidate,triggers,triggers/run,triggers/history,triggers/stream}`.
 - Triggers (Phase E): 8 manual actions grouped by category (currency / wikipedia / data-source / system). Registry at `src/admin/triggers.ts`. Serial worker in `src/admin/worker.ts` polls `api_triggers` every 500ms. SSE at `/triggers/stream?taskId=N` streams live updates. Every `run` writes to `admin_audit`.
 - Categories used to group APIs in the side nav: `time`, `data-source`, `currency`, `wikipedia`, `places`, `auth`. The mapping lives in `src/admin/categories.ts` — add a new endpoint = one slug there.
