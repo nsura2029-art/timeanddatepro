@@ -12,7 +12,7 @@
 //      succeeds, even when html2canvas chokes on a parent transform or
 //      oklch() color.
 
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 
 export interface CaptureOptions {
   /** Background color for the canvas. Default: white. */
