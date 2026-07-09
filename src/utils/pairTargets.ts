@@ -100,6 +100,101 @@ export function allKnownPairSlugs(): string[] {
 }
 
 /**
+ * Top-N cities that get algorithmic pair coverage. Picks the highest-
+ * population city per timezone (so NYC + Philly don't both get surfaced).
+ * Same as popup but biased toward population to maximize global reach.
+ */
+export const TOP_CITIES = (() => {
+  const byTz = new Map<string, { code: string; pop: number; name: string }>();
+  for (const code of Object.keys(CITY_BY_CODE)) {
+    const c = CITY_BY_CODE[code];
+    if (!c.population) continue;
+    const existing = byTz.get(c.timezone);
+    if (!existing || (c.population > existing.pop)) byTz.set(c.timezone, { code, pop: c.population, name: c.name });
+  }
+  return Array.from(byTz.values())
+    .sort((a, b) => b.pop - a.pop)
+    .slice(0, 100);  // top 100 unique timezones
+})();
+
+/** Top-N destinations a city should get algorithmic pairs generated to. */
+const TOP_DEST = TOP_CITIES.slice(0, 50);
+
+/**
+ * Generate every (city, destination) pair in TOP_CITIES × TOP_DEST that's
+ * not already in GLOBAL_PAIRS. Algorithm: for each city in TOP_CITIES,
+ * produce pairs with the top-N destinations (N defaults to 5). Yields
+ * ~500 entries — fits in a single bundle, indexes ~500 × 4 langs = 2000
+ * new SEO landing pages.
+ *
+ * The pair suggestion registry stays human-curated (GLOBAL_PAIRS);
+ * the sitemap gets the algorithmic supplement.
+ */
+export const ALGORITHMIC_PAIRS: PairSuggestion[] = (() => {
+  const seen = new Set<string>();
+  // Skip pairs already in GLOBAL_PAIRS (and their reverse)
+  for (const p of GLOBAL_PAIRS) {
+    seen.add(`${p.fromCode}→${p.toCode}`);
+    seen.add(`${p.toCode}→${p.fromCode}`);
+  }
+  // Skip location-targeted destination expansions already covered
+  for (const country of Object.values(COUNTRY_BY_CODE) as Array<{ popularCityCodes: string[] }>) {
+    for (const from of country.popularCityCodes) {
+      for (const to of country.popularCityCodes) {
+        if (from !== to) {
+          seen.add(`${from}→${to}`);
+          seen.add(`${to}→${from}`);
+        }
+      }
+    }
+  }
+
+  const out: PairSuggestion[] = [];
+  for (const home of TOP_CITIES) {
+    let added = 0;
+    for (const dest of TOP_DEST) {
+      if (home.code === dest.code) continue;
+      const key1 = `${home.code}→${dest.code}`;
+      const key2 = `${dest.code}→${home.code}`;
+      if (seen.has(key1) || seen.has(key2)) continue;
+      const destCity = CITY_BY_CODE[dest.code];
+      if (!destCity) continue;
+      seen.add(key1); seen.add(key2);
+      out.push({
+        slug: pairSlug({ name: home.name }, { name: dest.name }),
+        fromName: home.name,
+        toName: dest.name,
+        fromCode: home.code,
+        toCode: dest.code,
+      });
+      added++;
+      if (added >= 5) break;  // 5 outbound per home city
+    }
+  }
+  return out;
+})();
+
+/**
+ * Build the full sitemap registry: GLOBAL_PAIRS + location-targeted +
+ * algorithmic. ~540 slugs total at default settings, indexed across 4
+ * langs = ~2160 URLs.
+ */
+export const ALL_PAIR_SLUGS: string[] = (() => {
+  const set = new Set<string>();
+  for (const p of GLOBAL_PAIRS) set.add(p.slug);
+  for (const p of ALGORITHMIC_PAIRS) set.add(p.slug);
+  return Array.from(set);
+})();
+
+/** Hydrate the SLUG_TO_CODES map with the algorithmic pairs so
+ *  parsePairPath / codesFromSlug recognizes them. */
+(function hydrateAlgorithmic() {
+  for (const p of ALGORITHMIC_PAIRS) {
+    if (!SLUG_TO_CODES.has(p.slug)) SLUG_TO_CODES.set(p.slug, [p.fromCode, p.toCode]);
+  }
+})();
+
+/**
  * Location-targeted pair suggestions for the user's country.
  * Picks the country's capital (or first popular city) as the implicit
  * "from" and pairs it with each of the user's country's popular outbound

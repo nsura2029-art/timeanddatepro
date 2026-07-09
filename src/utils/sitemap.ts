@@ -3,7 +3,7 @@
 // Add new routes here as you build them — both static tools and programmatic SEO pages.
 
 import { LANG_SLUGS, TOOL_SLUGS, type LangSlug, type ToolSlug } from "./toolRoutes";
-import { allKnownPairSlugs } from "./pairTargets";
+import { ALL_PAIR_SLUGS } from "./pairTargets";
 import { DOC_SECTIONS, type DocSectionId } from "./docRoutes";
 
 export interface SitemapAlternate {
@@ -90,13 +90,13 @@ const DOC_PAGE_ENTRIES: SitemapEntry[] = DOC_SECTIONS.flatMap((section) =>
 // const EVENT_PAGES: SitemapEntry[] = [];
 
 /* --------------------------------------------------------------------------
- * 4. Pair pages — /<lang>/<from>-to-<to>-time (Phase 3 / Commit C)
- *    Generates every (lang × known-pair-slug) entry. Currently sourced from
- *    GLOBAL_PAIRS; future commit can extend with algorithmic pairs.
+ * 4. Pair pages — /<lang>/<from>-to-<to>-time (Phase 3 / Commit C + algorithmic expansion)
+ *    Generates every (lang × ALL_PAIR_SLUG) entry. ~540 unique pair slugs
+ *    × 4 langs = ~2160 indexed pair landing pages.
  * ------------------------------------------------------------------------ */
 const PAIR_PAGES: SitemapEntry[] = (["en", "fr", "zh", "ja"] as const).flatMap(
   (lang) =>
-    allKnownPairSlugs().map(
+    ALL_PAIR_SLUGS.map(
       (slug): SitemapEntry => ({
         path: `/${lang}/${slug}`,
         lang,

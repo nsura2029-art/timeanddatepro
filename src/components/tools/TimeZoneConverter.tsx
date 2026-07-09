@@ -63,6 +63,18 @@ export default function TimeZoneConverter({ lang = "en", pair }: Props) {
   const [busy, setBusy] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
+  // When navigating between pair URLs (SPA route), pair changes but
+  // useState ignores the new initial value. Sync cityCodes when pair
+  // changes. Skip the first effect run (initialCities already applied).
+  const pairKeyRef = useRef<string | null>(pair ? pair.slug : null);
+  useEffect(() => {
+    if (!pair) return;
+    if (pairKeyRef.current === pair.slug) return;
+    pairKeyRef.current = pair.slug;
+    setCityCodes([pair.fromCode, pair.toCode]);
+    setBaseDate(new Date());
+  }, [pair]);
+
   // Persist + rehydrate share URL on mount
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cityCodes)); } catch {/* noop */}
