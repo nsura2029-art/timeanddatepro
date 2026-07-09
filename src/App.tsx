@@ -54,6 +54,7 @@ import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
 import PairConverter from "./components/tools/PairConverter";
+import RouterDebugOverlay from "./components/common/RouterDebugOverlay";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 import { parsePairPath } from "./utils/pairRoutes";
 import { CITY_BY_CODE } from "./data/cities";
@@ -143,6 +144,30 @@ const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: st
 
 function parseRouteFromPath() {
   const path = window.location.pathname.toLowerCase();
+
+  // --- ROUTER ASSERTIONS (dev only) ---
+  // These guard against the bug where content-based language detection
+  // (path.includes('tokyo') → JA, 'london' → EN, etc.) overrides the
+  // explicit URL language prefix. If any of these throw in the browser
+  // console, the routing layer is misbehaving. Safe to delete once the
+  // routing layer is refactored to make URL prefix authoritative.
+  if (import.meta.env?.DEV !== false && typeof window !== "undefined") {
+    if (path.startsWith("/en/") || path === "/en") {
+      // Catch bugs like path.includes('tokyo') overriding /en/
+      // We can't enforce the resolved lang from inside this fn since
+      // that's what we're trying to resolve; but we can warn when
+      // content-suffixes are paired with a different-prefix detection.
+      const contentLooksNonEN = /tokyo|london|paris|beijing|tokio/.test(path);
+      if (contentLooksNonEN) {
+        // Mark for the overlay to surface; do not throw — it would
+        // break the entire app for QA testers.
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[router] /en/ URL contains content suffix that may trigger fallthrough heuristics: ${path}`
+        );
+      }
+    }
+  }
   const isWorldClock = path.endsWith("/worldclock") && !path.match(/\/[a-z]{2}\/worldclock/);
   const isMeetingFinder = path.endsWith("/meeting-finder") && !path.match(/\/[a-z]{2}\/meeting-finder/);
 
@@ -285,6 +310,15 @@ function getRelativeDayAndOffset(targetTz: string, baseTz: string, date: Date): 
 }
 
 export default function App() {
+  // --- DEV-ONLY ROUTER DEBUG OVERLAY ---
+  // Self-mounting; renders nothing in production unless
+  // localStorage.tdp_debug_router is explicitly "off". Mounts at the
+  // very top of the rendered tree so it sits above everything.
+  if (typeof window !== "undefined" && import.meta.env?.DEV !== false) {
+    // Don't add a guard here that would skip in production builds; the
+    // RouterDebugOverlay itself checks the localStorage flag.
+  }
+
   // --- STATE DECLARATIONS ---
   const [currentPathRoute, setCurrentPathRoute] = useState(() => parseRouteFromPath());
 
@@ -908,6 +942,9 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
+
+      {/* Dev-only router debug overlay (top-right floating card) */}
+      <RouterDebugOverlay />
 
       {/* 1. AUTO LOCALIZATION NOTIFICATION BANNER */}
       {showBanner && (
