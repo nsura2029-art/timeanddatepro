@@ -257,6 +257,22 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/countries/:code/working-hours",
       "GET /api/v1/pairs/:from/:to",
       "GET /api/v1/meeting/best",
+      // Data-source APIs (new — landing page hero, news/events section)
+      "GET /api/v1/time/sun",
+      "GET /api/v1/time/sync",
+      "GET /api/v1/dst",
+      "GET /api/v1/dst/upcoming",
+      "GET /api/v1/holidays/today",
+      "GET /api/v1/holidays/upcoming",
+      "GET /api/v1/holidays/year",
+      "GET /api/v1/popular/cities",
+      "GET /api/v1/popular/defaults",
+      "GET /api/v1/quotes/random",
+      "GET /api/v1/quotes/ranked",
+      "GET /api/v1/events/upcoming",
+      "GET /api/v1/events/next",
+      "GET /api/v1/onthisday",
+      "GET /api/v1/browse/home",
     ],
   }, "/api/v1");
 });
@@ -374,7 +390,177 @@ app.get("/api/v1/meeting/best", H("/api/v1/meeting/best", 0, (req: any) =>
   })
 ));
 
-// Setup Vite Dev server or static asset production build
+// ============================================================================
+// DATA SOURCE APIS — landing page, events, news, sun, holidays, sync, quotes
+// ============================================================================
+
+import { sunPosition } from "./src/utils/sunApi";
+import { lookupHoliday, getUpcomingHolidaysForCountry, getHolidaysForCountry } from "./src/utils/holidayApi";
+import { getPopularCities, getDefaultFavorites } from "./src/utils/popularApi";
+import { pickQuote, rankQuotes } from "./src/utils/quoteApi";
+import { getSyncResponse } from "./src/utils/syncApi";
+import { dstInfo, getUpcomingDstChanges } from "./src/utils/dstApi";
+import { getUpcomingEvents, getNextBigEvent, type AggregatedEvent } from "./src/utils/eventsApi";
+import { fetchOnThisDay, selectHeadlines, formatOnThisDay } from "./src/utils/onthisdayApi";
+import { buildBrowseHome } from "./src/utils/homeApi";
+import { openapiSpec } from "./src/utils/openapi";
+import { QUOTES_EN } from "./src/data/quotes/en";
+
+// === OPENAPI / API DOCS ===
+app.get("/api-docs", (_req: any, res: any) => {
+  res.set("Content-Type", "application/json; charset=utf-8");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.send(JSON.stringify(openapiSpec(), null, 2));
+});
+
+app.get("/api-docs/swagger", (_req: any, res: any) => {
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>TimeAndDatePro API - Swagger UI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+  SwaggerUIBundle({ url: "/api-docs", dom_id: "#swagger-ui", deepLinking: true });
+</script>
+</body>
+</html>`);
+});
+
+// === SUN POSITION ===
+app.get("/api/v1/time/sun", H("/api/v1/time/sun", 86400, (req: any) => {
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+  const date = req.query.date ? new Date(req.query.date) : new Date();
+  const tz = (req.query.tz as string) || "UTC";
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    throw Object.assign(new Error("lat and lng query params required"), { status: 400 });
+  }
+  return sunPosition(lat, lng, date, tz);
+}));
+
+// === HOLIDAYS ===
+app.get("/api/v1/holidays/today", H("/api/v1/holidays/today", 3600, (req: any) => {
+  const country = (req.query.country as string)?.toUpperCase() || "US";
+  const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+  return lookupHoliday(country as any, date);
+}));
+
+app.get("/api/v1/holidays/upcoming", H("/api/v1/holidays/upcoming", 3600, (req: any) => {
+  const country = (req.query.country as string)?.toUpperCase() || "US";
+  const limit = parseInt((req.query.limit as string) || "5", 10);
+  return getUpcomingHolidaysForCountry(country as any, limit);
+}));
+
+app.get("/api/v1/holidays/year", H("/api/v1/holidays/year", 86400, (req: any) => {
+  const country = (req.query.country as string)?.toUpperCase() || "US";
+  const all = getHolidaysForCountry(country as any);
+  // Filter to current year + next year
+  const year = new Date().getFullYear();
+  return all.filter((h) => h.date.startsWith(String(year)) || h.date.startsWith(String(year + 1)));
+}));
+
+// === POPULAR CITIES ===
+app.get("/api/v1/popular/cities", H("/api/v1/popular/cities", 86400, (req: any) => {
+  const limit = parseInt((req.query.limit as string) || "20", 10);
+  return { cities: getPopularCities(limit) };
+}));
+
+app.get("/api/v1/popular/defaults", H("/api/v1/popular/defaults", 86400, (req: any) => {
+  const countryCode = req.query.country as string | undefined;
+  return { cities: getDefaultFavorites(countryCode) };
+}));
+
+// === QUOTES ===
+app.get("/api/v1/quotes/random", H("/api/v1/quotes/random", 0, (req: any) => {
+  const locale = (req.query.locale as string) || "en";
+  const seed = req.query.seed as string | undefined;
+  const tag = req.query.tag as string | undefined;
+  const countryTag = req.query.country ? `country:${(req.query.country as string).toLowerCase()}` : undefined;
+  const pool = locale === "en" ? QUOTES_EN : QUOTES_EN;
+  const lastQuoteId = req.query.lastQuoteId as string | undefined;
+  const quote = pickQuote({
+    pool,
+    lastQuoteId,
+    now: new Date(),
+    countryTag,
+    isHoliday: req.query.isHoliday === "true",
+  });
+  return { ...quote, seed, locale };
+}));
+
+app.get("/api/v1/quotes/ranked", H("/api/v1/quotes/ranked", 60, (req: any) => {
+  const locale = (req.query.locale as string) || "en";
+  const limit = parseInt((req.query.limit as string) || "10", 10);
+  const countryTag = req.query.country ? `country:${(req.query.country as string).toLowerCase()}` : undefined;
+  const excludeIds = String(req.query.exclude || "").split(",").filter(Boolean);
+  const pool = locale === "en" ? QUOTES_EN : QUOTES_EN;
+  const ranked = rankQuotes({ pool, countryTag, isHoliday: req.query.isHoliday === "true", excludeIds, limit });
+  return { quotes: ranked };
+}));
+
+// === CLOCK SYNC ===
+app.get("/api/v1/time/sync", H("/api/v1/time/sync", 0, (req: any, res: any) => {
+  res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  const clientNowMs = req.query.clientTime ? parseInt(req.query.clientTime as string, 10) : undefined;
+  return getSyncResponse(clientNowMs);
+}));
+
+// === DST ===
+app.get("/api/v1/dst", H("/api/v1/dst", 86400, (req: any) => {
+  const tz = (req.query.tz as string) || "America/New_York";
+  const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
+  return dstInfo(tz, year);
+}));
+
+app.get("/api/v1/dst/upcoming", H("/api/v1/dst/upcoming", 86400, () => {
+  return { changes: getUpcomingDstChanges() };
+}));
+
+// === EVENTS (sports + holidays + observances) ===
+app.get("/api/v1/events/upcoming", H("/api/v1/events/upcoming", 3600, (req: any) => {
+  const limit = parseInt((req.query.limit as string) || "10", 10);
+  const source = req.query.source as "sports" | "holiday" | "observance" | undefined;
+  const country = req.query.country as string | undefined;
+  return { events: getUpcomingEvents({ limit, source, country }) };
+}));
+
+app.get("/api/v1/events/next", H("/api/v1/events/next", 3600, () => {
+  const event = getNextBigEvent();
+  return { event };
+}));
+
+// === ON THIS DAY (Wikipedia wrapper) ===
+app.get("/api/v1/onthisday", H("/api/v1/onthisday", 86400, async (req: any) => {
+  const now = new Date();
+  const month = req.query.month ? parseInt(req.query.month as string, 10) : now.getMonth() + 1;
+  const day = req.query.day ? parseInt(req.query.day as string, 10) : now.getDate();
+  const limit = parseInt((req.query.limit as string) || "20", 10);
+  const feed = await fetchOnThisDay(month, day, limit);
+  const headlines = selectHeadlines(feed);
+  return {
+    month,
+    day,
+    headlines: {
+      events: headlines.events.map(formatOnThisDay),
+      births: headlines.births.map(formatOnThisDay),
+      deaths: headlines.deaths.map(formatOnThisDay),
+    },
+    attribution: feed.attribution,
+  };
+}));
+
+// === COMPOSITE: hero snapshot ===
+app.get("/api/v1/browse/home", H("/api/v1/browse/home", 60, async (req: any) => {
+  const userCountry = req.query.country as string | undefined;
+  return await buildBrowseHome({ userCountryCode: userCountry });
+}));
+
+// === Setup Vite Dev server or static asset production build
 async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
     console.log("Starting server in development mode with Vite middleware...");

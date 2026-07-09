@@ -51,6 +51,17 @@ export const DOC_SECTIONS: DocSection[] = [
       { slug: "time/unix", title: "GET /time/unix", description: "Epoch ⇄ ISO conversion" },
       { slug: "time/iso", title: "GET /time/iso", description: "ISO 8601, RFC 3339/2822, week, ordinal" },
       { slug: "time/words", title: "GET /time/words", description: "Natural-language dates (en/fr/zh/ja)" },
+      // Data-source APIs (Phase 7 of landing page plan)
+      { slug: "time/sun", title: "GET /time/sun", description: "Sun position (sunrise/sunset/day-length)" },
+      { slug: "time/sync", title: "GET /time/sync", description: "Server time + clock-drift estimate" },
+      { slug: "dst", title: "GET /dst", description: "DST transitions for a timezone in a year" },
+      { slug: "holidays/today", title: "GET /holidays/today", description: "Holiday lookup per country + date" },
+      { slug: "events/upcoming", title: "GET /events/upcoming", description: "World Cup, Olympics, holidays aggregated" },
+      { slug: "events/next", title: "GET /events/next", description: "Next big event with countdown" },
+      { slug: "onthisday", title: "GET /onthisday", description: "Historical events (Wikipedia wrapper)" },
+      { slug: "quotes/random", title: "GET /quotes/random", description: "Context-aware quote picker" },
+      { slug: "popular/cities", title: "GET /popular/cities", description: "Top N cities by search volume" },
+      { slug: "browse/home", title: "GET /browse/home", description: "Composite hero snapshot" },
       // Cities
       { slug: "cities", title: "GET /cities", description: "Index of supported cities + aliases" },
       { slug: "cities/:slug", title: "GET /cities/:slug", description: "City detail with live clock" },
