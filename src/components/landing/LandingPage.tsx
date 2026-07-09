@@ -12,6 +12,7 @@ import { CityDetailCard, type SunSummary } from "./CityDetailCard";
 import { ExploreMore } from "./ExploreMore";
 import { TopPopularCities } from "./TopPopularCities";
 import { QuoteBlock } from "./QuoteBlock";
+import { WorldCupTeaser } from "./WorldCupTeaser";
 
 interface LandingPageProps {
   /** Same Date instance as App.tsx liveDate — passed down to all tickers */
@@ -127,6 +128,9 @@ export function LandingPage({
 
       {/* Quote --------------------------------------------------- */}
       <QuoteBlock quote={quote} />
+
+      {/* FIFA World Cup 2026 teaser ----------------------------- */}
+      <WorldCupTeaser liveDate={liveDate} langPrefix={`/${lang}`} />
     </main>
   );
 }

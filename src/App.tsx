@@ -65,6 +65,8 @@ import DocsPage from "./pages/docs/DocsPage";
 import AdminApp from "./pages/admin/AdminApp";
 import { LandingHeroHorizon } from "./components/landing/LandingHeroHorizon";
 import { LandingPage } from "./components/landing/LandingPage";
+import { WorldCupTeaser } from "./components/landing/WorldCupTeaser";
+import { WorldCupPage } from "./pages/worldcup/WorldCupPage";
 import { useHomeData } from "./hooks/useHomeData";
 
 export interface ApiColumnItem {
@@ -230,6 +232,23 @@ function parseRouteFromPath() {
   }
   if (path.startsWith("/admin")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: false, tool: undefined, isAdmin: true };
+  }
+  // /worldcup and /<lang>/worldcup dedicated pages
+  if (path.endsWith("/worldcup") || path === "/worldcup") {
+    // Allow either /en/worldcup or just /worldcup (default to en)
+    let lang = "en";
+    const m = path.match(/^\/([a-z]{2})\/worldcup$/);
+    if (m) lang = m[1];
+    return {
+      lang,
+      city: "new_york",
+      country: "US" as CountryCode,
+      timezone: "America/New_York",
+      isWorldClock: false,
+      isMeetingFinder: false,
+      tool: undefined,
+      isWorldcup: true,
+    };
   }
   return null;
 }
@@ -1034,6 +1053,11 @@ export default function App() {
   // ---- /admin/* early return - AdminApp renders its own chrome. ----
   if (browserPath.toLowerCase().startsWith("/admin")) {
     return <AdminApp />;
+  }
+
+  // ---- /worldcup early return - dedicated page with own chrome ----
+  if (currentPathRoute?.isWorldcup || browserPath.toLowerCase().endsWith("/worldcup")) {
+    return <WorldCupPage />;
   }
 
   return (

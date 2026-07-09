@@ -819,3 +819,371 @@
   .tdp-section { padding: 40px 16px; }
   .tdp-quote { padding: 48px 16px 56px; }
 }
+
+/* ============================================================================
+ * T4.x addition: FIFA World Cup 2026 section
+ * ============================================================================ */
+
+.tdp-wc-intro {
+  font-size: 14px;
+  color: var(--hero-text-muted);
+  margin-bottom: 24px;
+  max-width: 720px;
+  line-height: 1.55;
+}
+
+/* 16-host-cities grid — small clock chips --------------------------------- */
+.tdp-wc-cities-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .tdp-wc-cities-grid { grid-template-columns: repeat(6, 1fr); }
+}
+@media (max-width: 900px) {
+  .tdp-wc-cities-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 600px) {
+  .tdp-wc-cities-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.tdp-wc-city-chip {
+  background: var(--ticker-card-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--hero-fg-font);
+}
+
+.tdp-wc-city-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.tdp-wc-city-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--hero-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-wc-city-clock {
+  font-family: var(--hero-mono-font);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--seven);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-wc-city-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  font-family: var(--hero-mono-font);
+}
+
+.tdp-wc-city-flag {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.tdp-wc-city-offset {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Next match banner -------------------------------------------------------- */
+.tdp-wc-next-banner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(99, 102, 241, 0.06));
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.tdp-wc-next-eyebrow {
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-warm);
+}
+
+.tdp-wc-next-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .tdp-wc-next-main { grid-template-columns: 1fr; }
+}
+
+.tdp-wc-next-teams {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--hero-text);
+  font-family: var(--hero-fg-font);
+}
+
+.tdp-wc-next-teams .vs {
+  font-family: var(--hero-mono-font);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hero-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tdp-wc-next-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  font-family: var(--hero-mono-font);
+}
+
+.tdp-wc-next-stage {
+  font-weight: 700;
+  color: var(--accent-primary-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+.tdp-wc-next-time {
+  text-align: right;
+  font-family: var(--hero-mono-font);
+}
+
+@media (max-width: 700px) {
+  .tdp-wc-next-time { text-align: left; }
+}
+
+.tdp-wc-next-local {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--hero-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-wc-next-utc {
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+/* CTA to dedicated page ---------------------------------------------------- */
+.tdp-wc-cta {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hero-rule);
+}
+
+.tdp-wc-cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-primary-deep);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 150ms ease;
+  cursor: pointer;
+}
+
+.tdp-wc-cta-link:hover {
+  border-bottom-color: var(--accent-primary-deep);
+}
+
+/* ============================================================================
+ * Dedicated /worldcup page
+ * ============================================================================ */
+
+.tdp-wc-page {
+  font-family: var(--hero-fg-font);
+  color: var(--hero-text);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+
+.tdp-wc-page-header {
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--section-rule);
+}
+
+.tdp-wc-page-title {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 16px 0 8px;
+}
+
+.tdp-wc-page-sub {
+  font-size: 14px;
+  color: var(--hero-text-muted);
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+/* Host city big cards (full-page version) ------------------------------- */
+.tdp-wc-page-cities {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 32px 0;
+}
+
+@media (max-width: 1000px) { .tdp-wc-page-cities { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .tdp-wc-page-cities { grid-template-columns: repeat(2, 1fr); } }
+
+.tdp-wc-page-city-card {
+  background: var(--ticker-card-bg);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tdp-wc-page-city-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--hero-text);
+}
+
+.tdp-wc-page-city-stadium {
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  line-height: 1.4;
+}
+
+.tdp-wc-page-city-time {
+  font-family: var(--hero-mono-font);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--seven);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+.tdp-wc-page-city-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  font-family: var(--hero-mono-font);
+  letter-spacing: 0.02em;
+}
+
+/* Schedule table -------------------------------------------------------- */
+.tdp-wc-schedule {
+  margin-top: 32px;
+}
+
+.tdp-wc-stage-header {
+  font-family: var(--hero-mono-font);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-primary-deep);
+  margin: 32px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--section-rule);
+}
+
+.tdp-wc-match-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 1.5fr 100px;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hero-rule);
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .tdp-wc-match-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 16px 0;
+  }
+}
+
+.tdp-wc-match-time {
+  font-family: var(--hero-mono-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--hero-text);
+}
+
+.tdp-wc-match-time .utc {
+  display: block;
+  font-size: 10px;
+  color: var(--hero-text-muted);
+  margin-top: 2px;
+}
+
+.tdp-wc-match-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--hero-text);
+}
+
+.tdp-wc-match-teams .vs {
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  color: var(--hero-text-muted);
+}
+
+.tdp-wc-match-venue {
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  font-family: var(--hero-fg-font);
+}
+
+.tdp-wc-match-venue .stage {
+  display: block;
+  font-family: var(--hero-mono-font);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-primary-deep);
+  margin-bottom: 2px;
+}
+
+.tdp-wc-match-flag {
+  font-size: 13px;
+  margin-right: 2px;
+}
