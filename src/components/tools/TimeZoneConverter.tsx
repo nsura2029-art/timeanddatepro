@@ -15,7 +15,6 @@ import { detectHomeCity, deserializeSharePayload } from "../../data/lookup";
 import {
   captureElement,
   shareImageWithUrl,
-  blobToDataUrl,
   composeCalendarDescription,
   triggerDownload,
 } from "../../utils/screenshot";
@@ -96,32 +95,35 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
       const blob = await snapshot();
       const url = composeShareUrl();
       const cityNames = cityCodes.map((code) => CITY_BY_CODE[code]?.name).filter(Boolean) as string[];
-      const text = `Current time across ${cityNames.length} cities`;
+      const text = `Current time across ${cityNames.length} cities - ${url}`;
 
       if (blob) {
         const result = await shareImageWithUrl(blob, "time-zones.png", "Time Zone Converter", text, url);
         setShareToast(
-          result === "shared" ? "Shared" :
-          result === "copied" ? "Image + link copied" :
-          result === "downloaded" ? "Downloaded + link copied" :
+          result === "shared" ? "Shared (image)" :
+          result === "shared-url" ? "Shared (link)" :
+          result === "copied" ? "Image + link copied to clipboard" :
+          result === "downloaded" ? "Image downloaded + link copied" :
           "Link copied"
         );
       } else {
-        // Fallback: URL only
         if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(`${text} — ${url}`);
-          setShareToast("Link copied");
+          await navigator.clipboard.writeText(text);
+          setShareToast("Screenshot failed - link copied");
         } else {
           setShareToast(url);
         }
       }
+    } catch (e) {
+      console.error("[share] handleShare error:", e);
+      setShareToast(`Share failed: ${(e as Error)?.message ?? "unknown"}`);
     } finally {
       setBusy(false);
-      setTimeout(() => setShareToast(null), 2200);
+      setTimeout(() => setShareToast(null), 2400);
     }
   }
 
-  async function handleAddToCalendar(provider: "outlook" | "google" | "ics" | "yahoo") {
+  async function handleAddToCalendar(provider) {
     if (busy) return;
     setBusy(true);
     setShareToast(null);
@@ -129,18 +131,10 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
       const start = baseDate;
       const end = new Date(start.getTime() + 60 * 60 * 1000);
       const cityNames = cityCodes.map((code) => CITY_BY_CODE[code]?.name).filter(Boolean) as string[];
-      const title = `Time check — ${cityNames.join(", ")}`;
-      const fmt = (d: Date) => d.toISOString().replace(/[-:]|\.\d{3}/g, "");
+      const title = `Time check - ${cityNames.join(", ")}`;
+      const fmt = (d) => d.toISOString().replace(/[-:]|\.\d{3}/g, "");
       const appUrl = composeShareUrl();
-
-      // Try to inline a screenshot — calendar clients that support data: URLs in event
-      // description will render the screenshot inline. The /ics path can also embed a
-      // base64-encoded inline image via the INLINE property.
-      let dataUrl: string | undefined;
-      const blob = await snapshot();
-      if (blob) dataUrl = await blobToDataUrl(blob);
-
-      const description = composeCalendarDescription(cityNames, appUrl, dataUrl);
+      const description = composeCalendarDescription(cityNames, appUrl);
 
       if (provider === "google") {
         const url = new URL("https://calendar.google.com/calendar/render");
@@ -161,9 +155,7 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
         window.open(url.toString(), "_blank", "noopener");
         setShareToast("Outlook Calendar opened");
       } else {
-        // .ics download — includes the inline image as FMTTYPE=image/png with
-        // a data URI value (Outlook Desktop renders this; Google Calendar ignores).
-        const escapeIcs = (s: string) =>
+        const escapeIcs = (s) =>
           s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
         const ics = [
           "BEGIN:VCALENDAR",
@@ -177,22 +169,20 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
           `SUMMARY:${escapeIcs(title)}`,
           `LOCATION:Online`,
           `DESCRIPTION:${escapeIcs(description)}`,
-          ...(dataUrl
-            ? [
-                `ATTACH;ENCODING=BASE64;FMTTYPE=image/png;VALUE=URI:${dataUrl.split(",")[1] ?? ""}`,
-              ]
-            : []),
           "END:VEVENT",
           "END:VCALENDAR",
         ].join("\r\n");
-        const icsBlob = new Blob([ics], { type: "text/calendar" });
-        triggerDownload(icsBlob, "time-zone-check.ics");
+        triggerDownload(new Blob([ics], { type: "text/calendar" }), "time-zone-check.ics");
+        const blob = await snapshot();
         if (blob) triggerDownload(blob, "time-zone-check.png");
-        setShareToast("iCal downloaded (+ screenshot)");
+        setShareToast(blob ? "iCal + PNG downloaded" : "iCal downloaded");
       }
+    } catch (e) {
+      console.error("[share] handleAddToCalendar error:", e);
+      setShareToast(`Calendar failed: ${(e as Error)?.message ?? "unknown"}`);
     } finally {
       setBusy(false);
-      setTimeout(() => setShareToast(null), 2200);
+      setTimeout(() => setShareToast(null), 2400);
     }
   }
 
@@ -211,10 +201,9 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
           });
           return `${c.name}: ${fmt.format(baseDate)}`;
         })
-        .filter(Boolean) as string[];
+        .filter(Boolean);
 
-      // Prefer image clipboard; fall back to text
-      if (blob && typeof ClipboardItem !== "undefined") {
+      if (blob && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
         try {
           await navigator.clipboard.write([
             new ClipboardItem({
@@ -222,17 +211,43 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
               "text/plain": new Blob([lines.join("\n")], { type: "text/plain" }),
             }),
           ]);
-          setShareToast("Screenshot copied — paste anywhere");
+          setShareToast("Screenshot + times copied - paste anywhere");
           return;
-        } catch {/* fall through to text-only */}
+        } catch (e) {
+          console.warn("[share] clipboard image failed, text only:", e);
+        }
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(lines.join("\n"));
         setShareToast("Times copied");
+      } else {
+        setShareToast("Clipboard unavailable on this browser");
+      }
+    } catch (e) {
+      console.error("[share] handleCopyToClipboard error:", e);
+      setShareToast(`Copy failed: ${(e as Error)?.message ?? "unknown"}`);
+    } finally {
+      setBusy(false);
+      setTimeout(() => setShareToast(null), 2400);
+    }
+  }
+
+  /** Explicit PNG download - reliable ultimate fallback. */
+  async function handleDownloadPng() {
+    if (busy) return;
+    setBusy(true);
+    setShareToast(null);
+    try {
+      const blob = await snapshot();
+      if (blob) {
+        triggerDownload(blob, "time-zones.png");
+        setShareToast("PNG downloaded");
+      } else {
+        setShareToast("Screenshot failed");
       }
     } finally {
       setBusy(false);
-      setTimeout(() => setShareToast(null), 2200);
+      setTimeout(() => setShareToast(null), 1800);
     }
   }
 
@@ -269,6 +284,7 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
         onShare={handleShare}
         onAddToCalendar={handleAddToCalendar}
         onCopyToClipboard={handleCopyToClipboard}
+        onDownloadPng={handleDownloadPng}
         innerRef={gridRef}
       />
 

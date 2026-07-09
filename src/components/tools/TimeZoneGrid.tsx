@@ -27,6 +27,7 @@ export interface TimeZoneGridProps {
   onShare?: () => void;
   onAddToCalendar?: (provider: "outlook" | "google" | "ics" | "yahoo") => void;
   onCopyToClipboard?: () => void;
+  onDownloadPng?: () => void;
   /** Optional ref attached to the outer container — used for screenshot capture. */
   innerRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -149,6 +150,7 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
     onShare,
     onAddToCalendar,
     onCopyToClipboard,
+    onDownloadPng,
     innerRef,
   } = props;
 
@@ -237,6 +239,9 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
           </button>
           <button type="button" onClick={onShare} className="px-2 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-medium inline-flex items-center gap-1.5">
             <span aria-hidden>🔗</span> Share this view
+          </button>
+          <button type="button" onClick={onDownloadPng} className="px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 inline-flex items-center gap-1.5" title="Download as PNG image">
+            <span aria-hidden>⬇</span> PNG
           </button>
         </div>
       </div>

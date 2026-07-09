@@ -39,13 +39,27 @@ export async function captureElement(
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
 
-/** True if the browser supports sharing files via the Web Share API. */
+/**
+ * True if the browser supports sharing FILES alone via the Web Share API.
+ * (Some browsers reject text + files combined, so we probe separately.)
+ */
 export function canShareFiles(): boolean {
   if (typeof navigator === "undefined") return false;
   if (!("share" in navigator) || !("canShare" in navigator)) return false;
   try {
     const probe = new File([new Blob()], "probe.png", { type: "image/png" });
     return navigator.canShare({ files: [probe] });
+  } catch {
+    return false;
+  }
+}
+
+/** True if the browser can call navigator.share with text alone. */
+export function canShareText(): boolean {
+  if (typeof navigator === "undefined") return false;
+  if (!("share" in navigator)) return false;
+  try {
+    return navigator.canShare({ text: "test" });
   } catch {
     return false;
   }
@@ -64,41 +78,60 @@ export async function canClipboardImage(): Promise<boolean> {
   }
 }
 
-/** Open the OS share sheet with a file + URL. Resolves to true if shared. */
+/**
+ * Open the OS share sheet, falling through gracefully.
+ *
+ * Order of attempts:
+ *   1. navigator.share with files only  (Chrome desktop, iOS Safari)
+ *   2. navigator.share with text only   (Firefox, Android Chrome)
+ *   3. clipboard.write image + text     (Chromium, Safari 13.1+)
+ *   4. triggerDownload(blob) + copy URL  (anything else)
+ */
 export async function shareImageWithUrl(
   blob: Blob,
   filename: string,
   title: string,
   text: string,
   url: string
-): Promise<"shared" | "copied" | "downloaded" | "url-copied"> {
+): Promise<"shared" | "shared-url" | "copied" | "downloaded" | "url-copied"> {
+  // 1. File share (preferred when supported)
   if (canShareFiles()) {
     try {
       const file = new File([blob], filename, { type: "image/png" });
-      await navigator.share({
-        title,
-        text: `${text}\n${url}`,
-        files: [file],
-      });
+      await navigator.share({ title, files: [file] });
       return "shared";
     } catch (e) {
-      if ((e as Error)?.name === "AbortError") return "shared"; // user cancelled = intent satisfied
-      // fall through to clipboard
+      const err = e as Error;
+      if (err?.name === "AbortError") return "shared";
+      console.warn("[share] file share failed:", err);
     }
   }
+  // 2. Text share (always include the URL so the recipient can view live)
+  if (canShareText()) {
+    try {
+      await navigator.share({ title, text: `${text}\n${url}` });
+      return "shared-url";
+    } catch (e) {
+      const err = e as Error;
+      if (err?.name === "AbortError") return "shared-url";
+      console.warn("[share] text share failed:", err);
+    }
+  }
+  // 3. Clipboard image (paired with text so paste-target always lands something)
   if (await canClipboardImage()) {
     try {
       await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob }),
+        new ClipboardItem({
+          "image/png": blob,
+          "text/plain": new Blob([`${text}\n${url}`], { type: "text/plain" }),
+        }),
       ]);
-      // Also copy the URL as text alongside the image
-      if (navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(`${text}\n${url}`);
-      }
       return "copied";
-    } catch {/* fall through */}
+    } catch (e) {
+      console.warn("[share] clipboard image failed:", e);
+    }
   }
-  // Final fallback: trigger download + copy URL
+  // 4. Final fallback — trigger a download AND copy the URL
   triggerDownload(blob, filename);
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(`${text}\n${url}`);
@@ -119,8 +152,10 @@ export function triggerDownload(blob: Blob, filename: string): void {
 }
 
 /**
- * Embed a PNG blob into a calendar-event description field. Most calendar
- * clients render <img src="data:image/png;base64,..."> snippets inline.
+ * Embed a PNG blob as a data URL. Used for .ics attachments only —
+ * DO NOT pass to Google Calendar or Outlook URL composition: those
+ * clients (a) truncate URLs > ~2 MB, and (b) strip "data:" URIs for
+ * security. The base64 of a 2x-screenshot typically blows past 2 MB.
  */
 export async function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -131,19 +166,22 @@ export async function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-/** Build a "Cities: ["NYC","LDN",...]" tag for a calendar description. */
+/**
+ * Calendar description for Google Calendar + Outlook web. NO inline image —
+ * Google strips data: URIs from URL parameters and Outlook truncates the
+ * URL. Instead, point recipients at the live share URL where the grid is
+ * always rendered and can be screenshotted by hand.
+ */
 export function composeCalendarDescription(
   cityNames: string[],
   appUrl: string,
-  imageDataUrl?: string
+  _unused?: unknown
 ): string {
-  const lines = [
-    `Compare time zones across ${cityNames.length} cities.`,
+  return [
+    `Time zone check across ${cityNames.length} cities: ${cityNames.join(", ")}.`,
     "",
-    `View in app: ${appUrl}`,
-  ];
-  if (imageDataUrl) {
-    lines.splice(1, 0, "", `![Time zone screenshot](${imageDataUrl})`, "");
-  }
-  return lines.join("\n");
+    `Open the live comparison (with screenshot): ${appUrl}`,
+    "",
+    "(Screenshot can be downloaded from the Share button on that page.)",
+  ].join("\n");
 }
