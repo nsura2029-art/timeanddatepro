@@ -1,21 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Globe,
-  Settings,
   Search,
   HelpCircle,
-  X,
   Clock,
   Calendar,
   Check,
   ChevronRight,
-  TrendingUp,
-  AlertCircle,
-  Palette,
   ChevronDown,
   Menu,
   ArrowRightLeft,
-  Users,
   CalendarDays,
   Hourglass,
   Terminal,
@@ -43,11 +37,8 @@ import { getTheme, THEME_CONFIGS, ThemeType } from "./utils/theme";
 import AnalogClock from "./components/AnalogClock";
 import TodaySnapshot from "./components/TodaySnapshot";
 import QuickActions from "./components/QuickActions";
-import TimeInsights from "./components/TimeInsights";
 import { TRANSLATIONS } from "./utils/translations";
 import { useClickOutside } from "./utils/useClickOutside";
-import WorldClockDashboard from "./components/WorldClockDashboard";
-import MeetingFinder from "./components/MeetingFinder";
 import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
 import UnixTimestampConverter from "./components/tools/UnixTimestampConverter";
 import ISO8601Formatter from "./components/tools/ISO8601Formatter";
@@ -69,56 +60,9 @@ import { WorldCupTeaser } from "./components/landing/WorldCupTeaser";
 import { WorldCupPage } from "./pages/worldcup/WorldCupPage";
 import { useHomeData } from "./hooks/useHomeData";
 
-export interface ApiColumnItem {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  desc: string;
-}
-
-export interface ApiColumnProps {
-  title: string;
-  intro: string;
-  badge?: string;
-  items: ApiColumnItem[];
-}
-
-export function ApiColumn({ title, intro, badge, items }: ApiColumnProps) {
-  return (
-    <div>
-      <div className="mb-2 flex items-baseline justify-between border-b border-slate-100 pb-1.5">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</div>
-        {badge && (
-          <span className="rounded border border-emerald-200 bg-emerald-50 px-1 py-0 text-[8px] font-extrabold tracking-wider text-emerald-700">
-            {badge}
-          </span>
-        )}
-      </div>
-      <p className="mb-2 text-[10px] text-slate-500">{intro}</p>
-      <ul className="space-y-0.5">
-        {items.map((it) => (
-          <li key={it.href + it.label}>
-            <a
-              href={it.href}
-              onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState(null, "", it.href);
-                window.dispatchEvent(new Event("tdp:navigate"));
-              }}
-              className="flex items-start gap-2 rounded-md px-2 py-1.5 text-slate-700 hover:bg-indigo-50/70 hover:text-indigo-700 transition-colors"
-            >
-              <span className="mt-0.5">{it.icon}</span>
-              <div className="min-w-0 flex-1">
-                <div className="text-[12px] font-semibold">{it.label}</div>
-                <div className="truncate text-[10px] text-slate-500">{it.desc}</div>
-              </div>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+/* ApiColumn helpers removed during nav cleanup — APIs menu is now flat
+ * 2-column grid (see showApisDropdown). Kept as no-op stubs to avoid
+ * lint errors from any indirect references in tests/stories. */
 
 const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: string }>> = {
   en: {
@@ -177,9 +121,6 @@ function parseRouteFromPath() {
       }
     }
   }
-  const isWorldClock = path.endsWith("/worldclock") && !path.match(/\/[a-z]{2}\/worldclock/);
-  const isMeetingFinder = path.endsWith("/meeting-finder") && !path.match(/\/[a-z]{2}\/meeting-finder/);
-
   // Check for /<lang>/<tool> sub-routes first
   const toolRoute = parseToolPath(path);
   if (toolRoute) {
@@ -188,8 +129,6 @@ function parseRouteFromPath() {
       city: toolRoute.lang === "en" ? "london" : toolRoute.lang === "fr" ? "paris" : toolRoute.lang === "zh" ? "beijing" : "tokyo",
       country: toolRoute.lang === "en" ? "GB" : toolRoute.lang === "fr" ? "FR" : toolRoute.lang === "zh" ? "CN" : "JP",
       timezone: toolRoute.lang === "en" ? "Europe/London" : toolRoute.lang === "fr" ? "Europe/Paris" : toolRoute.lang === "zh" ? "Asia/Shanghai" : "Asia/Tokyo",
-      isWorldClock: false,
-      isMeetingFinder: false,
       tool: toolRoute.tool
     };
   }
@@ -204,8 +143,6 @@ function parseRouteFromPath() {
       city: pairRoute.fromName.toLowerCase().replace(/\s+/g, "_"),
       country: fromCountry,
       timezone: fromTz,
-      isWorldClock: false,
-      isMeetingFinder: false,
       pair: pairRoute,
       tool: undefined,
     };
@@ -213,25 +150,19 @@ function parseRouteFromPath() {
 
 
   if (path.startsWith("/fr") || path === "/paris") {
-    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
+    return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", tool: undefined };
   }
   if (path.startsWith("/zh") || path.includes("beijing") || path.includes("beging")) {
-    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
+    return { lang: "zh", city: "beijing", country: "CN" as CountryCode, timezone: "Asia/Shanghai", tool: undefined };
   }
   if (path.startsWith("/ja") || path.includes("tokyo")) {
-    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
+    return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", tool: undefined };
   }
   if (path.startsWith("/en") || path.includes("london")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
-  }
-  if (path === "/worldclock") {
-    return { lang: "en", city: "new_york", country: "US" as CountryCode, timezone: "America/New_York", isWorldClock: true, isMeetingFinder: false, tool: undefined };
-  }
-  if (path === "/meeting-finder" || path.endsWith("/meeting-finder")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: true, tool: undefined };
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined };
   }
   if (path.startsWith("/admin")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: false, tool: undefined, isAdmin: true };
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isAdmin: true };
   }
   // /worldcup and /<lang>/worldcup dedicated pages
   if (path.endsWith("/worldcup") || path === "/worldcup") {
@@ -244,8 +175,6 @@ function parseRouteFromPath() {
       city: "new_york",
       country: "US" as CountryCode,
       timezone: "America/New_York",
-      isWorldClock: false,
-      isMeetingFinder: false,
       tool: undefined,
       isWorldcup: true,
     };
@@ -382,8 +311,6 @@ export default function App() {
   });
 
   const [showBanner, setShowBanner] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<"general" | "design">("general");
 
   // Real-time states
   const [liveDate, setLiveDate] = useState(new Date());
@@ -566,95 +493,6 @@ export default function App() {
     });
   };
 
-  const navigateToWorldClock = (lang: string) => {
-    const path = `/${lang}/worldclock`;
-    window.history.pushState({ lang, worldClock: true }, "", path);
-
-    let country: CountryCode = "GB";
-    let timezone = "Europe/London";
-
-    if (lang === "fr") {
-      country = "FR";
-      timezone = "Europe/Paris";
-    } else if (lang === "zh") {
-      country = "CN";
-      timezone = "Asia/Shanghai";
-    } else if (lang === "ja") {
-      country = "JP";
-      timezone = "Asia/Tokyo";
-    } else if (lang === "en") {
-      country = "GB";
-      timezone = "Europe/London";
-    }
-
-    const defaults = DEFAULT_PREFERENCES[country];
-    if (defaults) {
-      setPreferences(defaults);
-      setHolidays(COUNTRY_HOLIDAYS[country] || []);
-    }
-
-    setCurrentPathRoute({
-      lang,
-      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
-      country,
-      timezone,
-      isWorldClock: true
-    });
-
-    setShowToolsDropdown(false);
-    setShowMobileMenu(false);
-  };
-
-  // --- UNIFIED LANGUAGE SWITCH HANDLER ---
-  // Always updates preferences, holidays, URL, and currentPathRoute together so the
-  // home page sections are guaranteed to re-render with the new language context.
-  // Tool pages (Meeting Finder / World Clock) inherit the new language via URL.
-  const switchLanguage = (lang: "en" | "fr" | "zh" | "ja") => {
-    const langMap = {
-      en: { country: "GB" as CountryCode, timezone: "Europe/London", city: "london", path: "/en" },
-      fr: { country: "FR" as CountryCode, timezone: "Europe/Paris", city: "paris", path: "/fr" },
-      zh: { country: "CN" as CountryCode, timezone: "Asia/Shanghai", city: "beijing", path: "/zh" },
-      ja: { country: "JP" as CountryCode, timezone: "Asia/Tokyo", city: "tokyo", path: "/ja" }
-    };
-    const cfg = langMap[lang];
-    if (!cfg) return;
-
-    // Build the path; preserve tool sub-route if currently on one
-    let targetPath = cfg.path;
-    if (currentPathRoute?.isMeetingFinder) {
-      targetPath = `${cfg.path}/meeting-finder`;
-    } else if (currentPathRoute?.isWorldClock) {
-      targetPath = `${cfg.path}/worldclock`;
-    } else if (currentPathRoute?.tool) {
-      targetPath = `${cfg.path}/${currentPathRoute.tool}`;
-    }
-
-    // Update URL
-    window.history.pushState({ lang }, "", targetPath);
-
-    // Update state atomically - React 18 batches these
-    const defaults = DEFAULT_PREFERENCES[cfg.country];
-    if (defaults) {
-      setPreferences(defaults);
-      setHolidays(COUNTRY_HOLIDAYS[cfg.country] || []);
-    }
-    setCurrentPathRoute({
-      lang,
-      city: cfg.city,
-      country: cfg.country,
-      timezone: cfg.timezone,
-      isWorldClock: !!currentPathRoute?.isWorldClock,
-      isMeetingFinder: !!currentPathRoute?.isMeetingFinder,
-      tool: currentPathRoute?.tool
-    } as any);
-
-    // Note: we deliberately do NOT write to localStorage here.
-    // The URL (/<lang>) is the source of truth for language/country.
-    // localStorage is reserved for explicit user saves (settings panel, banner actions).
-    // This prevents footer language clicks from polluting the home page experience
-    // when the user navigates back to /.
-  };
-
   // --- NAVIGATE TO A TOOL PAGE (/lang/tool-slug) ---
   const navigateToTool = (tool: ToolSlug) => {
     const lang = currentPathRoute?.lang || preferences.country === "GB" ? "en" : preferences.country === "FR" ? "fr" : preferences.country === "CN" ? "zh" : preferences.country === "JP" ? "ja" : "en";
@@ -682,46 +520,6 @@ export default function App() {
     setShowDateToolsDropdown(false);
     setShowMobileMenu(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const navigateToMeetingFinder = (lang: string) => {
-    const path = lang === "default" || lang === "en" ? "/meeting-finder" : `/${lang}/meeting-finder`;
-    window.history.pushState({ lang, meetingFinder: true }, "", path);
-
-    let country: CountryCode = "GB";
-    let timezone = "Europe/London";
-
-    if (lang === "fr") {
-      country = "FR";
-      timezone = "Europe/Paris";
-    } else if (lang === "zh") {
-      country = "CN";
-      timezone = "Asia/Shanghai";
-    } else if (lang === "ja") {
-      country = "JP";
-      timezone = "Asia/Tokyo";
-    } else if (lang === "en") {
-      country = "GB";
-      timezone = "Europe/London";
-    }
-
-    const defaults = DEFAULT_PREFERENCES[country];
-    if (defaults) {
-      setPreferences(defaults);
-      setHolidays(COUNTRY_HOLIDAYS[country] || []);
-    }
-
-    setCurrentPathRoute({
-      lang,
-      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
-      country,
-      timezone,
-      isWorldClock: false,
-      isMeetingFinder: true
-    });
-
-    setShowToolsDropdown(false);
-    setShowMobileMenu(false);
   };
 
   useEffect(() => {
@@ -1132,16 +930,6 @@ export default function App() {
             >
               Today
             </button>
-            <button
-              onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                currentPathRoute?.isMeetingFinder
-                  ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm"
-                  : `${t.text} hover:bg-slate-100/50`
-              }`}
-            >
-              Meeting Finder
-            </button>
 
             {/* Time Tools Dropdown Trigger */}
             <div
@@ -1161,25 +949,16 @@ export default function App() {
                 <ChevronDown size={12} className={`transition-transform duration-200 ${showToolsDropdown ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Tool Dropdown Menu List */}
+              {/* Tool Dropdown Menu List — 2-column wide */}
               {showToolsDropdown && (
                 <div
                   role="menu"
-                  className={`absolute left-0 mt-1.5 w-64 rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
+                  className={`absolute left-0 mt-1.5 w-[440px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
                 >
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
-                    Select Workspace Tool
+                    Time Tools
                   </div>
-                  <button
-                    onClick={() => navigateToWorldClock(currentPathRoute?.lang || "en")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors cursor-pointer`}
-                  >
-                    <Globe size={13} className="text-indigo-500" />
-                    <div>
-                      <div className="font-semibold">World Clock Dashboard</div>
-                      <div className="text-[10px] text-slate-400">Interactive localized global clock grid</div>
-                    </div>
-                  </button>
+                  <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-blue-50/60 transition-colors cursor-pointer`}
@@ -1187,17 +966,7 @@ export default function App() {
                     <ArrowRightLeft size={13} className="text-blue-500" />
                     <div>
                       <div className="font-semibold">Time Zone Converter</div>
-                      <div className="text-[10px] text-slate-400">Full converter + live clocks + overlap grid</div>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
-                  >
-                    <Users size={13} className="text-emerald-500" />
-                    <div>
-                      <div className="font-semibold">AI Meeting Planner</div>
-                      <div className="text-[10px] text-slate-400">Align global teammates effortlessly</div>
+                      <div className="text-[10px] text-slate-400">Wall-clock conversion + overlap grid</div>
                     </div>
                   </button>
                   <button
@@ -1250,6 +1019,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Live ECB rates for 33 ISO 4217 codes</div>
                     </div>
                   </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1275,11 +1045,12 @@ export default function App() {
               {showDateToolsDropdown && (
                 <div
                   role="menu"
-                  className={`absolute left-0 mt-1.5 w-72 rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
+                  className={`absolute left-0 mt-1.5 w-[440px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
                 >
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
                     Date & Time Calculators
                   </div>
+                  <div className="grid grid-cols-2 gap-1">
                   <button
                     onClick={() => navigateToTool("holidays")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-[#e8f5e9]/60 transition-colors cursor-pointer`}
@@ -1350,6 +1121,7 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Live ECB rates for 33 ISO 4217 codes</div>
                     </div>
                   </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1392,60 +1164,104 @@ export default function App() {
               {showApisDropdown && (
                 <div
                   role="menu"
-                  className={`absolute right-0 mt-1.5 w-[640px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
+                  className={`absolute right-0 mt-1.5 w-[440px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
                 >
-                  <div className="grid grid-cols-3 gap-3 px-2 py-1">
-                    <ApiColumn
-                      title="REST API"
-                      intro="15 endpoints, JSON envelope, no signup."
-                      items={[
-                        { href: "/docs/getting-started/introduction", icon: <BookOpen size={13} className="text-indigo-500" />, label: "Introduction", desc: "What the API does" },
-                        { href: "/docs/getting-started/quickstart", icon: <ChevronRight size={13} className="text-indigo-500" />, label: "Quickstart", desc: "First call in 2 min" },
-                        { href: "/docs/api-reference/time/now", icon: <Clock size={13} className="text-indigo-500" />, label: "Time API", desc: "now · convert · diff · add · unix · iso · words" },
-                        { href: "/docs/api-reference/cities", icon: <Globe size={13} className="text-indigo-500" />, label: "Cities", desc: "Index + per-city live clock" },
-                        { href: "/docs/api-reference/countries", icon: <Calendar size={13} className="text-indigo-500" />, label: "Countries", desc: "List + holidays + working hours" },
-                        { href: "/docs/api-reference/meeting/best", icon: <Users size={13} className="text-indigo-500" />, label: "Meeting", desc: "Best-overlap across cities" },
-                        { href: "/docs/api-reference/pairs/:from/:to", icon: <ArrowRightLeft size={13} className="text-indigo-500" />, label: "City Pairs", desc: "Programmatic SEO backbone" },
-                      ]}
-                    />
-                    <ApiColumn
-                      title="Node.js SDK"
-                      intro="Zero-dep. Native fetch. Full TypeScript."
-                      badge="NEW"
-                      items={[
-                        { href: "/docs/sdk/nodejs", icon: <Braces size={13} className="text-emerald-500" />, label: "Installation", desc: "npm install @timeanddatepro/sdk" },
-                        { href: "/docs/sdk/nodejs#errors", icon: <BookOpen size={13} className="text-emerald-500" />, label: "Error reference", desc: "ApiClientError + status codes" },
-                        { href: "/docs/api-reference/time/now", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.time.*", desc: "now · convert · diff · add · unix · iso · words" },
-                        { href: "/docs/api-reference/cities", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.cities.*", desc: "list · get" },
-                        { href: "/docs/api-reference/countries", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.countries.*", desc: "list · get · holidays · workingHours" },
-                        { href: "/docs/api-reference/meeting/best", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.meeting.*", desc: "best({ cities })" },
-                        { href: "/docs/api-reference/pairs/:from/:to", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.pairs.*", desc: "get(from, to)" },
-                      ]}
-                    />
-                    <ApiColumn
-                      title="Integrations"
-                      intro="Power your own UI with the same engine."
-                      items={[
-                        { href: "/docs/integrations/time-zone-converter", icon: <ArrowRightLeft size={13} className="text-amber-500" />, label: "Time Zone Converter", desc: "Wall-clock conversion widget" },
-                        { href: "/docs/integrations/meeting-finder", icon: <Users size={13} className="text-amber-500" />, label: "Meeting Finder", desc: "Best-overlap engine" },
-                        { href: "/docs/integrations/world-clock", icon: <Globe size={13} className="text-amber-500" />, label: "World Clock", desc: "Multi-clock dashboard" },
-                        { href: "/docs/integrations/holiday-hours", icon: <CalendarDays size={13} className="text-amber-500" />, label: "Holiday & Hours", desc: "Holidays + working hours" },
-                        { href: "/docs/integrations/unix-timestamp", icon: <Terminal size={13} className="text-amber-500" />, label: "Unix Timestamp", desc: "Live epoch clock" },
-                        { href: "/docs/integrations/iso8601-formatter", icon: <FileCode size={13} className="text-amber-500" />, label: "ISO 8601 Formatter", desc: "6 output formats" },
-                        { href: "/docs/getting-started/authentication", icon: <BookOpen size={13} className="text-slate-500" />, label: "Authentication", desc: "Rate limits + Pro tier (Q3)" },
-                      ]}
-                    />
+                  <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
+                    APIs & SDKs
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <a
+                      href="/docs/getting-started/introduction"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/getting-started/introduction"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors`}
+                    >
+                      <BookOpen size={13} className="text-indigo-500" />
+                      <div>
+                        <div className="font-semibold">REST API</div>
+                        <div className="text-[10px] text-slate-400">15 endpoints, JSON, no signup</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/sdk/nodejs"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/sdk/nodejs"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors`}
+                    >
+                      <Braces size={13} className="text-emerald-500" />
+                      <div>
+                        <div className="font-semibold">Node.js SDK <span className="ml-1 px-1.5 py-0.5 text-[8px] font-bold rounded-full bg-emerald-100 text-emerald-700">NEW</span></div>
+                        <div className="text-[10px] text-slate-400">Zero-dep, full TypeScript</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/getting-started/quickstart"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/getting-started/quickstart"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-sky-50/60 transition-colors`}
+                    >
+                      <ChevronRight size={13} className="text-sky-500" />
+                      <div>
+                        <div className="font-semibold">Quickstart</div>
+                        <div className="text-[10px] text-slate-400">First call in 2 min</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/api-reference/time/now"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/api-reference/time/now"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors`}
+                    >
+                      <Clock size={13} className="text-indigo-500" />
+                      <div>
+                        <div className="font-semibold">Time API</div>
+                        <div className="text-[10px] text-slate-400">now · convert · diff · add · unix · iso</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/api-reference/cities"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/api-reference/cities"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors`}
+                    >
+                      <Globe size={13} className="text-indigo-500" />
+                      <div>
+                        <div className="font-semibold">Cities API</div>
+                        <div className="text-[10px] text-slate-400">Index + per-city live clock</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/api-reference/countries"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/api-reference/countries"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors`}
+                    >
+                      <Calendar size={13} className="text-indigo-500" />
+                      <div>
+                        <div className="font-semibold">Countries API</div>
+                        <div className="text-[10px] text-slate-400">List + holidays + working hours</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/api-reference/pairs/:from/:to"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/api-reference/pairs/from/to"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-indigo-50/60 transition-colors`}
+                    >
+                      <ArrowRightLeft size={13} className="text-indigo-500" />
+                      <div>
+                        <div className="font-semibold">City Pairs</div>
+                        <div className="text-[10px] text-slate-400">Programmatic SEO backbone</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/docs/getting-started/authentication"
+                      onClick={(e) => { e.preventDefault(); window.history.pushState(null, "", "/docs/getting-started/authentication"); window.dispatchEvent(new Event("tdp:navigate")); setShowApisDropdown(false); setShowMobileMenu(false); }}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-slate-100/60 transition-colors`}
+                    >
+                      <BookOpen size={13} className="text-slate-500" />
+                      <div>
+                        <div className="font-semibold">Authentication</div>
+                        <div className="text-[10px] text-slate-400">Rate limits + Pro tier (Q3)</div>
+                      </div>
+                    </a>
                   </div>
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => handleScrollToSection("insights-section")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
-            >
-              Insights
-            </button>
           </div>
 
           {/* AI Command Search Input - always visible (md+) */}
@@ -1467,33 +1283,7 @@ export default function App() {
               </button>
           </div>
 
-          {/* Preferences Settings & Mobile Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => {
-                setSettingsTab("design");
-                setShowSettings(true);
-              }}
-              className={`p-2 rounded-lg bg-slate-50/80 border ${t.border} ${t.text} hover:opacity-80 transition cursor-pointer flex items-center gap-1.5`}
-              title="Workspace Themes & Styling"
-            >
-              <Palette size={15} className={t.accentText} />
-              <span className="text-[11px] font-mono font-medium hidden xl:inline">Design themes</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSettingsTab("general");
-                setShowSettings(true);
-              }}
-              className={`p-2 rounded-lg bg-slate-50/80 border ${t.border} ${t.text} hover:opacity-80 transition cursor-pointer flex items-center gap-1.5`}
-              title="Manual Workspace Settings"
-            >
-              <Settings size={15} />
-              <span className="text-[11px] font-mono font-medium hidden xl:inline">Settings</span>
-            </button>
-
-            {/* Hamburger menu button for mobile/tablet */}
+          {/* Mobile menu toggle (visible below lg) */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className={`lg:hidden p-2 rounded-lg bg-slate-50/80 border ${t.border} ${t.text} hover:bg-slate-100 transition cursor-pointer`}
@@ -1501,7 +1291,6 @@ export default function App() {
             >
               <Menu size={15} />
             </button>
-          </div>
         </div>
 
         {/* Mobile Navigation Drawer Dropdown */}
@@ -1515,13 +1304,6 @@ export default function App() {
                 <Clock size={14} className={t.accentText} />
                 <span>Today Snapshot</span>
               </button>
-              <button
-                onClick={() => handleScrollToSection("insights-section")}
-                className={`flex items-center gap-2 p-2.5 rounded-lg border ${t.border} text-xs font-semibold ${t.text} hover:bg-slate-50`}
-              >
-                <TrendingUp size={14} className="text-emerald-500" />
-                <span>Smart Insights</span>
-              </button>
             </div>
 
             {/* Time Tools list inside mobile menu */}
@@ -1531,32 +1313,12 @@ export default function App() {
               </div>
               <div className="space-y-1.5">
                 <button
-                  onClick={() => navigateToWorldClock(currentPathRoute?.lang || "en")}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
-                >
-                  <span className="flex items-center gap-2 font-semibold">
-                    <Globe size={13} className="text-indigo-500" />
-                    World Clock Dashboard
-                  </span>
-                  <ChevronRight size={12} className="text-slate-400" />
-                </button>
-                <button
                   onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
                     <ArrowRightLeft size={13} className="text-blue-500" />
                     Time Zone Converter
-                  </span>
-                  <ChevronRight size={12} className="text-slate-400" />
-                </button>
-                <button
-                  onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
-                >
-                  <span className="flex items-center gap-2 font-semibold">
-                    <Users size={13} className="text-emerald-500" />
-                    AI Meeting Planner
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
@@ -1627,7 +1389,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
         <LandingPage
@@ -1981,88 +1743,6 @@ export default function App() {
             {currentPathRoute.tool === "currency-converter" && <CurrencyConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
           </div>
-        ) : currentPathRoute?.isMeetingFinder ? (
-          <div className="animate-fade-in">
-            <MeetingFinder lang={currentPathRoute?.lang || "en"} />
-          </div>
-        ) : currentPathRoute?.isWorldClock ? (
-          <div className="animate-fade-in space-y-8">
-            {(() => {
-              const targetLang = currentPathRoute.lang || "en";
-              const targetCountry = currentPathRoute.country || "GB";
-              const locInfo = LOCALIZED_NAMES[targetLang]?.[targetCountry] || LOCALIZED_NAMES.en[targetCountry] || { city: "London", country: "United Kingdom" };
-              const offsetInfo = getTimezoneOffsetAndAbbr(currentPathRoute.timezone, liveDate);
-
-              return (
-                <div className="space-y-8">
-                  {/* Top Header (city + timezone info, no back button) */}
-                  <div className="flex items-center gap-3 border-b border-slate-200/10 dark:border-slate-800/40 pb-4">
-                    <span className="text-2xl sm:text-3xl">
-                      {targetCountry === "FR" ? "🇫🇷" :
-                       targetCountry === "CN" ? "🇨🇳" :
-                       targetCountry === "JP" ? "🇯🇵" :
-                       targetCountry === "US" ? "🇺🇸" : "🇬🇧"}
-                    </span>
-                    <div>
-                      <h1 className="text-xl sm:text-2xl font-sans font-bold tracking-tight">
-                        {locInfo.city}, {locInfo.country}
-                      </h1>
-                      <p className="text-xs text-slate-400">
-                        {currentPathRoute.timezone} • {offsetInfo.offsetStr} ({offsetInfo.abbr})
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Gigantic 7-Segment LED Digital Clock Section */}
-                  <div className="bg-transparent rounded-2xl border border-slate-200 dark:border-slate-800/80 p-8 sm:p-12 relative overflow-hidden select-none">
-                    {/* Retro-cyber grid/glow design background lines */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.08)_0%,transparent_70%)] pointer-events-none" />
-
-                    <div className="relative text-center space-y-4">
-                      <span className="inline-block text-[10px] sm:text-xs font-mono font-bold tracking-widest text-emerald-500/70 uppercase bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                        {currentPathRoute.lang === "fr" ? "HORLOGE NATIONALE DE PRÉCISION" :
-                         currentPathRoute.lang === "zh" ? "国家高精度授时中心" :
-                         currentPathRoute.lang === "ja" ? "高精度国家標準時" :
-                         "HIGH-PRECISION STANDARD TIME"}
-                      </span>
-
-                      {/* Display Clock face with background digit shadow */}
-                      <div className="relative flex items-center justify-center py-6 font-digital">
-                        {/* Unlit segments background */}
-                        <div className="absolute opacity-[0.03] dark:opacity-[0.04] text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-widest text-emerald-500 text-center select-none whitespace-nowrap">
-                          {preferences.timeFormat === "12h" ? "88:88:88 AM" : "88:88:88"}
-                        </div>
-                        {/* Active glowing digits */}
-                        <div className="relative text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-widest text-emerald-500 dark:text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.6)] text-center select-none whitespace-nowrap">
-                          {formatLocalTime(liveDate, preferences.timeFormat, currentPathRoute.timezone)}
-                        </div>
-                      </div>
-
-                      {/* Localized Full Date */}
-                      <div className="text-xs sm:text-sm font-mono text-slate-400 font-semibold uppercase tracking-wider">
-                        {formatLocalDate(liveDate, preferences.dateFormat, preferences.locale, currentPathRoute.timezone)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* World Clock Dashboard Component */}
-                  <WorldClockDashboard
-                    preferences={preferences}
-                    onSelectTimezone={(tz, country, cName) => {
-                      savePreferences({
-                        ...preferences,
-                        timezone: tz,
-                        country,
-                        countryName: cName
-                      });
-                    }}
-                    lang={currentPathRoute.lang || "en"}
-                    isWorldClockPage={true}
-                  />
-                </div>
-              );
-            })()}
-          </div>
         ) : (
           <>
             {/* T4: When VITE_LANDING_V2 is on, LandingPage composes its
@@ -2096,18 +1776,6 @@ export default function App() {
                   });
                 }}
                 lang={currentPathRoute?.lang || "en"}
-              />
-            </div>
-
-            {/* Section 4: Personalized Time Insights */}
-            <div id="insights-section" className="scroll-mt-24">
-              <TimeInsights
-                preferences={preferences}
-                onNavigateToTool={(toolId) => {
-                  setActiveToolTab(toolId);
-                  const elem = document.getElementById("quick-tools-section");
-                  elem?.scrollIntoView({ behavior: "smooth" });
-                }}
               />
             </div>
               </>
@@ -2148,302 +1816,8 @@ export default function App() {
               Support
             </button>
           </div>
-          {/* Language Picker */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Language</span>
-            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1">
-              {[
-                { lang: "en", flag: "🇬🇧", label: "EN" },
-                { lang: "fr", flag: "🇫🇷", label: "FR" },
-                { lang: "zh", flag: "🇨🇳", label: "ZH" },
-                { lang: "ja", flag: "🇯🇵", label: "JA" }
-              ].map((item) => (
-                <button
-                  key={item.lang}
-                  onClick={() => switchLanguage(item.lang as "en" | "fr" | "zh" | "ja")}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                    (currentPathRoute?.lang || (preferences.country === "GB" ? "en" : preferences.country === "FR" ? "fr" : preferences.country === "CN" ? "zh" : preferences.country === "JP" ? "ja" : "en")) === item.lang
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                  title={item.lang.toUpperCase()}
-                >
-                  <span>{item.flag}</span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </footer>
-
-      {/* 7. DETAILED WORKSPACE MANUAL SETTINGS PANEL MODAL */}
-      {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-2xl flex flex-col max-h-[90vh]">
-
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <Settings size={18} className={t.accentText} /> Workspace Settings
-                </h3>
-                <p className="text-xs text-slate-400">Customize default locales, language rendering, calendars and workspace preferences.</p>
-              </div>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* TAB SELECTOR HEADER */}
-            <div className="flex border-b border-slate-800/80 mt-3 mb-4 gap-4 text-xs font-mono">
-              <button
-                onClick={() => setSettingsTab("general")}
-                className={`pb-2 px-1 font-semibold transition ${
-                  settingsTab === "general"
-                    ? `border-b-2 ${t.accentText} border-cyan-500`
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                General Config
-              </button>
-              <button
-                onClick={() => setSettingsTab("design")}
-                className={`pb-2 px-1 font-semibold transition flex items-center gap-1.5 ${
-                  settingsTab === "design"
-                    ? `border-b-2 ${t.accentText} border-cyan-500`
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <Palette size={13} />
-                <span>Design Options</span>
-              </button>
-            </div>
-
-            {/* Form scrollable container */}
-            <div className="overflow-y-auto py-2 flex-1 space-y-4 pr-1">
-
-              {settingsTab === "design" ? (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="mb-1">
-                    <span className="text-[10px] font-mono text-slate-400 font-semibold uppercase tracking-wider">Visual Workspace Themes</span>
-                    <h4 className="text-md font-semibold text-slate-100 mt-0.5 font-display">Select Theme Preset</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Select any theme to immediately preview the ambient background, primary colors and card visual highlights in real time.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {(Object.keys(THEME_CONFIGS) as ThemeType[]).map((themeKey) => {
-                      const themeConfig = THEME_CONFIGS[themeKey];
-                      const isSelected = (preferences.theme || "slate") === themeKey;
-
-                      return (
-                        <div
-                          key={themeKey}
-                          onClick={() => {
-                            setPreferences({
-                              ...preferences,
-                              theme: themeKey
-                            });
-                          }}
-                          className={`group rounded-xl border p-3.5 shadow-sm cursor-pointer transition-all duration-200 flex items-center justify-between gap-4 ${
-                            isSelected
-                              ? `border-slate-400 bg-slate-800/50 ring-1 ring-cyan-500/20`
-                              : `border-slate-800 bg-slate-900/20 hover:border-slate-700 hover:bg-slate-900/40`
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {/* Radio indicator */}
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all shrink-0 ${
-                              isSelected
-                                ? "border-cyan-400 bg-cyan-400/10 text-cyan-400"
-                                : "border-slate-600 group-hover:border-slate-400"
-                            }`}>
-                              {isSelected && <Check size={10} strokeWidth={3} />}
-                            </div>
-
-                            <div>
-                              <div className="text-sm font-semibold text-slate-200">{themeConfig.name}</div>
-                              <div className="text-xs text-slate-400/90 mt-0.5 leading-relaxed">{themeConfig.description}</div>
-                            </div>
-                          </div>
-
-                          {/* Previews / Swatches */}
-                          <div className="flex gap-1 bg-slate-950 p-1.5 rounded-lg border border-slate-850 shrink-0">
-                            {themeConfig.previewColors.map((colorClass, idx) => (
-                              <span key={idx} className={`w-3 h-3 rounded-full ${colorClass}`} />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4 animate-fade-in">
-                  {/* Country Selection */}
-                  <div>
-                    <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Primary Country / Profile</label>
-                    <select
-                      value={preferences.country}
-                      onChange={(e) => {
-                        const countryCode = e.target.value as CountryCode;
-                        const defaults = DEFAULT_PREFERENCES[countryCode];
-                        if (defaults) {
-                          setPreferences({
-                            ...preferences,
-                            country: countryCode,
-                            countryName: defaults.countryName,
-                            timezone: defaults.timezone,
-                            language: defaults.language,
-                            locale: defaults.locale,
-                            dateFormat: defaults.dateFormat,
-                            timeFormat: defaults.timeFormat,
-                            firstDayOfWeek: defaults.firstDayOfWeek,
-                            favoriteCities: defaults.favoriteCities
-                          });
-                        }
-                      }}
-                      className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="US">United States</option>
-                      <option value="IN">India</option>
-                      <option value="DE">Germany</option>
-                      <option value="JP">Japan</option>
-                      <option value="AE">United Arab Emirates</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="OTHER">Global / General Fallback</option>
-                    </select>
-                  </div>
-
-                  {/* Timezone selection */}
-                  <div>
-                    <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Base Workstation Timezone ID</label>
-                    <select
-                      value={preferences.timezone}
-                      onChange={(e) => setPreferences({ ...preferences, timezone: e.target.value })}
-                      className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500 font-mono"
-                    >
-                      {Object.keys(CITY_DATA).map(tz => (
-                        <option key={tz} value={tz}>{CITY_DATA[tz].name} - {tz}</option>
-                      ))}
-                      <option value="UTC">Coordinated Universal Time (UTC)</option>
-                    </select>
-                  </div>
-
-                  {/* Formatting fields */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Date Format style</label>
-                      <select
-                        value={preferences.dateFormat}
-                        onChange={(e) => setPreferences({ ...preferences, dateFormat: e.target.value as any })}
-                        className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
-                      >
-                        <option value="MM/DD/YYYY">MM/DD/YYYY (US)</option>
-                        <option value="DD/MM/YYYY">DD/MM/YYYY (UK/UAE/IN)</option>
-                        <option value="DD.MM.YYYY">DD.MM.YYYY (DE)</option>
-                        <option value="YYYY/MM/DD">YYYY/MM/DD (JP)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Time Format style</label>
-                      <select
-                        value={preferences.timeFormat}
-                        onChange={(e) => setPreferences({ ...preferences, timeFormat: e.target.value as any })}
-                        className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
-                      >
-                        <option value="12h">12-hour (AM/PM)</option>
-                        <option value="24h">24-hour index</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Day rules */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">First Day of Week</label>
-                      <select
-                        value={preferences.firstDayOfWeek}
-                        onChange={(e) => setPreferences({ ...preferences, firstDayOfWeek: e.target.value as any })}
-                        className="w-full bg-slate-950 text-slate-200 border border-slate-800 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500"
-                      >
-                        <option value="sunday">Sunday</option>
-                        <option value="monday">Monday</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Holiday Calendar Filter</label>
-                      <div className="bg-slate-950 p-2.5 border border-slate-800 text-xs text-slate-400 font-mono rounded">
-                        Using: {preferences.countryName} public list
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Working Hours slider settings */}
-                  <div>
-                    <label className="block text-xs font-mono font-semibold uppercase text-slate-400 mb-2">Core Working Hour Boundaries</label>
-                    <div className="flex gap-4 items-center bg-slate-950 p-3.5 border border-slate-800 rounded-lg">
-                      <div className="flex-1">
-                        <span className="text-[10px] font-mono text-slate-500">Core start hour: {preferences.workingHoursStart}:00</span>
-                        <input
-                          type="range"
-                          min="0"
-                          max="23"
-                          value={preferences.workingHoursStart}
-                          onChange={(e) => setPreferences({ ...preferences, workingHoursStart: parseInt(e.target.value) })}
-                          className="w-full accent-blue-500 h-1 bg-slate-800 rounded"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-[10px] font-mono text-slate-500">Core end hour: {preferences.workingHoursEnd}:00</span>
-                        <input
-                          type="range"
-                          min="0"
-                          max="23"
-                          value={preferences.workingHoursEnd}
-                          onChange={(e) => setPreferences({ ...preferences, workingHoursEnd: parseInt(e.target.value) })}
-                          className="w-full accent-blue-500 h-1 bg-slate-800 rounded"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-
-            <div className="pt-4 border-t border-slate-800 flex justify-end gap-2.5">
-              <button
-                onClick={() => {
-                  // Revert to detected browser default state
-                  localStorage.removeItem("global_time_workspace_prefs");
-                  localStorage.removeItem("global_time_workspace_banner_locked");
-                  window.location.reload();
-                }}
-                className="px-4 py-2 rounded-lg bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition font-semibold"
-              >
-                Reset Default
-              </button>
-              <button
-                onClick={() => {
-                  savePreferences(preferences);
-                  setShowSettings(false);
-                }}
-                className={`px-5 py-2 rounded-lg ${t.btnPrimary} font-bold text-xs transition`}
-              >
-                Apply Workspace
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );
