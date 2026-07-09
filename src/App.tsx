@@ -1736,7 +1736,7 @@ export default function App() {
 
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        {currentPathRoute?.tool ? (
+        {(currentPathRoute?.tool || currentPathRoute?.pair) ? (
           <div className="animate-fade-in">
             {currentPathRoute.tool === "holidays" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "working-hours" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
