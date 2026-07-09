@@ -1272,3 +1272,118 @@
   cursor: default;
   opacity: 0.85;
 }
+
+/* ============================================================================
+ * ExploreMore — NotebookLM-style colored cards (6-up grid)
+ * Each card uses its own gradient bg + matching icon chip so the grid
+ * reads as a "dashboard of capabilities" rather than a flat menu.
+ * ============================================================================ */
+
+.tdp-hooks--colored {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 920px) {
+  .tdp-hooks--colored {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .tdp-hooks--colored {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tdp-hook--violet,
+.tdp-hook--amber,
+.tdp-hook--rose,
+.tdp-hook--sky,
+.tdp-hook--lime,
+.tdp-hook--indigo {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+  transition: transform 220ms var(--ease-smooth, ease), box-shadow 220ms var(--ease-smooth, ease), border-color 220ms;
+  cursor: pointer;
+}
+
+.tdp-hook--violet { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%); border-color: #c4b5fd; color: #3b0764; }
+.tdp-hook--amber  { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%); border-color: #fcd34d; color: #451a03; }
+.tdp-hook--rose   { background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 50%, #fda4af 100%); border-color: #fda4af; color: #4c0519; }
+.tdp-hook--sky    { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%); border-color: #7dd3fc; color: #0c4a6e; }
+.tdp-hook--lime   { background: linear-gradient(135deg, #ecfccb 0%, #d9f99d 50%, #bef264 100%); border-color: #bef264; color: #1a2e05; }
+.tdp-hook--indigo { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%); border-color: #a5b4fc; color: #1e1b4b; }
+
+.tdp-hook--violet:hover,
+.tdp-hook--amber:hover,
+.tdp-hook--rose:hover,
+.tdp-hook--sky:hover,
+.tdp-hook--lime:hover,
+.tdp-hook--indigo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -10px rgba(15, 23, 42, 0.18);
+}
+
+.tdp-hook-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+
+.tdp-hook--violet .tdp-hook-icon { color: #6d28d9; }
+.tdp-hook--amber  .tdp-hook-icon { color: #b45309; }
+.tdp-hook--rose   .tdp-hook-icon { color: #be123c; }
+.tdp-hook--sky    .tdp-hook-icon { color: #0369a1; }
+.tdp-hook--lime   .tdp-hook-icon { color: #4d7c0f; }
+.tdp-hook--indigo .tdp-hook-icon { color: #4338ca; }
+
+.tdp-hook-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tdp-hook-tagline {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.tdp-hook-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tdp-hook-arrow {
+  opacity: 0.5;
+  flex-shrink: 0;
+  transition: opacity 200ms, transform 200ms;
+}
+
+.tdp-hook:hover .tdp-hook-arrow {
+  opacity: 1;
+  transform: translate(2px, -2px);
+}
