@@ -7,10 +7,22 @@
 // selects all of them" behavior). Double-click on a column extends the
 // time window by 12h in that direction; click sets the time anchor.
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Calendar as CalendarIcon,
+  Share2,
+  Download,
+  ExternalLink,
+  AlertCircle,
+} from "lucide-react";
 import { CITIES, CityEntry, CITY_BY_CODE } from "../../data/cities";
 import { flagFor } from "../../data/flags";
 import { getCountryHolidaysForDate } from "../../utils/holidayLookup";
+import { useClickOutside } from "../../utils/useClickOutside";
 
 export type CellKind = "working" | "earlyLate" | "night" | "sleep" | "weekend" | "holiday";
 
@@ -30,6 +42,8 @@ export interface TimeZoneGridProps {
   onDownloadPng?: () => void;
   /** Optional ref attached to the outer container — used for screenshot capture. */
   innerRef?: React.RefObject<HTMLDivElement | null>;
+  /** Optional status text shown in the toolbar (used to surface errors / busy). */
+  statusText?: string | null;
 }
 
 const LEGEND: Array<{ kind: CellKind; label: string; color: string }> = [
@@ -152,10 +166,14 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
     onCopyToClipboard,
     onDownloadPng,
     innerRef,
+    statusText,
   } = props;
 
   const [hoverCol, setHoverCol] = useState<number | null>(null);
   const [paneStartCol, setPaneStartCol] = useState(0); // 0 = centered at now
+  const [calOpen, setCalOpen] = useState(false);
+  const calDropdownRef = useRef<HTMLDivElement>(null);
+  useClickOutside(calDropdownRef, () => setCalOpen(false));
 
   // Anchor: top of hour, with offset so the current hour is the visible "now"
   const anchor = useMemo(() => {
@@ -192,56 +210,137 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
 
   // Day separators (when slot date rolls over in the FIRST city = the "reference" city)
   const refCity = cities[0];
-
   return (
     <div ref={innerRef} className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 overflow-hidden">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-        <button
-          type="button"
-          aria-label="Pan 12 hours earlier"
-          onClick={() => setPaneStartCol((p) => p - 12)}
-          className="px-2 py-1 rounded-md hover:bg-slate-200 text-slate-600"
-        >
-          ←
-        </button>
-        <div className="px-3 py-1 rounded-md bg-white border border-slate-200 text-sm font-medium text-indigo-700 font-mono">
-          {hoursPerColumn} hour{hoursPerColumn === 1 ? "" : "s"}
+        {/* Pane controls */}
+        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5">
+          <button
+            type="button"
+            aria-label="Pan 12 hours earlier"
+            onClick={() => setPaneStartCol((p) => p - 12)}
+            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <div className="px-2 text-[11px] font-mono font-medium text-indigo-700 min-w-[60px] text-center">
+            {hoursPerColumn} hour{hoursPerColumn === 1 ? "" : "s"}
+          </div>
+          <button
+            type="button"
+            aria-label="Pan 12 hours later"
+            onClick={() => setPaneStartCol((p) => p + 12)}
+            className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-600 transition"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
-        <button
-          type="button"
-          aria-label="Pan 12 hours later"
-          onClick={() => setPaneStartCol((p) => p + 12)}
-          className="px-2 py-1 rounded-md hover:bg-slate-200 text-slate-600"
-        >
-          →
-        </button>
 
-        <div className="flex-1 min-w-[200px] text-sm text-slate-600 truncate">
+        {/* Reference time */}
+        <div className="flex-1 min-w-[180px] text-sm text-slate-600 truncate">
           {refCity && (
             <>
               <span className="font-semibold text-slate-800">{refCity.name}:</span>{" "}
               {cellLabelFor(refCity, baseDate)} – {cellLabelFor(refCity, addHours(baseDate, hoursPerColumn))}
-              <span className="text-slate-400"> · Click to adjust, double-click to extend</span>
+              <span className="text-slate-400"> · click column to adjust, dbl-click to extend</span>
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => onAddToCalendar?.("outlook")} className="px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 inline-flex items-center gap-1.5">
-            <span aria-hidden>📅</span> Outlook / iCal
+        {/* Status badge */}
+        {statusText && (
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-900 text-white text-[11px] font-medium shadow-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            {statusText}
+          </span>
+        )}
+
+        {/* Action buttons — consistent Lucide icon style, primary CTA on the right */}
+        <div className="flex items-center gap-2">
+          {/* Save PNG — outlined primary (reliable fallback) */}
+          <button
+            type="button"
+            onClick={onDownloadPng}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-indigo-200 bg-white hover:bg-indigo-50 text-[13px] font-semibold text-indigo-700 transition"
+            title="Download the grid as a PNG image"
+          >
+            <Download size={14} />
+            Save PNG
           </button>
-          <button type="button" onClick={() => onAddToCalendar?.("google")} className="px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 inline-flex items-center gap-1.5">
-            <span aria-hidden>📅</span> Google Calendar
+
+          {/* Copy image to clipboard */}
+          <button
+            type="button"
+            onClick={onCopyToClipboard}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-medium text-slate-700 transition"
+            title="Copy a screenshot of the grid to your clipboard"
+          >
+            <Copy size={14} />
+            Copy image
           </button>
-          <button type="button" onClick={() => onCopyToClipboard?.()} className="px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 inline-flex items-center gap-1.5">
-            <span aria-hidden>📋</span> Clipboard
-          </button>
-          <button type="button" onClick={onShare} className="px-2 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-medium inline-flex items-center gap-1.5">
-            <span aria-hidden>🔗</span> Share this view
-          </button>
-          <button type="button" onClick={onDownloadPng} className="px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-xs text-slate-700 inline-flex items-center gap-1.5" title="Download as PNG image">
-            <span aria-hidden>⬇</span> PNG
+
+          {/* Add to calendar — dropdown */}
+          <div className="relative" ref={calDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setCalOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={calOpen}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-medium text-slate-700 transition"
+            >
+              <CalendarIcon size={14} />
+              Add to calendar
+              <ChevronDown size={12} className={`transition-transform ${calOpen ? "rotate-180" : ""}`} />
+            </button>
+            {calOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-1 z-20 w-56 rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 py-1 overflow-hidden"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setCalOpen(false); onAddToCalendar?.("google"); }}
+                  className="w-full text-left px-3 py-2 text-[13px] hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <span className="inline-block h-5 w-5 rounded bg-indigo-100 inline-flex items-center justify-center text-[10px] font-bold text-indigo-700">G</span>
+                  Google Calendar
+                  <ExternalLink size={11} className="ml-auto text-slate-400" />
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setCalOpen(false); onAddToCalendar?.("ics"); }}
+                  className="w-full text-left px-3 py-2 text-[13px] hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <span className="inline-block h-5 w-5 rounded bg-sky-100 inline-flex items-center justify-center text-[10px] font-bold text-sky-700">i</span>
+                  Outlook / Apple iCal (.ics)
+                  <ExternalLink size={11} className="ml-auto text-slate-400" />
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setCalOpen(false); onAddToCalendar?.("outlook"); }}
+                  className="w-full text-left px-3 py-2 text-[13px] hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                >
+                  <span className="inline-block h-5 w-5 rounded bg-blue-100 inline-flex items-center justify-center text-[10px] font-bold text-blue-700">O</span>
+                  Outlook.com (web)
+                  <ExternalLink size={11} className="ml-auto text-slate-400" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Share — primary CTA */}
+          <button
+            type="button"
+            onClick={onShare}
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-[13px] font-semibold shadow-sm transition"
+            title="Share via OS share sheet (image + link)"
+          >
+            <Share2 size={14} />
+            Share
           </button>
         </div>
       </div>

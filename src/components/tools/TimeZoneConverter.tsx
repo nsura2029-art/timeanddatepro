@@ -236,18 +236,26 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
   async function handleDownloadPng() {
     if (busy) return;
     setBusy(true);
-    setShareToast(null);
+    setShareToast("Rendering PNG...");
     try {
       const blob = await snapshot();
-      if (blob) {
-        triggerDownload(blob, "time-zones.png");
-        setShareToast("PNG downloaded");
-      } else {
-        setShareToast("Screenshot failed");
+      if (!blob) {
+        setShareToast("Screenshot failed - check console");
+        console.error("[png] snapshot returned null - check gridRef in devtools");
+        return;
       }
+      const ok = triggerDownload(blob, "time-zones.png");
+      if (ok) {
+        setShareToast("PNG downloaded (check your Downloads folder)");
+      } else {
+        setShareToast("PNG download blocked by browser");
+      }
+    } catch (e) {
+      setShareToast(`PNG failed: ${(e as Error)?.message ?? "unknown"}`);
+      console.error("[png] error:", e);
     } finally {
       setBusy(false);
-      setTimeout(() => setShareToast(null), 1800);
+      setTimeout(() => setShareToast(null), 3500);
     }
   }
 
@@ -286,6 +294,7 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
         onCopyToClipboard={handleCopyToClipboard}
         onDownloadPng={handleDownloadPng}
         innerRef={gridRef}
+        statusText={busy ? "Working..." : shareToast}
       />
 
       {/* Popular conversions (programmatic SEO hub) */}
@@ -315,14 +324,6 @@ console.log(\`Hour difference: \${result.differenceHours}\`);`}
         curlCode={`curl "https://timeanddatepro.com/api/v1/time/convert?from=NYC&to=TYO&time=15%3A00&date=2026-07-08"`}
         docsHref="/docs/integrations/time-zone-converter"
       />
-
-      {/* Toast */}
-      {shareToast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900 text-white text-sm shadow-lg flex items-center gap-2">
-          {busy && <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />}
-          {shareToast}
-        </div>
-      )}
     </div>
   );
 }
