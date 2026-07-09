@@ -382,18 +382,33 @@
   text-transform: none;
 }
 
-/* FiveCitiesFavorites ------------------------------------------------------- */
+/* FiveCitiesFavorites + TopPopularCities -----------------------------------
+ * Two components share the .tdp-city-card chip. FiveCitiesFavorites caps
+ * at 5 per row (so favorites land in a tidy single line until the user
+ * starts adding more — at which point the 6th, 7th... wrap to a new row,
+ * exactly the "click to add starting next row" UX). TopPopularCities
+ * uses 4 columns (--popular modifier) so 20 cards fit in a 5x4 grid.
+ */
 .tdp-cities-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 
+.tdp-cities-row--popular {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .tdp-cities-row--popular { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 900px) {
   .tdp-cities-row { grid-template-columns: repeat(3, 1fr); }
+  .tdp-cities-row--popular { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-  .tdp-cities-row { grid-template-columns: repeat(2, 1fr); }
+  .tdp-cities-row,
+  .tdp-cities-row--popular { grid-template-columns: repeat(2, 1fr); }
 }
 
 .tdp-city-card {
@@ -466,6 +481,44 @@
   font-size: 10px;
   color: var(--hero-text-muted);
   letter-spacing: 0.02em;
+}
+
+/* Favorite star indicator — top-right corner of every city card.
+ * Hollow in TopPopularCities = click to add. Filled in FiveCitiesFavorites
+ * + TopPopularCities' favorite rows = click to remove. Same star, two
+ * states — no second icon needed.
+ */
+.tdp-city-card .fav-star {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--accent-coral);
+  opacity: 0.35;
+  transition: opacity 150ms ease, transform 150ms ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.tdp-city-card .fav-star.filled {
+  opacity: 1;
+  color: var(--accent-coral);
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.35);
+}
+
+.tdp-city-card:hover .fav-star {
+  opacity: 0.85;
+  transform: scale(1.15);
+}
+
+.tdp-city-card.is-favorite {
+  background: rgba(5, 150, 105, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.18);
+}
+
+.tdp-city-card.is-favorite .city {
+  color: var(--accent-primary-deep);
 }
 
 /* CityDetailCard ------------------------------------------------------------ */
@@ -674,77 +727,11 @@
   flex-shrink: 0;
 }
 
-/* TopPopularCities --------------------------------------------------------- */
-.tdp-popular-sub {
-  font-size: 13px;
-  color: var(--hero-text-muted);
-  margin: -12px 0 20px;
-}
-
-.tdp-pop-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-@media (max-width: 1000px) {
-  .tdp-pop-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 700px) {
-  .tdp-pop-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 420px) {
-  .tdp-pop-grid { grid-template-columns: 1fr; }
-}
-
-.tdp-pop-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 150ms ease;
-  font-family: var(--hero-fg-font);
-}
-
-.tdp-pop-row:hover {
-  background: rgba(99, 102, 241, 0.06);
-}
-
-.tdp-pop-row .rank {
-  font-family: var(--hero-mono-font);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--hero-text-muted);
-  width: 18px;
-  text-align: right;
-}
-
-.tdp-pop-row .name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--hero-text);
-}
-
-.tdp-pop-row .country {
-  font-size: 11px;
-  color: var(--hero-text-muted);
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-}
-
-.tdp-pop-row .clock {
-  font-family: var(--hero-mono-font);
-  font-size: 11px;
-  color: var(--hero-text-muted);
-  font-variant-numeric: tabular-nums;
-  margin-left: 4px;
-}
-
-.tdp-pop-row.is-favorite .name {
-  color: var(--accent-primary-deep);
-}
+/* TopPopularCities ---------------------------------------------------------
+ * Now shares the same `.tdp-city-card` chip as FiveCitiesFavorites. The
+ * grid uses `.tdp-cities-row--popular` (4-col default, see top of file)
+ * so 20 cards fit a 5x4 layout.
+ */
 
 /* QuoteBlock ---------------------------------------------------------------- */
 .tdp-quote {

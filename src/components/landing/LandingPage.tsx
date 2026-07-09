@@ -5,7 +5,7 @@
 
 import React from "react";
 import type { BrowseHome } from "../../utils/homeApi";
-import type { CityEntry } from "../../data/cities";
+import { CITY_BY_CODE, type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
 import { FiveCitiesFavorites } from "./FiveCitiesFavorites";
 import { CityDetailCard, type SunSummary } from "./CityDetailCard";
@@ -45,6 +45,21 @@ export function LandingPage({
   // Normalize data — sections can render with partial data (graceful fallbacks).
   const topFive: CityEntry[] = homeData?.topFive ?? [];
   const topTwenty: CityEntry[] = homeData?.topTwenty ?? [];
+
+  // Resolve favorite codes → CityEntry[] for FiveCitiesFavorites.
+  // Lookup priority: browse/home topTwenty (has freshest live ticker data)
+  // → CITY_BY_CODE (covers everything else). Falls back to topFive if
+  // the user has no favorites yet — preserves the curated default.
+  const favorites: CityEntry[] = favoriteCodes.length > 0
+    ? favoriteCodes
+        .map((code) => {
+          const from20 = topTwenty.find((c) => c.code === code);
+          if (from20) return from20;
+          const byCode = CITY_BY_CODE[code];
+          return byCode as CityEntry | undefined;
+        })
+        .filter((c): c is CityEntry => Boolean(c))
+    : topFive;
   const homeCity: CityEntry | undefined = homeData?.home
     ? {
         code: "WLC",
@@ -79,9 +94,9 @@ export function LandingPage({
         testData={homeData}
       />
 
-      {/* 5 favorite cities --------------------------------------- */}
-      {topFive.length > 0 && (
-        <FiveCitiesFavorites liveDate={liveDate} cities={topFive} />
+      {/* Favorite cities --------------------------------------- */}
+      {favorites.length > 0 && (
+        <FiveCitiesFavorites liveDate={liveDate} cities={favorites} />
       )}
 
       {/* Featured city (home) ----------------------------------- */}

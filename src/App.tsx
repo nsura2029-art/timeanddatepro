@@ -404,6 +404,53 @@ export default function App() {
   // called unconditionally, but the hook itself does no work unless
   // VITE_LANDING_V2 is on.
   const homeData = useHomeData(preferences.countryCode, "WLC");
+
+  // T4+: Favorite cities list — driven by FiveCitiesFavorites + TopPopularCities.
+  // Persisted to localStorage so the user's picks survive page reloads.
+  // FiveCitiesFavorites dispatches `tdp:add-city` and TopPopularCities does
+  // the same — both toggle a city in/out of the list. The favorites grid
+  // grows past 5 (cards wrap to the next row, per user feedback).
+  const [favoriteCodes, setFavoriteCodes] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("tdp_user_cities");
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((s): s is string => typeof s === "string") : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    function handleAddCity(ev: Event) {
+      const e = ev as CustomEvent<{ code: string }>;
+      const code = e.detail?.code;
+      if (!code) return;
+      setFavoriteCodes((prev) => {
+        if (prev.includes(code)) {
+          // Toggle off — remove from favorites
+          const next = prev.filter((c) => c !== code);
+          try { localStorage.setItem("tdp_user_cities", JSON.stringify(next)); } catch {}
+          return next;
+        }
+        // Add to favorites (append at end so it appears as the "next row" card)
+        const next = [...prev, code];
+        try { localStorage.setItem("tdp_user_cities", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+    function handleSwapCity(ev: Event) {
+      // Same as add for now — toggles inclusion. Phase 2: scroll the
+      // swapped-out city into view and animate.
+      handleAddCity(ev);
+    }
+    window.addEventListener("tdp:add-city", handleAddCity as EventListener);
+    window.addEventListener("tdp:swap-city", handleSwapCity as EventListener);
+    return () => {
+      window.removeEventListener("tdp:add-city", handleAddCity as EventListener);
+      window.removeEventListener("tdp:swap-city", handleSwapCity as EventListener);
+    };
+  }, []);
   // Per-dropdown refs for click-outside-to-close
   const toolsDropdownRef = useRef<HTMLDivElement | null>(null);
   const dateToolsDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -1570,9 +1617,7 @@ export default function App() {
           countryName={preferences.countryName}
           lang={(currentPathRoute?.lang as "en" | "fr" | "zh" | "ja" | undefined) ?? "en"}
           homeData={homeData.status === "ok" ? homeData.data : null}
-          favoriteCodes={(() => {
-            try { return JSON.parse(localStorage.getItem("tdp_user_cities") || "[]"); } catch { return []; }
-          })()}
+          favoriteCodes={favoriteCodes}
         />
       )}
       {import.meta.env?.VITE_LANDING_V2 !== "true" && (
