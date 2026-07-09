@@ -1003,8 +1003,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => navigateToRoutePath(currentPathRoute?.lang || "en")}
-                    onClickCapture={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); }}
+                    onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-blue-50/60 transition-colors cursor-pointer`}
                   >
                     <ArrowRightLeft size={13} className="text-blue-500" />
@@ -1327,7 +1326,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("converter")}
+                  onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
