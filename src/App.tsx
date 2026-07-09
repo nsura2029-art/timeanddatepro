@@ -43,6 +43,7 @@ import TodaySnapshot from "./components/TodaySnapshot";
 import QuickActions from "./components/QuickActions";
 import TimeInsights from "./components/TimeInsights";
 import { TRANSLATIONS } from "./utils/translations";
+import { useClickOutside } from "./utils/useClickOutside";
 import WorldClockDashboard from "./components/WorldClockDashboard";
 import MeetingFinder from "./components/MeetingFinder";
 import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
@@ -332,6 +333,13 @@ export default function App() {
 
   // Scroll visibility refs
   const headerRef = useRef<HTMLDivElement | null>(null);
+  // Per-dropdown refs for click-outside-to-close
+  const toolsDropdownRef = useRef<HTMLDivElement | null>(null);
+  const dateToolsDropdownRef = useRef<HTMLDivElement | null>(null);
+  const apisDropdownRef = useRef<HTMLDivElement | null>(null);
+  useClickOutside(toolsDropdownRef, () => setShowToolsDropdown(false));
+  useClickOutside(dateToolsDropdownRef, () => setShowDateToolsDropdown(false));
+  useClickOutside(apisDropdownRef, () => setShowApisDropdown(false));
 
   // Sync `browserPath` with the current URL so the docs site re-renders on
   // back/forward and any in-app navigation that uses pushState.
@@ -957,10 +965,17 @@ export default function App() {
             </button>
 
             {/* Time Tools Dropdown Trigger */}
-            <div className="relative">
-              <button 
+            <div
+              ref={toolsDropdownRef}
+              className="relative"
+              onMouseLeave={() => setShowToolsDropdown(false)}
+            >
+              <button
+                type="button"
                 onClick={() => setShowToolsDropdown(!showToolsDropdown)}
                 onMouseEnter={() => setShowToolsDropdown(true)}
+                aria-haspopup="menu"
+                aria-expanded={showToolsDropdown}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 flex items-center gap-1 cursor-pointer`}
               >
                 <span>Time Tools</span>
@@ -969,9 +984,9 @@ export default function App() {
 
               {/* Tool Dropdown Menu List */}
               {showToolsDropdown && (
-                <div 
+                <div
+                  role="menu"
                   className={`absolute left-0 mt-1.5 w-64 rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
-                  onMouseLeave={() => setShowToolsDropdown(false)}
                 >
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
                     Select Workspace Tool
@@ -1051,10 +1066,17 @@ export default function App() {
             </div>
 
             {/* Date & Time Tools Dropdown Trigger */}
-            <div className="relative">
-              <button 
+            <div
+              ref={dateToolsDropdownRef}
+              className="relative"
+              onMouseLeave={() => setShowDateToolsDropdown(false)}
+            >
+              <button
+                type="button"
                 onClick={() => setShowDateToolsDropdown(!showDateToolsDropdown)}
                 onMouseEnter={() => setShowDateToolsDropdown(true)}
+                aria-haspopup="menu"
+                aria-expanded={showDateToolsDropdown}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${currentPathRoute?.tool ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
               >
                 <span>Date Tools</span>
@@ -1062,9 +1084,9 @@ export default function App() {
               </button>
 
               {showDateToolsDropdown && (
-                <div 
+                <div
+                  role="menu"
                   className={`absolute left-0 mt-1.5 w-72 rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
-                  onMouseLeave={() => setShowDateToolsDropdown(false)}
                 >
                   <div className="px-3 py-1.5 text-[10px] font-mono text-slate-400 uppercase font-semibold border-b border-slate-100/10 mb-1">
                     Date & Time Calculators
@@ -1134,10 +1156,17 @@ export default function App() {
             </div>
 
             {/* APIs Dropdown — Node.js SDK + REST endpoints + per-tool integration guides */}
-            <div className="relative">
+            <div
+              ref={apisDropdownRef}
+              className="relative"
+              onMouseLeave={() => setShowApisDropdown(false)}
+            >
               <button
+                type="button"
                 onClick={() => setShowApisDropdown(!showApisDropdown)}
                 onMouseEnter={() => setShowApisDropdown(true)}
+                aria-haspopup="menu"
+                aria-expanded={showApisDropdown}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${isDocsPath ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
               >
                 <Code2 size={12} />
@@ -1146,8 +1175,8 @@ export default function App() {
               </button>
               {showApisDropdown && (
                 <div
+                  role="menu"
                   className={`absolute right-0 mt-1.5 w-[640px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
-                  onMouseLeave={() => setShowApisDropdown(false)}
                 >
                   <div className="grid grid-cols-3 gap-3 px-2 py-1">
                     <ApiColumn
