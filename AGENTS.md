@@ -19,10 +19,11 @@
 - URL: `/admin` (or `/admin/dashboard`, `/admin/api-status`, `/admin/cache`).
 - Default creds: from `ADMIN_USER` / `ADMIN_PASS` env, OR on first boot a random 18-char password is written to `./.admin-credentials` (mode 0600) — copy + rotate + delete.
 - DB: `data/tdp.db` (SQLite, WAL). Swap-in for Cloudflare D1 at deploy time (`src/admin/db.ts` is the only layer to replace).
-- Login endpoint: `POST /api/admin/login`. Bootstrap (no auth): `GET /api/admin/bootstrap`. Authed endpoints under `/api/admin/authed/{dashboard,api-status,categories,endpoints,cache/invalidate}`.
+- Login endpoint: `POST /api/admin/login`. Bootstrap (no auth): `GET /api/admin/bootstrap`. Authed endpoints under `/api/admin/authed/{dashboard,api-status,categories,endpoints,cache/invalidate,triggers,triggers/run,triggers/history,triggers/stream}`.
+- Triggers (Phase E): 8 manual actions grouped by category (currency / wikipedia / data-source / system). Registry at `src/admin/triggers.ts`. Serial worker in `src/admin/worker.ts` polls `api_triggers` every 500ms. SSE at `/triggers/stream?taskId=N` streams live updates. Every `run` writes to `admin_audit`.
 - Categories used to group APIs in the side nav: `time`, `data-source`, `currency`, `wikipedia`, `places`, `auth`. The mapping lives in `src/admin/categories.ts` — add a new endpoint = one slug there.
 - All `/api/v1/*` requests are logged to `api_requests` (rolled at 7 days) via `src/admin/requestLog.ts`. The middleware is registered at the TOP of `server.ts` so `res.on('finish')` fires.
-- Triggering a manual refresh isn't wired yet (Phase E) — for now use the Cache page's "Invalidate" button which writes to `cache_invalidation`.
+- Manual refreshes: use the **Triggers** page in the admin panel. 8 actions registered in `src/admin/triggers.ts` (refresh:currency-rates, refresh:news:all/country, refresh:onthisday, sync:time, export:sitemap, etc.). Each enqueues a row in `api_triggers`, the serial worker processes it, and SSE streams live status to the UI.
 - Public API endpoints live as pure functions in `src/utils/timeApi.ts` and are mounted in `server.ts`. Adding an endpoint = function in `timeApi.ts` + handler in `server.ts` + `EndpointDoc` entry in `src/data/docs/endpointCatalog.ts`.
 
 ## Mandatory Loading Workflow
