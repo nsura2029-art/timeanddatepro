@@ -25,7 +25,8 @@ import {
   Plus,
   Code2,
   BookOpen,
-  Braces
+  Braces,
+  Coins
 } from "lucide-react";
 import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
 import {
@@ -53,6 +54,7 @@ import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
+import CurrencyConverter from "./components/tools/CurrencyConverter";
 import PairConverter from "./components/tools/PairConverter";
 import RouterDebugOverlay from "./components/common/RouterDebugOverlay";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
@@ -1153,6 +1155,16 @@ export default function App() {
                       <div className="text-[10px] text-slate-400">Encode or decode epoch timestamps</div>
                     </div>
                   </button>
+                  <button
+                    onClick={() => navigateToTool("currency-converter")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Coins size={13} className="text-emerald-500" />
+                    <div>
+                      <div className="font-semibold">Currency Converter</div>
+                      <div className="text-[10px] text-slate-400">Live ECB rates for 33 ISO 4217 codes</div>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -1241,6 +1253,16 @@ export default function App() {
                     <div>
                       <div className="font-semibold">Date to Words</div>
                       <div className="text-[10px] text-slate-400">Natural language, relative time</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => navigateToTool("currency-converter")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Coins size={13} className="text-emerald-500" />
+                    <div>
+                      <div className="font-semibold">Currency Converter</div>
+                      <div className="text-[10px] text-slate-400">Live ECB rates for 33 ISO 4217 codes</div>
                     </div>
                   </button>
                 </div>
@@ -1473,6 +1495,16 @@ export default function App() {
                   <span className="flex items-center gap-2 font-semibold">
                     <Terminal size={13} className="text-sky-500" />
                     Unix Epoch Converter
+                  </span>
+                  <ChevronRight size={12} className="text-slate-400" />
+                </button>
+                <button
+                  onClick={() => navigateToTool("currency-converter")}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    <Coins size={13} className="text-emerald-500" />
+                    Currency Converter
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
@@ -1831,6 +1863,7 @@ export default function App() {
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "currency-converter" && <CurrencyConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
           </div>
         ) : currentPathRoute?.isMeetingFinder ? (

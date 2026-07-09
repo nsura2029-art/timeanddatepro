@@ -273,6 +273,10 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/events/next",
       "GET /api/v1/onthisday",
       "GET /api/v1/browse/home",
+      // Currency
+      "GET /api/v1/currency/rates",
+      "GET /api/v1/currency/convert",
+      "GET /api/v1/currency/codes",
     ],
   }, "/api/v1");
 });
@@ -559,6 +563,37 @@ app.get("/api/v1/browse/home", H("/api/v1/browse/home", 60, async (req: any) => 
   const userCountry = req.query.country as string | undefined;
   return await buildBrowseHome({ userCountryCode: userCountry });
 }));
+
+// === Currency APIs (Phase A of admin/currency track) ====================
+// Wraps European Central Bank eurofxref daily feed (CC-BY 4.0).
+// Currencies: 33 ISO 4217 codes; base EUR + cross-rate math for USD users.
+import {
+  fetchLatestRates as fetchLatestCurrencyRates,
+  convertCurrency,
+  getAllRatesAgainstBase,
+  CURRENCIES,
+} from "./src/utils/currencyApi";
+
+app.get("/api/v1/currency/rates", H("/api/v1/currency/rates", 3600, async (req: any) => {
+  const base = ((req.query.base as string) || "USD").toUpperCase();
+  if (!CURRENCIES.some((c) => c.code === base)) {
+    throw new Error(`Unsupported base currency: ${base}`);
+  }
+  return await getAllRatesAgainstBase(base);
+}));
+
+app.get(
+  "/api/v1/currency/convert",
+  H("/api/v1/currency/convert", 300, async (req: any) => {
+    const amount = Number(req.query.amount);
+    const from = ((req.query.from as string) || "USD").toUpperCase();
+    const to = ((req.query.to as string) || "EUR").toUpperCase();
+    if (!Number.isFinite(amount)) throw new Error("`amount` must be a number");
+    return await convertCurrency({ amount, from, to });
+  })
+);
+
+app.get("/api/v1/currency/codes", H("/api/v1/currency/codes", 86400, () => CURRENCIES));
 
 // === Setup Vite Dev server or static asset production build
 async function setupVite() {

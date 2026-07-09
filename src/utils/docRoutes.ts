@@ -62,6 +62,10 @@ export const DOC_SECTIONS: DocSection[] = [
       { slug: "quotes/random", title: "GET /quotes/random", description: "Context-aware quote picker" },
       { slug: "popular/cities", title: "GET /popular/cities", description: "Top N cities by search volume" },
       { slug: "browse/home", title: "GET /browse/home", description: "Composite hero snapshot" },
+      // Currency
+      { slug: "currency/rates", title: "GET /currency/rates", description: "Exchange rates against a chosen base" },
+      { slug: "currency/convert", title: "GET /currency/convert", description: "Convert amount between two currencies" },
+      { slug: "currency/codes", title: "GET /currency/codes", description: "Catalog of supported ISO 4217 codes" },
       // Cities
       { slug: "cities", title: "GET /cities", description: "Index of supported cities + aliases" },
       { slug: "cities/:slug", title: "GET /cities/:slug", description: "City detail with live clock" },

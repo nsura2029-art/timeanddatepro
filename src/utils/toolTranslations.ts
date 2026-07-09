@@ -31,6 +31,11 @@ export interface ToolI18n {
   referenceDate: string; useToday: string; fullDate: string;
   dayOfWeek: string; monthName: string; yearOnly: string;
   ordinal: string; spokenForm: string; writtenForm: string;
+  currencyConverter: string; currencyConverterSubtitle: string; amount: string;
+  convertFrom: string; convertTo: string; swapCurrencies: string;
+  rateSnapshot: string; lastUpdated: string; trendingPairs: string;
+  inverse: string; oneUnit: string; currencySource: string; liveEcbFeed: string;
+  fallbackRates: string; refreshRates: string; ratesTable: string;
 }
 
 const en: ToolI18n = {
@@ -64,7 +69,12 @@ const en: ToolI18n = {
   writeInWords: "Write in Words", wordsOutput: "Words Output", relativeTime: "Relative Time",
   referenceDate: "Reference date", useToday: "Use today", fullDate: "Full date",
   dayOfWeek: "Day of week", monthName: "Month name", yearOnly: "Year",
-  ordinal: "Ordinal", spokenForm: "Spoken form", writtenForm: "Written form"
+  ordinal: "Ordinal", spokenForm: "Spoken form", writtenForm: "Written form",
+  currencyConverter: "Currency Converter", currencyConverterSubtitle: "Live exchange rates for 33 ISO 4217 currencies, refreshed daily from the European Central Bank feed.",
+  amount: "Amount", convertFrom: "From", convertTo: "To", swapCurrencies: "Swap",
+  rateSnapshot: "Rate snapshot", lastUpdated: "Last updated", trendingPairs: "Trending pairs",
+  inverse: "Inverse", oneUnit: "1 unit", currencySource: "Source", liveEcbFeed: "Live ECB feed",
+  fallbackRates: "Offline fallback", refreshRates: "Refresh rates", ratesTable: "All rates vs"
 };
 
 const fr: ToolI18n = {
@@ -98,7 +108,12 @@ const fr: ToolI18n = {
   writeInWords: "Ecrire en Mots", wordsOutput: "Resultat en mots", relativeTime: "Temps Relatif",
   referenceDate: "Date de reference", useToday: "Aujourd hui", fullDate: "Date complete",
   dayOfWeek: "Jour de la semaine", monthName: "Nom du mois", yearOnly: "Annee",
-  ordinal: "Ordinal", spokenForm: "Forme parlee", writtenForm: "Forme ecrite"
+  ordinal: "Ordinal", spokenForm: "Forme parlee", writtenForm: "Forme ecrite",
+  currencyConverter: "Convertisseur de devises", currencyConverterSubtitle: "Taux de change en direct pour 33 devises ISO 4217, rafraichis chaque jour depuis la Banque centrale europeenne.",
+  amount: "Montant", convertFrom: "De", convertTo: "Vers", swapCurrencies: "Inverser",
+  rateSnapshot: "Apercu des taux", lastUpdated: "Derniere mise a jour", trendingPairs: "Paires populaires",
+  inverse: "Inverse", oneUnit: "1 unite", currencySource: "Source", liveEcbFeed: "Flux BCE en direct",
+  fallbackRates: "Secours hors ligne", refreshRates: "Rafraichir les taux", ratesTable: "Tous les taux vs"
 };
 
 const zh: ToolI18n = {
@@ -132,7 +147,12 @@ const zh: ToolI18n = {
   writeInWords: "转换为文字", wordsOutput: "文字结果", relativeTime: "相对时间",
   referenceDate: "参考日期", useToday: "今天", fullDate: "完整日期",
   dayOfWeek: "星期", monthName: "月份", yearOnly: "年份",
-  ordinal: "序数", spokenForm: "口语形式", writtenForm: "书面形式"
+  ordinal: "序数", spokenForm: "口语形式", writtenForm: "书面形式",
+  currencyConverter: "货币转换器", currencyConverterSubtitle: "33 种 ISO 4217 货币的实时汇率，每日从欧洲中央银行更新。",
+  amount: "金额", convertFrom: "从", convertTo: "至", swapCurrencies: "交换",
+  rateSnapshot: "汇率快照", lastUpdated: "最后更新", trendingPairs: "热门货币对",
+  inverse: "反向", oneUnit: "1 单位", currencySource: "数据源", liveEcbFeed: "欧洲央行实时",
+  fallbackRates: "离线备用", refreshRates: "刷新汇率", ratesTable: "全部汇率 vs"
 };
 
 const ja: ToolI18n = {
@@ -166,7 +186,12 @@ const ja: ToolI18n = {
   writeInWords: "文字で書く", wordsOutput: "文字出力", relativeTime: "相対時間",
   referenceDate: "基準日", useToday: "今日", fullDate: "完全な日付",
   dayOfWeek: "曜日", monthName: "月の名前", yearOnly: "年",
-  ordinal: "序数", spokenForm: "口頭形式", writtenForm: "書面形式"
+  ordinal: "序数", spokenForm: "口頭形式", writtenForm: "書面形式",
+  currencyConverter: "為替コンバーター", currencyConverterSubtitle: "33 種類の ISO 4217 通貨のリアルタイム為替レートを、欧州中央銀行から毎日更新。",
+  amount: "金額", convertFrom: "から", convertTo: "へ", swapCurrencies: "入替",
+  rateSnapshot: "レートスナップショット", lastUpdated: "最終更新", trendingPairs: "主要通貨ペア",
+  inverse: "逆", oneUnit: "1 単位", currencySource: "データ源", liveEcbFeed: "ECB ライブ",
+  fallbackRates: "オフラインフォールバック", refreshRates: "レートを更新", ratesTable: "全レート vs"
 };
 
 export const TOOL_TRANSLATIONS: Record<string, ToolI18n> = { en, fr, zh, ja };
