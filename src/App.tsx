@@ -1392,7 +1392,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && (
+      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
 
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
