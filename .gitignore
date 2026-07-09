@@ -7,3 +7,9 @@ server.js
 # SDK build artifacts only — source is tracked
 sdk/**/dist/
 sdk/**/node_modules/
+# Admin state
+data/tdp.db
+data/tdp.db-shm
+data/tdp.db-wal
+data/
+.admin-credentials

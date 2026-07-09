@@ -11,6 +11,27 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// === Admin Panel (Phase C) =================================================
+// Public-by-link, locked-by-role. /api/admin/* mounts first (before vite
+// middleware) so the auth cookie middleware can run. /admin/* is the SPA
+// route, served from the SPA fallback in production OR via the dev
+// vite.ssrLoadModule hook in development.
+import { buildAdminRouter, mountAdminSPA } from "./src/admin/router";
+import { adminCookieParser, loadSession } from "./src/admin/auth";
+import { ensureAdminSeed } from "./src/admin/seed";
+import { requestLogger } from "./src/admin/requestLog";
+
+// Ensure admin user exists before the router mounts (so /admin/bootstrap
+// never returns 500 on first boot).
+ensureAdminSeed();
+
+// Admin middleware: cookie parser + session loader + request log.
+// MUST be registered BEFORE the /api/v1/* routes so res.on('finish') fires.
+app.use(adminCookieParser);
+app.use(loadSession);
+app.use(requestLogger);
+app.use("/api/admin", buildAdminRouter());
+
 // Initialize server-side Gemini client
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -654,6 +675,8 @@ app.get(
 
 // === Setup Vite Dev server or static asset production build
 async function setupVite() {
+  // (admin middleware is registered at the top of server.ts so it runs
+  //  before any /api/v1/* route handlers — see imports above.)
   if (process.env.NODE_ENV !== "production") {
     console.log("Starting server in development mode with Vite middleware...");
     const vite = await createViteServer({
@@ -662,10 +685,16 @@ async function setupVite() {
       envDir: process.cwd(),
     });
     app.use(vite.middlewares);
+    mountAdminSPA(app as any, path.join(process.cwd(), 'dist')); // fallback to dist if it exists; vite serves /admin/* in dev
+    // In dev, vite serves the SPA from index.html. /admin should still hit the SPA.
+    app.get(/^\/admin(\/.*)?$/, (_req, res) => {
+      res.sendFile(path.join(process.cwd(), 'index.html'));
+    });
   } else {
     console.log("Starting server in production mode serving static files...");
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+    mountAdminSPA(app as any, distPath);
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

@@ -26,7 +26,8 @@ import {
   Code2,
   BookOpen,
   Braces,
-  Coins
+  Coins,
+  ShieldCheck
 } from "lucide-react";
 import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
 import {
@@ -61,6 +62,7 @@ import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 import { parsePairPath } from "./utils/pairRoutes";
 import { CITY_BY_CODE } from "./data/cities";
 import DocsPage from "./pages/docs/DocsPage";
+import AdminApp from "./pages/admin/AdminApp";
 import { LandingHeroHorizon } from "./components/landing/LandingHeroHorizon";
 
 export interface ApiColumnItem {
@@ -223,6 +225,9 @@ function parseRouteFromPath() {
   }
   if (path === "/meeting-finder" || path.endsWith("/meeting-finder")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: true, tool: undefined };
+  }
+  if (path.startsWith("/admin")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", isWorldClock: false, isMeetingFinder: false, tool: undefined, isAdmin: true };
   }
   return null;
 }
@@ -975,6 +980,11 @@ export default function App() {
     return <DocsPage pathname={browserPath} />;
   }
 
+  // ---- /admin/* early return - AdminApp renders its own chrome. ----
+  if (browserPath.toLowerCase().startsWith("/admin")) {
+    return <AdminApp />;
+  }
+
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
 
@@ -1269,6 +1279,23 @@ export default function App() {
               )}
             </div>
 
+            {/* Admin Panel link — visible to everyone but the panel itself is auth-gated */}
+            <button
+              onClick={() => {
+                window.history.pushState(null, "", "/admin");
+                window.dispatchEvent(new Event("tdp:navigate"));
+                setShowToolsDropdown(false);
+                setShowDateToolsDropdown(false);
+                setShowApisDropdown(false);
+                setShowMobileMenu(false);
+              }}
+              data-testid="admin-link"
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${t.text} hover:bg-slate-100/50`}
+            >
+              <ShieldCheck size={12} className="text-[color:var(--adm-accent,#38bdf8)]" />
+              <span>Admin</span>
+            </button>
+
             {/* APIs Dropdown - Node.js SDK + REST endpoints + per-tool integration guides */}
             <div
               ref={apisDropdownRef}
@@ -1505,6 +1532,16 @@ export default function App() {
                   <span className="flex items-center gap-2 font-semibold">
                     <Coins size={13} className="text-emerald-500" />
                     Currency Converter
+                  </span>
+                  <ChevronRight size={12} className="text-slate-400" />
+                </button>
+                <button
+                  onClick={() => { window.history.pushState(null, "", "/admin"); window.dispatchEvent(new Event("tdp:navigate")); setShowMobileMenu(false); }}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    <ShieldCheck size={13} className="text-[color:var(--adm-accent,#38bdf8)]" />
+                    Admin Panel
                   </span>
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
