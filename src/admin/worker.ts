@@ -56,7 +56,7 @@ async function processOne(): Promise<boolean> {
       `SELECT id, trigger_name, params, requested_by, status, created_at, started_at, finished_at, output_meta
        FROM api_triggers WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1`
     )
-    .get() as TriggerRow | undefined;
+    .get() as unknown as TriggerRow | undefined;
 
   if (!row) return false;
 
@@ -138,7 +138,7 @@ export function getJob(id: number): TriggerRow | undefined {
       `SELECT id, trigger_name, params, requested_by, status, created_at, started_at, finished_at, output_meta
        FROM api_triggers WHERE id = ?`
     )
-    .get(id) as TriggerRow | undefined;
+    .get(id) as unknown as TriggerRow | undefined;
 }
 
 /** Get recent jobs (for the history list in the UI). */
@@ -148,5 +148,5 @@ export function listJobs(limit = 50): TriggerRow[] {
       `SELECT id, trigger_name, params, requested_by, status, created_at, started_at, finished_at, output_meta
        FROM api_triggers ORDER BY created_at DESC LIMIT ?`
     )
-    .all(limit) as TriggerRow[];
+    .all(limit) as unknown as TriggerRow[];
 }
