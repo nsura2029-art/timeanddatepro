@@ -21,9 +21,11 @@ interface LandingPageProps {
   timezone: string;
   /** Country code → drives Hero country badge */
   country: string;
-  /** City name → Hero "Time in {city}" line */
+  /** City name → Hero "Current time in {city}" headline */
   cityName: string;
-  /** Country name → Hero "Time in {city}, {country}" */
+  /** Optional region/state/province (e.g. "Florida", "England", "Kantō") */
+  cityRegion?: string;
+  /** Country name → Hero "in {city}, {country}" */
   countryName: string;
   /** Translation locale (Hero only — sections are EN for MVP) */
   lang?: "en" | "fr" | "zh" | "ja";
@@ -38,6 +40,7 @@ export function LandingPage({
   timezone,
   country,
   cityName,
+  cityRegion,
   countryName,
   lang = "en",
   homeData,
@@ -95,6 +98,7 @@ export function LandingPage({
         timezone={timezone}
         country={country}
         cityName={cityName}
+        cityRegion={cityRegion}
         countryName={countryName}
         lang={lang}
         testData={homeData}

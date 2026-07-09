@@ -1,14 +1,15 @@
 // src/components/landing/HeroClock.tsx
 // DSEG14-Classic-Bold numeric clock with 2-digit sub-second + sync drift +
 // accuracy status. Renders HH:MM:SS big + :cc (centiseconds, smaller).
-// Pulled from 03-horizon.html hero block; rendered into React while preserving
-// the same visual (Inter 800-900 + DSEG14 + emerald glow + steps(2) colon blink).
 //
-// One component = ONE job: display the current time for a specific timezone
-// plus the sync status from the browse/home payload.
+// Above the clock itself, an h1 "Current time in {City}, {Region}, {Country}"
+// primes what the user is about to see and updates as they change city.
+// Default values are now dynamic — LandingHeroHorizon passes the live city
+// info up from CITY_DATA, so "London, England, United Kingdom" renders for
+// a London visitor without any code change.
 
 import { useEffect, useRef, useState } from "react";
-import { Sunrise, Sunset, Clock3 } from "lucide-react";
+import { Sunrise, Sunset, Clock3, MapPin } from "lucide-react";
 import type { BrowseHome } from "../../utils/homeApi";
 
 interface HeroClockProps {
@@ -18,9 +19,11 @@ interface HeroClockProps {
   timezone: string;
   /** Sync payload from browse/home ({ driftMs, accuracyMs }) */
   sync?: BrowseHome["sync"];
-  /** City name to show in the "Time in {city}" footer line */
+  /** City name to show in the "Current time in {city}" headline + below the clock */
   cityName?: string;
-  /** Country name shown after the city in the footer */
+  /** Region/state name (e.g. "Florida", "England"). Optional. */
+  cityRegion?: string;
+  /** Country name shown after the city in the headline + footer line */
   countryName?: string;
   /** Optional sun pills rendered ABOVE the clock */
   sun?: BrowseHome["sun"];
@@ -74,11 +77,27 @@ function fmtSyncLine(driftMs: number, locale: "en" | "fr" | "zh" | "ja" = "en") 
   return `Your clock is ${tenths} seconds ${ahead ? "behind" : "ahead"}.`;
 }
 
+/**
+ * Build "City, Region, Country" handling missing region gracefully.
+ * - "Wesley Chapel, Florida, United States"
+ * - "London, England, United Kingdom"
+ * - "Tokyo, Kantō, Japan"
+ * - "Dubai, United Arab Emirates" (no region known)
+ */
+function formatLocationString(city: string, region?: string, country?: string): string {
+  const segs: string[] = [];
+  if (city) segs.push(city);
+  if (region && region !== city) segs.push(region);
+  if (country && country !== region && country !== city) segs.push(country);
+  return segs.join(", ");
+}
+
 export function HeroClock({
   liveDate,
   timezone,
   sync,
   cityName = "Wesley Chapel",
+  cityRegion = "Florida",
   countryName = "United States",
   sun,
   hour12 = false,
@@ -107,10 +126,16 @@ export function HeroClock({
   const accuracyMs = sync ? Math.round(sync.accuracyMs) : 0;
   const accuracySec = (accuracyMs / 1000).toFixed(3);
 
+  const locationString = formatLocationString(cityName, cityRegion, countryName);
+
   // SSR-safe: render placeholder on first paint, real values after mount.
   if (!mounted) {
     return (
       <div className="tdp-hero-clock">
+        <h1 className="tdp-hero-clock-loc">
+          <MapPin size={14} aria-hidden />
+          <span>Current time in {locationString}</span>
+        </h1>
         <div className="tdp-seven">
           <span>--</span>
           <span className="tdp-colon">:</span>
@@ -130,6 +155,12 @@ export function HeroClock({
 
   return (
     <div className="tdp-hero-clock">
+      {/* Headline: "Current time in <City>, <Region>, <Country>" */}
+      <h1 className="tdp-hero-clock-loc">
+        <MapPin size={15} aria-hidden style={{ verticalAlign: "-2px" }} />
+        <span>Current time in <strong>{cityName}</strong>{cityRegion ? <span>, <span className="tdp-hero-clock-region">{cityRegion}</span></span> : null}{countryName ? <span>, {countryName}</span> : null}</span>
+      </h1>
+
       {/* Sun pills above the clock */}
       {sun && (
         <div className="tdp-sun-above">
@@ -188,7 +219,7 @@ export function HeroClock({
           <div className="tdp-sync-row">
             <span className="tdp-marker" />
             <span>
-              Time in <strong>{cityName}, {countryName}</strong> now.
+              Time in <strong>{locationString}</strong> now.
             </span>
           </div>
         </div>
@@ -197,4 +228,4 @@ export function HeroClock({
   );
 }
 
-export { fmtSyncLine };
+export { fmtSyncLine, formatLocationString };

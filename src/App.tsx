@@ -1635,6 +1635,7 @@ export default function App() {
           timezone={preferences.timezone}
           country={preferences.countryCode}
           cityName={CITY_DATA[preferences.timezone]?.name || "Wesley Chapel"}
+          cityRegion={CITY_DATA[preferences.timezone]?.region}
           countryName={preferences.countryName}
           lang={(currentPathRoute?.lang as "en" | "fr" | "zh" | "ja" | undefined) ?? "en"}
           homeData={homeData.status === "ok" ? homeData.data : null}

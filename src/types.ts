@@ -26,6 +26,8 @@ export interface CityInfo {
   country: string;
   timezone: string;
   code: string;
+  /** State/region/province name. Optional — render "City, Country" if unset. */
+  region?: string;
 }
 
 export interface AIQueryResult {

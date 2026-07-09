@@ -18,8 +18,10 @@ interface LandingHeroHorizonProps {
   timezone: string;
   /** Country code → drives the browse/home country parameter + picker */
   country: string;
-  /** City name shown in the "Time in {city}" line */
+  /** City name shown in the "Current time in {city}" headline */
   cityName: string;
+  /** Region/state name (e.g. "Florida", "England"). Optional. */
+  cityRegion?: string;
   /** Country name shown after the city */
   countryName: string;
   /** Translation locale */
@@ -38,6 +40,7 @@ export function LandingHeroHorizon({
   timezone,
   country,
   cityName,
+  cityRegion,
   countryName,
   lang = "en",
   testData,
@@ -92,7 +95,7 @@ export function LandingHeroHorizon({
           aria-pressed={hour12}
           data-testid="hero-hour-toggle"
         >
-          <Clock size={11} aria-hidden />
+          <Clock size={12} aria-hidden />
           <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
           <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
         </button>
@@ -102,6 +105,7 @@ export function LandingHeroHorizon({
           timezone={timezone}
           sync={data?.sync}
           cityName={cityName}
+          cityRegion={cityRegion}
           countryName={countryName}
           sun={data?.sun}
           hour12={hour12}
