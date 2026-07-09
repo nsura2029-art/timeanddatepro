@@ -7,9 +7,9 @@
     "node": ">=22.5.0"
   },
   "scripts": {
-    "dev": "NODE_OPTIONS='--experimental-sqlite --no-warnings=ExperimentalWarning' tsx server.ts",
+    "dev": "node --experimental-sqlite --no-warnings=ExperimentalWarning --import tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "NODE_OPTIONS='--experimental-sqlite --no-warnings=ExperimentalWarning' node dist/server.cjs",
+    "start": "node --experimental-sqlite --no-warnings=ExperimentalWarning --import tsx dist/server.cjs",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
   },
