@@ -13,3 +13,6 @@ data/tdp.db-shm
 data/tdp.db-wal
 data/
 .admin-credentials
+
+# Git worktree directories (avoid accidentally committing worktree contents)
+.worktrees/
