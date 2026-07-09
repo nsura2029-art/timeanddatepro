@@ -59,6 +59,7 @@ import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 import { parsePairPath } from "./utils/pairRoutes";
 import { CITY_BY_CODE } from "./data/cities";
 import DocsPage from "./pages/docs/DocsPage";
+import { LandingHeroHorizon } from "./components/landing/LandingHeroHorizon";
 
 export interface ApiColumnItem {
   href: string;
@@ -1483,6 +1484,18 @@ export default function App() {
 
       {/* 3. HERO CONTAINER SECTION */}
       {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      <>
+      {import.meta.env?.VITE_LANDING_V2 === "true" && (
+        <LandingHeroHorizon
+          liveDate={liveDate}
+          timezone={preferences.timezone}
+          country={preferences.countryCode}
+          cityName={CITY_DATA[preferences.timezone]?.name || "Wesley Chapel"}
+          countryName={preferences.countryName}
+          lang={(currentPathRoute?.lang as "en" | "fr" | "zh" | "ja" | undefined) ?? "en"}
+        />
+      )}
+      {import.meta.env?.VITE_LANDING_V2 !== "true" && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
 
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
@@ -1742,6 +1755,8 @@ export default function App() {
 
         </div>
       </header>
+      )}
+      </>
       )}
 
       {/* 4. AI RESULTS CARD (Visible when AI query yields output) */}

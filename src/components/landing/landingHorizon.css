@@ -1,0 +1,288 @@
+/* src/components/landing/landingHorizon.css
+ * Horizon v4b landing styles. One-component-one-purpose, but the design
+ * uses shared variables defined at `:root`. Imported once by App.tsx.
+ *
+ * Palette (Horizon — emerald-led, time.is typography, family.co motion):
+ *   --accent-primary:      #059669 (emerald 600) — coral replacement
+ *   --accent-primary-deep: #047857 (emerald 700)
+ *   --accent-secondary:    #0d9488 (teal 600)
+ *   --accent-tertiary:     #6366f1 (indigo 500) — accent-blue alias
+ *   --accent-warm:         #fbbf24 (amber 400)
+ *   --accent-primary-soft: #d1fae5 (emerald 100)
+ *   --seven:               #1a1a1a (DSEG display)
+ *   --seven-glow:          rgba(5, 150, 105, 0.6)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@font-face {
+  font-family: 'DSEG7';
+  src: url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@v0.46/fonts/woff2/DSEG7Classic-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Variable fallbacks if root palette not defined elsewhere — covers Vite preview/local */
+:root {
+  --accent-primary: #059669;
+  --accent-primary-deep: #047857;
+  --accent-secondary: #0d9488;
+  --accent-tertiary: #6366f1;
+  --accent-warm: #fbbf24;
+  --accent-primary-soft: #d1fae5;
+  --seven: #1a1a1a;
+  --seven-glow: rgba(5, 150, 105, 0.45);
+  --hero-bg: #ffffff;
+  --hero-text: #0f172a;
+  --hero-text-muted: #475569;
+  --hero-rule: rgba(15, 23, 42, 0.08);
+  --hero-fg-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --hero-mono-font: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+/* Hero wrapper ------------------------------------------------------------ */
+.tdp-hero {
+  font-family: var(--hero-fg-font);
+  color: var(--hero-text);
+  background:
+    radial-gradient(at 12% 18%, rgba(99, 102, 241, 0.05) 0, transparent 45%),
+    radial-gradient(at 88% 20%, rgba(13, 148, 136, 0.05) 0, transparent 45%),
+    radial-gradient(at 70% 95%, rgba(5, 150, 105, 0.05) 0, transparent 45%),
+    var(--hero-bg);
+  padding: 56px 24px 40px;
+  border-bottom: 1px solid var(--hero-rule);
+}
+
+.tdp-hero-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* Eyebrow ----------------------------------------------------------------- */
+.tdp-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hero-text-muted);
+  margin-bottom: 28px;
+  letter-spacing: 0.01em;
+}
+
+.tdp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--accent-primary-soft);
+  color: var(--accent-primary-deep);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tdp-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 0 var(--accent-primary);
+  animation: tdp-ping 2.4s infinite;
+}
+
+@keyframes tdp-ping {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
+}
+
+.tdp-eyebrow-date {
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-tz {
+  font-family: var(--hero-mono-font);
+  font-size: 12px;
+  color: var(--hero-text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* Sun pills above the clock ---------------------------------------------- */
+.tdp-sun-above {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 0 24px;
+}
+
+.tdp-sun-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  color: var(--hero-text);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.tdp-sun-pill strong {
+  font-weight: 700;
+  color: var(--accent-primary-deep);
+}
+
+/* DSEG7 hero clock ------------------------------------------------------- */
+.tdp-hero-clock {
+  text-align: center;
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.tdp-seven {
+  font-family: 'DSEG7', 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: bold;
+  font-size: clamp(80px, 16vw, 200px);
+  line-height: 1;
+  color: var(--seven);
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 60px var(--seven-glow);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.05em;
+  user-select: none;
+}
+
+.tdp-colon {
+  display: inline-block;
+  animation: tdp-blink 1s steps(2, end) infinite;
+  color: var(--seven);
+  opacity: 0.85;
+}
+
+@keyframes tdp-blink {
+  0%, 49% { opacity: 0.85; }
+  50%, 100% { opacity: 0.25; }
+}
+
+.tdp-subsec {
+  font-size: 0.32em;
+  opacity: 0.65;
+  font-weight: bold;
+  margin-left: 0.04em;
+  letter-spacing: -0.02em;
+}
+
+.tdp-subsec-label {
+  font-family: var(--hero-fg-font);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+  color: var(--hero-text-muted);
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+
+/* Hero date (H1) and holiday block --------------------------------------- */
+.tdp-hero-dateblock {
+  text-align: center;
+  margin-top: 28px;
+}
+
+.tdp-hero-date {
+  font-size: clamp(28px, 4.5vw, 48px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0;
+  color: var(--hero-text);
+}
+
+.tdp-hero-holiday {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 6px 14px;
+  background: var(--accent-primary-soft);
+  border-radius: 999px;
+  color: var(--accent-primary-deep);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tdp-hero-holiday strong {
+  font-weight: 700;
+}
+
+.tdp-hero-holiday-flag {
+  color: var(--accent-primary);
+}
+
+/* Sync block ------------------------------------------------------------- */
+.tdp-sync {
+  margin: 24px auto 0;
+  padding: 16px 20px;
+  background: rgba(5, 150, 105, 0.04);
+  border: 1px solid rgba(5, 150, 105, 0.18);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--hero-text-muted);
+  line-height: 1.7;
+  max-width: 480px;
+  font-family: var(--hero-fg-font);
+  text-align: left;
+}
+
+.tdp-sync-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tdp-sync-row strong {
+  color: var(--hero-text);
+  font-weight: 700;
+}
+
+.tdp-marker {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hero-text-muted);
+  flex-shrink: 0;
+  opacity: 0.4;
+}
+
+.tdp-marker-green {
+  background: var(--accent-primary);
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(5, 150, 105, 0.4);
+}
+
+/* Responsive ------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .tdp-hero {
+    padding: 40px 16px 32px;
+  }
+  .tdp-seven {
+    font-size: clamp(60px, 22vw, 110px);
+  }
+  .tdp-hero-date {
+    font-size: clamp(22px, 6vw, 32px);
+  }
+  .tdp-sync {
+    font-size: 12px;
+    padding: 14px 16px;
+  }
+}
