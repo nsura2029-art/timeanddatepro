@@ -18,6 +18,8 @@ import { ensureAdminSeed } from "./seed";
 import { dashboardSummary } from "./requestLog";
 import { ADMIN_CATEGORIES, categoryOf, ENDPOINT_CATEGORY } from "./categories";
 import { ENDPOINT_CATALOG, type EndpointDoc } from "../data/docs/endpointCatalog";
+import { TRIGGERS, findTrigger, triggersGrouped } from "./triggers";
+import { enqueueTrigger, getJob, listJobs, subscribe } from "./worker";
 
 export function buildAdminRouter(): Router {
   const r = Router();
@@ -158,6 +160,120 @@ export function buildAdminRouter(): Router {
       [cacheKey, user.id, reason ?? null, Date.now()]
     );
     res.json({ success: true, data: { cacheKey, invalidated: true } });
+  });
+
+  // ── Triggers (Phase E) ────────────────────────────────────────────────
+  authed.get("/triggers", (_req, res) => {
+    res.json({ success: true, data: { grouped: triggersGrouped(), total: TRIGGERS.length } });
+  });
+
+  authed.post("/triggers/run", (req, res) => {
+    const user = (req as AuthedRequest).user!;
+    const { triggerName, params } = (req.body || {}) as { triggerName: string; params?: Record<string, string> };
+    if (!triggerName) {
+      res.status(400).json({ success: false, error: { message: "triggerName required" } });
+      return;
+    }
+    const t = findTrigger(triggerName);
+    if (!t) {
+      res.status(404).json({ success: false, error: { message: `Unknown trigger: ${triggerName}` } });
+      return;
+    }
+    // Validate params
+    const errors: string[] = [];
+    const cleanParams: Record<string, string> = {};
+    for (const p of t.params) {
+      const v = params?.[p.name];
+      if (p.required && !v) errors.push(`Missing required param: ${p.name}`);
+      cleanParams[p.name] = v || p.default || "";
+    }
+    if (errors.length > 0) {
+      res.status(400).json({ success: false, error: { message: errors.join("; "), code: "E_VALIDATION" } });
+      return;
+    }
+    const job = enqueueTrigger(triggerName, cleanParams, user.id);
+    // Audit
+    run(
+      "INSERT INTO admin_audit (user_id, action, target, meta, ip, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+      [user.id, "trigger.run", triggerName, JSON.stringify(cleanParams), (req.ip || "").toString(), Date.now()]
+    );
+    res.json({ success: true, data: job });
+  });
+
+  authed.get("/triggers/history", (_req, res) => {
+    const rows = listJobs(50).map((r) => ({
+      id: r.id,
+      trigger_name: r.trigger_name,
+      params: r.params ? JSON.parse(r.params) : {},
+      status: r.status,
+      created_at: r.created_at,
+      started_at: r.started_at,
+      finished_at: r.finished_at,
+      output_meta: r.output_meta ? JSON.parse(r.output_meta) : null,
+    }));
+    res.json({ success: true, data: { jobs: rows } });
+  });
+
+  // SSE: streams live updates for either a specific task or all tasks.
+  authed.get("/triggers/stream", (req, res) => {
+    const user = (req as AuthedRequest).user!;
+    const taskIdParam = (req.query.taskId ? parseInt(String(req.query.taskId)) : null) as number | null;
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+    // Send a hello
+    res.write(`event: hello\ndata: ${JSON.stringify({ ok: true, taskId: taskIdParam, user: user.username })}\n\n`);
+
+    // If we have a taskId and that task is already done, replay then close.
+    if (taskIdParam) {
+      const existing = getJob(taskIdParam);
+      if (existing) {
+        const out = existing.output_meta ? JSON.parse(existing.output_meta) : null;
+        res.write(`event: status\ndata: ${JSON.stringify({
+          taskId: existing.id,
+          status: existing.status,
+          created_at: existing.created_at,
+          started_at: existing.started_at,
+          finished_at: existing.finished_at,
+          output: out,
+        })}\n\n`);
+        if (existing.status === "ok" || existing.status === "failed") {
+          res.write(`event: done\ndata: ${JSON.stringify({ taskId: existing.id })}\n\n`);
+          res.end();
+          return;
+        }
+      }
+    }
+
+    const unsubscribe = subscribe((ev) => {
+      if (taskIdParam && ev.taskId !== taskIdParam) return;
+      const eventName = ev.status === "ok" || ev.status === "failed" ? "status" : "status";
+      res.write(`event: ${eventName}\ndata: ${JSON.stringify(ev)}\n\n`);
+      if ((ev.status === "ok" || ev.status === "failed") && (!taskIdParam || ev.taskId === taskIdParam)) {
+        res.write(`event: done\ndata: ${JSON.stringify({ taskId: ev.taskId })}\n\n`);
+        if (taskIdParam) {
+          unsubscribe();
+          res.end();
+        }
+      }
+    });
+
+    // Keep-alive heartbeat every 15s
+    const ka = setInterval(() => {
+      try {
+        res.write(`:heartbeat\n\n`);
+      } catch {
+        // ignore
+      }
+    }, 15_000);
+
+    req.on("close", () => {
+      clearInterval(ka);
+      unsubscribe();
+    });
   });
 
   // All authed routes mounted under /api/admin/authed

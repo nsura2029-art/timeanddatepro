@@ -6,14 +6,15 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Database, Settings2, History, ShieldCheck, LogOut,
-  Activity, ArrowRightLeft, BookOpen, Clock, Globe2, Coins,
+  Activity, ArrowRightLeft, BookOpen, Clock, Globe2, Coins, Zap,
 } from "lucide-react";
 import { AdminLogin } from "./AdminLogin";
 import { AdminDashboard } from "./AdminDashboard";
 import { AdminApiStatus } from "./AdminApiStatus";
 import { AdminCache } from "./AdminCache";
+import { AdminTriggers } from "./AdminTriggers";
 
-type Page = "dashboard" | "api-status" | "cache";
+type Page = "dashboard" | "api-status" | "cache" | "triggers";
 
 interface NavItem {
   id: Page;
@@ -26,6 +27,7 @@ const NAV: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hotkey: "D" },
   { id: "api-status", label: "API Status", icon: Activity, hotkey: "A" },
   { id: "cache", label: "Cache", icon: Settings2, hotkey: "C" },
+  { id: "triggers", label: "Triggers", icon: Zap, hotkey: "T" },
 ];
 
 export function AdminShell() {
@@ -117,6 +119,7 @@ export function AdminShell() {
         {page === "dashboard" && <AdminDashboard tick={refreshTick} />}
         {page === "api-status" && <AdminApiStatus onRefresh={() => setRefreshTick((t) => t + 1)} />}
         {page === "cache" && <AdminCache onRefresh={() => setRefreshTick((t) => t + 1)} />}
+        {page === "triggers" && <AdminTriggers onRefresh={() => setRefreshTick((t) => t + 1)} />}
       </main>
     </div>
   );

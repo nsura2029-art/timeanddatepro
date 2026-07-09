@@ -20,10 +20,12 @@ import { buildAdminRouter, mountAdminSPA } from "./src/admin/router";
 import { adminCookieParser, loadSession } from "./src/admin/auth";
 import { ensureAdminSeed } from "./src/admin/seed";
 import { requestLogger } from "./src/admin/requestLog";
+import { startWorker } from "./src/admin/worker";
 
 // Ensure admin user exists before the router mounts (so /admin/bootstrap
 // never returns 500 on first boot).
 ensureAdminSeed();
+startWorker();
 
 // Admin middleware: cookie parser + session loader + request log.
 // MUST be registered BEFORE the /api/v1/* routes so res.on('finish') fires.
