@@ -24,7 +24,9 @@ export interface ToolI18n {
   monthsBetween: string; yearsBetween: string; breakdown: string;
   sameDay: string; inclusive: string; exclusive: string;
   humanized: string; includeEndDate: string; calendarDays: string;
-  workingDays: string; totalTime: string; hoursMinutes: string;
+  /** Renamed from a duplicate `workingDays` — distinct semantic: the diff result label. */
+  businessDays: string;
+  totalTime: string; hoursMinutes: string;
   writeInWords: string; wordsOutput: string; relativeTime: string;
   referenceDate: string; useToday: string; fullDate: string;
   dayOfWeek: string; monthName: string; yearOnly: string;
@@ -57,7 +59,7 @@ const en: ToolI18n = {
   monthsBetween: "Months", yearsBetween: "Years", breakdown: "Breakdown",
   sameDay: "Same day", inclusive: "Inclusive", exclusive: "Exclusive",
   humanized: "Humanized", includeEndDate: "Include end date",
-  calendarDays: "Calendar days", workingDays: "Working days",
+  calendarDays: "Calendar days", businessDays: "Working days",
   totalTime: "Total time", hoursMinutes: "Hours & minutes",
   writeInWords: "Write in Words", wordsOutput: "Words Output", relativeTime: "Relative Time",
   referenceDate: "Reference date", useToday: "Use today", fullDate: "Full date",
@@ -91,7 +93,7 @@ const fr: ToolI18n = {
   monthsBetween: "Mois", yearsBetween: "Annees", breakdown: "Detail",
   sameDay: "Meme jour", inclusive: "Inclusif", exclusive: "Exclusif",
   humanized: "Humanise", includeEndDate: "Inclure la date de fin",
-  calendarDays: "Jours calendaires", workingDays: "Jours ouvres",
+  calendarDays: "Jours calendaires", businessDays: "Jours ouvres",
   totalTime: "Temps total", hoursMinutes: "Heures & minutes",
   writeInWords: "Ecrire en Mots", wordsOutput: "Resultat en mots", relativeTime: "Temps Relatif",
   referenceDate: "Date de reference", useToday: "Aujourd hui", fullDate: "Date complete",
@@ -125,7 +127,7 @@ const zh: ToolI18n = {
   monthsBetween: "月", yearsBetween: "年", breakdown: "明细",
   sameDay: "同一天", inclusive: "包含", exclusive: "不包含",
   humanized: "人性化", includeEndDate: "包含结束日期",
-  calendarDays: "日历天", workingDays: "工作日",
+  calendarDays: "日历天", businessDays: "工作日",
   totalTime: "总时间", hoursMinutes: "小时和分钟",
   writeInWords: "转换为文字", wordsOutput: "文字结果", relativeTime: "相对时间",
   referenceDate: "参考日期", useToday: "今天", fullDate: "完整日期",
@@ -159,7 +161,7 @@ const ja: ToolI18n = {
   monthsBetween: "月", yearsBetween: "年", breakdown: "内訳",
   sameDay: "同日", inclusive: "含む", exclusive: "含まない",
   humanized: "人間が読みやすい形式", includeEndDate: "終了日を含む",
-  calendarDays: "暦日", workingDays: "営業日",
+  calendarDays: "暦日", businessDays: "営業日",
   totalTime: "合計時間", hoursMinutes: "時間と分",
   writeInWords: "文字で書く", wordsOutput: "文字出力", relativeTime: "相対時間",
   referenceDate: "基準日", useToday: "今日", fullDate: "完全な日付",

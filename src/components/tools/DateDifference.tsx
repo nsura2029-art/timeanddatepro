@@ -58,7 +58,7 @@ export default function DateDifference({ lang = "en" }: Props) {
           <h1 className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#212121]">
             {t.daysBetween} {t.from.toLowerCase()} {t.from} {t.to.toLowerCase()}
           </h1>
-          <p className="mt-1 text-sm text-[#616161]">{t.calendarDays} / {t.workingDays} / {t.totalTime}</p>
+          <p className="mt-1 text-sm text-[#616161]">{t.calendarDays} / {t.businessDays} / {t.totalTime}</p>
         </header>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
