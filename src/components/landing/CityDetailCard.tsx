@@ -7,7 +7,7 @@
 // default) and any city promoted via the chrome.
 
 import React from "react";
-import { Sunrise, Sunset, Clock3, MapPin } from "lucide-react";
+import { Sunrise, Sunset, Clock3, MapPin, Star } from "lucide-react";
 import type { CityEntry } from "../../data/cities";
 import {
   formatTimeAmPmShared,
@@ -30,6 +30,8 @@ interface Props {
   onMakeDefault?: () => void;
   /** When user clicks "Add to favorites" */
   onAddFavorite?: () => void;
+  /** True if this city is already in the user's favorites. */
+  isFavorite?: boolean;
 }
 
 export function CityDetailCard({
@@ -38,6 +40,7 @@ export function CityDetailCard({
   liveLabel,
   onMakeDefault,
   onAddFavorite,
+  isFavorite,
 }: Props) {
   const tz = city.timezone;
   const sunrise = sun ? formatTimeAmPmShared(new Date(sun.sunrise), tz) : "—";
@@ -92,16 +95,22 @@ export function CityDetailCard({
               <a href="#">Make {city.name} default</a>
             )}
             <span className="sep">·</span>
-            {onAddFavorite ? (
-              <a
-                href="#"
-                onClick={(e) => { e.preventDefault(); onAddFavorite(); }}
-              >
-                Add to favorites
-              </a>
-            ) : (
-              <a href="#">Add to favorites</a>
-            )}
+            {/* Add to favorites — primary CTA, disabled when already added */}
+            <button
+              type="button"
+              onClick={() => onAddFavorite?.()}
+              disabled={isFavorite}
+              className="tdp-wc-fav-btn"
+              data-testid="home-add-to-favorites"
+              aria-label={
+                isFavorite
+                  ? `${city.name} already in your favorites`
+                  : `Add ${city.name} to your favorites`
+              }
+            >
+              <Star size={12} fill={isFavorite ? "currentColor" : "none"} />
+              <span>{isFavorite ? "In your favorites" : `Add ${city.name} to favorites`}</span>
+            </button>
             <span className="sep">·</span>
             <a href={`/en/holidays?country=${city.countryCode}`}>2026 Calendar</a>
           </div>

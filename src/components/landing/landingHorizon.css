@@ -1187,3 +1187,88 @@
   font-size: 13px;
   margin-right: 2px;
 }
+
+/* ============================================================================
+ * Hero 12h/24h toggle + AM/PM chip
+ * ============================================================================ */
+
+.tdp-hour-toggle {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--hero-rule);
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hero-text);
+  cursor: pointer;
+  transition: all 150ms ease;
+  backdrop-filter: blur(4px);
+}
+
+.tdp-hour-toggle:hover {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.tdp-hour-toggle-mode {
+  font-size: 11px;
+  color: var(--accent-primary-deep);
+}
+
+.tdp-hour-toggle-label {
+  color: var(--hero-text-muted);
+  font-weight: 500;
+}
+
+/* AM/PM chip in 12h mode — sits between seconds and centiseconds */
+.tdp-ampm {
+  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.42em;
+  font-weight: bold;
+  color: var(--accent-primary-deep);
+  opacity: 0.85;
+  align-self: center;
+  margin-left: 0.04em;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+ * HomeCity "Add to favorites" button (primary CTA in actions row)
+ * ============================================================================ */
+
+.tdp-wc-fav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--accent-primary-deep);
+  font-family: var(--hero-fg-font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+  border: 1px solid rgba(5, 150, 105, 0.18);
+}
+
+.tdp-wc-fav-btn:hover:not(:disabled) {
+  background: rgba(5, 150, 105, 0.16);
+}
+
+.tdp-wc-fav-btn:disabled {
+  background: rgba(5, 150, 105, 0.04);
+  color: var(--hero-text-muted);
+  cursor: default;
+  opacity: 0.85;
+}

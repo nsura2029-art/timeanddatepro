@@ -24,20 +24,33 @@ interface HeroClockProps {
   countryName?: string;
   /** Optional sun pills rendered ABOVE the clock */
   sun?: BrowseHome["sun"];
+  /** 12-hour vs 24-hour display. Persisted at the App level. */
+  hour12?: boolean;
 }
 
 function pad(n: number, len = 2) {
   return n.toString().padStart(len, "0");
 }
 
-function fmtClock(d: Date, tz: string) {
+interface FormattedClock {
+  hh: string;
+  mm: string;
+  ss: string;
+  cs: string;
+  /** "AM" / "PM" in 12h mode, "" in 24h mode */
+  ampm: string;
+  /** "12h" / "24h" — used in the sub-second label */
+  mode: "12h" | "24h";
+}
+
+function fmtClock(d: Date, tz: string, hour12: boolean): FormattedClock {
   // Use Intl so the clock honors DST without any extra work.
-  const parts = new Intl.DateTimeFormat("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false,
+    hour12,
   }).formatToParts(d);
   const map: Record<string, string> = {};
   for (const p of parts) map[p.type] = p.value;
@@ -45,9 +58,9 @@ function fmtClock(d: Date, tz: string) {
     hh: map.hour ?? "00",
     mm: map.minute ?? "00",
     ss: map.second ?? "00",
-    // 2-digit sub-second: centiseconds (00-99).
-    // Math.floor(ms/10) gives 0-99, padded to 2 digits.
     cs: pad(Math.floor(d.getMilliseconds() / 10), 2),
+    ampm: map.dayPeriod ?? "",
+    mode: hour12 ? "12h" : "24h",
   };
 }
 
@@ -68,6 +81,7 @@ export function HeroClock({
   cityName = "Wesley Chapel",
   countryName = "United States",
   sun,
+  hour12 = false,
 }: HeroClockProps) {
   const [mounted, setMounted] = useState(false);
   const rafRef = useRef<number | null>(null);
@@ -86,7 +100,7 @@ export function HeroClock({
     };
   }, []);
 
-  const clock = fmtClock(liveDate, timezone);
+  const clock = fmtClock(liveDate, timezone, hour12);
   const driftSec = sync ? (sync.driftMs / 1000).toFixed(1) : "0.0";
   const driftDir = sync && sync.driftMs > 0 ? "behind" : "ahead";
   const driftDisplay = sync ? Math.abs(parseFloat(driftSec)).toFixed(1) : "0.0";
@@ -110,6 +124,9 @@ export function HeroClock({
       </div>
     );
   }
+
+  // Compose accessible time string for screen readers
+  const timeForAria = `${clock.hh}:${clock.mm}:${clock.ss}.${clock.cs}${clock.ampm ? " " + clock.ampm : ""}`;
 
   return (
     <div className="tdp-hero-clock">
@@ -137,16 +154,22 @@ export function HeroClock({
         </div>
       )}
 
-      <div className="tdp-seven" aria-label={`Time ${clock.hh}:${clock.mm}:${clock.ss}.${clock.cs} in ${timezone}`}>
+      <div className="tdp-seven" aria-label={`Time ${timeForAria} in ${timezone}`}>
         <span>{clock.hh}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.mm}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.ss}</span>
+        {/* AM/PM chip — only renders in 12h mode */}
+        {hour12 && clock.ampm && (
+          <span className="tdp-ampm">{clock.ampm}</span>
+        )}
         <span className="tdp-subsec-sep">:</span>
         <span className="tdp-subsec">{clock.cs}</span>
       </div>
-      <div className="tdp-subsec-label">HH : MM : SS : CENTISECONDS</div>
+      <div className="tdp-subsec-label">
+        {hour12 ? "HH : MM : SS AM/PM : CENTISECONDS" : "HH : MM : SS : CENTISECONDS"}
+      </div>
 
       {sync && (
         <div className="tdp-sync">

@@ -11,7 +11,7 @@ sdk/**/node_modules/
 data/tdp.db
 data/tdp.db-shm
 data/tdp.db-wal
-data/
+/data/
 .admin-credentials
 
 # Git worktree directories (avoid accidentally committing worktree contents)

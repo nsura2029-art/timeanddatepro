@@ -41,6 +41,14 @@ export function TopPopularCities({
 }: Props) {
   if (!cities || cities.length === 0) return null;
 
+  // Hide the 5 default cities from the Top 20 grid — they're already
+  // visible in the favorites row above, so showing them here too is
+  // redundant. The user can still see them marked as favorite (if they
+  // happen to scroll) by checking the home row.
+  const defaultSet = new Set(defaultCodes);
+  const nonDefault = cities.filter((c) => !defaultSet.has(c.code));
+  if (nonDefault.length === 0) return null;
+
   return (
     <section className="tdp-section" aria-label="Top 20 most popular cities">
       <div className="tdp-section-label">
@@ -49,7 +57,7 @@ export function TopPopularCities({
         <span className="meta">click ★ to add to your favorites</span>
       </div>
       <div className="tdp-cities-row tdp-cities-row--popular">
-        {cities.slice(0, 20).map((c) => (
+        {nonDefault.slice(0, 20).map((c) => (
           <PopularCityCard
             key={c.code}
             city={c}

@@ -3,6 +3,8 @@
 // Single source of truth for the hero — replaces the inline hero markup in
 // App.tsx (gated by VITE_LANDING_V2 flag, off by default for now).
 
+import { useState, useEffect } from "react";
+import { Clock } from "lucide-react";
 import { HeroClock } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { useHomeData } from "../../hooks/useHomeData";
@@ -40,8 +42,24 @@ export function LandingHeroHorizon({
   lang = "en",
   testData,
 }: LandingHeroHorizonProps) {
-  // Hook is called for prop-driven SSR consistency even if testData is set.
-  const fetched = testData ? { status: "ok" as const, data: testData, source: "local" as const } : useHomeData(country, "WLC");
+  // Always call the hook — React rules require hooks in the same order
+  // every render. We override the result with testData below.
+  const homeDataResult = useHomeData(country, "WLC");
+  const fetched = testData
+    ? ({ status: "ok" as const, data: testData, source: "local" as const })
+    : homeDataResult;
+
+  // 12h/24h toggle — App-level concern (persists across page changes),
+  // but rendered inside the hero so it lives next to the clock it
+  // controls. Persisted to localStorage.
+  const [hour12, setHour12] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return localStorage.getItem("tdp_hour12") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try { localStorage.setItem("tdp_hour12", hour12 ? "1" : "0"); } catch {}
+  }, [hour12]);
 
   const data =
     fetched.status === "ok"
@@ -54,7 +72,7 @@ export function LandingHeroHorizon({
         <HeroDateBlock
           liveDate={liveDate}
           timezone={timezone}
-          todayHoliday={null} // browse/home.holiday.today shape varies; render via HeroClock sync block for now
+          todayHoliday={null}
           internationalHoliday={
             data?.holiday?.international
               ? { country: data.holiday.international.country, name: data.holiday.international.name }
@@ -63,6 +81,22 @@ export function LandingHeroHorizon({
           lang={lang}
         />
 
+        {/* 12h/24h toggle — sits at the top-right of the hero so it's
+            visible without scrolling. Toggling re-renders the clock
+            immediately because it shares the same liveDate prop. */}
+        <button
+          type="button"
+          className="tdp-hour-toggle"
+          onClick={() => setHour12((v) => !v)}
+          aria-label={hour12 ? "Switch to 24-hour clock" : "Switch to 12-hour clock with AM/PM"}
+          aria-pressed={hour12}
+          data-testid="hero-hour-toggle"
+        >
+          <Clock size={11} aria-hidden />
+          <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
+          <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
+        </button>
+
         <HeroClock
           liveDate={liveDate}
           timezone={timezone}
@@ -70,6 +104,7 @@ export function LandingHeroHorizon({
           cityName={cityName}
           countryName={countryName}
           sun={data?.sun}
+          hour12={hour12}
         />
       </div>
     </section>

@@ -65,6 +65,7 @@ export function LandingPage({
   const defaultSet = new Set(topFive.map((c) => c.code));
   const userAddedFiltered = userAdded.filter((c) => !defaultSet.has(c.code));
   const allFavorites: CityEntry[] = [...topFive, ...userAddedFiltered];
+
   const homeCity: CityEntry | undefined = homeData?.home
     ? {
         code: "WLC",
@@ -110,7 +111,17 @@ export function LandingPage({
 
       {/* Featured city (home) ----------------------------------- */}
       {homeCity && (
-        <CityDetailCard city={homeCity} sun={sun} />
+        <CityDetailCard
+          city={homeCity}
+          sun={sun}
+          isFavorite={favoriteCodes.includes(homeCity.code)}
+          onAddFavorite={() => {
+            if (typeof window === "undefined") return;
+            window.dispatchEvent(
+              new CustomEvent("tdp:add-city", { detail: { code: homeCity.code } })
+            );
+          }}
+        />
       )}
 
       {/* Explore more (hooks) ----------------------------------- */}
