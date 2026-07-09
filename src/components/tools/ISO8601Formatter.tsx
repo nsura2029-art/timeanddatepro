@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Copy, Check, FileCode } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
+import ToolSdkPanel from "./ToolSdkPanel";
 
 interface Props { lang?: string; }
 
@@ -74,6 +75,29 @@ export default function ISO8601Formatter({ lang = "en" }: Props) {
           </div>
         )}
       </div>
+      <ToolSdkPanel
+        summary="Format any date as ISO 8601, RFC 3339, RFC 2822, ISO Week, ISO Ordinal, or ISO Basic — with optional timezone."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+const result = await client.time.iso({
+  date: "2026-07-08",
+  format: "rfc3339",
+  tz: "America/New_York",
+});
+console.log(result.output); // "2026-07-07T20:00:00-04:00"
+
+// Other formats: "week", "ordinal", "basic", "rfc2822"
+const week = await client.time.iso({
+  date: "2026-07-08",
+  format: "week",
+});
+console.log(week.output); // "2026-W28"`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/time/iso?date=2026-07-08&format=rfc3339&tz=America/New_York"
+curl "https://timeanddatepro.com/api/v1/time/iso?date=2026-07-08&format=week"`}
+        docsHref="/docs/integrations/iso8601-formatter"
+      />
     </div>
   );
 }

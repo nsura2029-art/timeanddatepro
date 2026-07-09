@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Type, Clock, Calendar } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
+import ToolSdkPanel from "./ToolSdkPanel";
 
 interface Props { lang?: string; }
 
@@ -168,6 +169,20 @@ export default function DateToWords({ lang = "en" }: Props) {
           </div>
         )}
       </div>
+      <ToolSdkPanel
+        summary="Natural-language date strings in en/fr/zh/ja — perfect for emails, calendar invites, and accessibility."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+const result = await client.time.words({
+  date: "2026-07-08",
+  lang: "fr",
+});
+console.log(result.output); // "mercredi 8 juillet 2026"`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/time/words?date=2026-07-08&lang=fr"`}
+        docsHref="/docs/integrations/date-to-words"
+      />
     </div>
   );
 }

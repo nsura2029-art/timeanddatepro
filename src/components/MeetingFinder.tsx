@@ -18,6 +18,7 @@ import {
   SlidersHorizontal,
   ChevronDown
 } from "lucide-react";
+import ToolSdkPanel from "./tools/ToolSdkPanel";
 
 // 15 Cities specified in instructions
 const CITIES_DATA = [
@@ -1083,6 +1084,31 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
         </div>
       </div>
 
+      <ToolSdkPanel
+        title="Power this UI from the Meeting API"
+        summary="Same engine that ranks best meeting slots across multiple cities. Returns top 6 candidate hours scored by working-hour coverage."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// Best overlap slots across 3 cities with custom working hours
+const result = await client.meeting.best({
+  cities: ["NYC", "LDN", "TYO"],
+  start: 9,        // working-hours start (per-city local)
+  end: 17,         // working-hours end
+  duration: 60,    // slot length in minutes
+});
+
+// Render the top 3
+result.topSlots.slice(0, 3).forEach((slot) => {
+  console.log(\`\${slot.utcHour}:00Z → score \${slot.score.toFixed(2)}\`);
+  slot.perCity.forEach((c) => {
+    console.log(\`   \${c.city}: \${c.localTime} (\${c.utcOffset})\`);
+  });
+});`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/meeting/best?cities=NYC,LDN,TYO&start=9&end=17&duration=60"`}
+        docsHref="/docs/integrations/meeting-finder"
+      />
     </div>
   );
 }

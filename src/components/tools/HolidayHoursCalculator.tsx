@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Calendar, Clock, Sun } from "lucide-react";
 import { COUNTRY_HOLIDAYS, CountryCode } from "../../data/countries";
+import ToolSdkPanel from "./ToolSdkPanel";
 import { getToolI18n } from "../../utils/toolTranslations";
 
 interface Props { lang?: string; }
@@ -158,6 +159,26 @@ export default function HolidayHoursCalculator({ lang = "en" }: Props) {
           })}
         </div>
       </div>
+      <ToolSdkPanel
+        summary="Federal + observance holidays for any year plus working-day count and total annual hours."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// All US holidays for 2026
+const { holidays } = await client.countries.holidays("US", 2026);
+holidays.forEach((h) => console.log(h.date, h.name, h.type));
+
+// Working hours — 8h/day default; override for EU-style 7.5h
+const hours = await client.countries.workingHours("US", {
+  year: 2026,
+  hoursPerDay: 8,
+});
+console.log(\`\${hours.workingDays} working days → \${hours.totalHours} hours\`);`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/countries/US/holidays?year=2026"
+curl "https://timeanddatepro.com/api/v1/countries/US/working-hours?year=2026"`}
+        docsHref="/docs/integrations/holiday-hours"
+      />
     </div>
   );
 }

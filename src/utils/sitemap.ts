@@ -3,6 +3,7 @@
 // Add new routes here as you build them — both static tools and programmatic SEO pages.
 
 import { LANG_SLUGS, TOOL_SLUGS, type LangSlug, type ToolSlug } from "./toolRoutes";
+import { DOC_SECTIONS, type DocSectionId } from "./docRoutes";
 
 export interface SitemapAlternate {
   lang: string;
@@ -58,6 +59,20 @@ const FEATURE_PAGES: SitemapEntry[] = [
 ];
 
 /* --------------------------------------------------------------------------
+ * Documentation site (/docs/*) — English-only docs (UI copy + content are
+ * English for now; translated docs can ship as pages are localized). Mirrors
+ * DOC_SECTIONS so adding a new docs page = one registry entry.
+ * ------------------------------------------------------------------------ */
+const DOC_PAGE_ENTRIES: SitemapEntry[] = DOC_SECTIONS.flatMap((section) =>
+  section.pages.map((page): SitemapEntry => ({
+    path: `/docs/${section.id}/${page.slug}`,
+    lang: "en",
+    priority: section.id === "getting-started" ? 0.8 : 0.6,
+    changefreq: page.badge === "new" ? "weekly" : "monthly",
+  }))
+);
+
+/* --------------------------------------------------------------------------
  * (Future — empty arrays for now, ready for programmatic SEO)
  * ------------------------------------------------------------------------ */
 
@@ -81,6 +96,7 @@ export const SITEMAP_ENTRIES: SitemapEntry[] = [
   ...LANG_LANDING,
   ...TOOL_PAGES,
   ...FEATURE_PAGES,
+  ...DOC_PAGE_ENTRIES,
 ];
 
 /* --------------------------------------------------------------------------

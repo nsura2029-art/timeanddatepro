@@ -19,6 +19,7 @@ import { CountryPreferences, CountryCode } from "../types";
 import { getTheme } from "../utils/theme";
 import { getTimezoneOffsetAndAbbr, formatLocalTime } from "../data/countries";
 import AnalogClock from "./AnalogClock";
+import ToolSdkPanel from "./tools/ToolSdkPanel";
 
 interface WorldClockDashboardProps {
   preferences: CountryPreferences;
@@ -683,6 +684,31 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
         )}
       </div>
 
+      <ToolSdkPanel
+        title="Pull city data from the World Clock API"
+        summary="The full city registry (~80 entries + IATA aliases) cached for an hour. Each clock subscribes to client-side ticks using the SDK's per-city helper."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// 1) Pull the entire registry once (cached 1h on our side)
+const cities = await client.cities.list();
+console.log(\`\${cities.length} cities supported\`);
+
+// 2) For each city you want to render, fetch a fresh live clock
+//    (or compute it client-side from offsets — up to you).
+for (const city of cities.slice(0, 5)) {
+  const live = await client.cities.get(city.code);
+  console.log(\`\${live.name} (\${live.code}) — \${live.currentTime.time}\`);
+}
+
+// 3) Get the full live snapshot of any city (used for city landing pages)
+const nyc = await client.cities.get("NYC");
+// nyc.currentTime.time, .tz, .utcOffset, .abbr, .weekday ...`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/cities"
+curl "https://timeanddatepro.com/api/v1/cities/TYO"`}
+        docsHref="/docs/integrations/world-clock"
+      />
     </div>
   );
 }

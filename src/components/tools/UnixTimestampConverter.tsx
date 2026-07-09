@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Clock, Copy, Check, Hash } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
+import ToolSdkPanel from "./ToolSdkPanel";
 
 interface Props { lang?: string; }
 
@@ -131,6 +132,30 @@ export default function UnixTimestampConverter({ lang = "en" }: Props) {
           </div>
         </div>
       </div>
+      <ToolSdkPanel
+        summary="Convert between Unix epoch and ISO 8601 in either direction. Auto-detects seconds vs milliseconds for the to_date direction."
+        installCmd="npm install @timeanddatepro/sdk"
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// 1718370000 → ISO 8601
+const fromEpoch = await client.time.unix({
+  value: "1718370000",
+  direction: "to_date",
+});
+console.log(fromEpoch.iso); // "2024-06-14T09:00:00.000Z"
+
+// ISO 8601 → epoch (ms)
+const toEpoch = await client.time.unix({
+  value: "2026-07-08T15:00:00Z",
+  direction: "to_unix",
+});
+console.log(toEpoch.milliseconds);`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/time/unix?value=1718370000&direction=to_date"
+curl "https://timeanddatepro.com/api/v1/time/unix?value=2026-07-08T15:00:00Z&direction=to_unix"`}
+        docsHref="/docs/integrations/unix-timestamp"
+      />
     </div>
   );
 }

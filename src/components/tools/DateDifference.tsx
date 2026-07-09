@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CalendarRange, ArrowRight, Calendar } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
+import ToolSdkPanel from "./ToolSdkPanel";
 
 interface Props { lang?: string; }
 
@@ -117,6 +118,29 @@ export default function DateDifference({ lang = "en" }: Props) {
           <div className="text-center text-sm text-rose-600 py-4">End date must be after start date.</div>
         )}
       </div>
+      <ToolSdkPanel
+        summary="Days between two dates — calendar mode returns years/months/days; business mode counts working days per country."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// Calendar mode
+const cal = await client.time.diff({
+  from: "2026-01-01",
+  to: "2026-12-31",
+});
+
+// Business mode (US holidays excluded)
+const biz = await client.time.diff({
+  from: "2026-01-01",
+  to: "2026-12-31",
+  mode: "business",
+  country: "US",
+});
+console.log(cal.totalDays, biz.businessDays);`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/time/diff?from=2026-01-01&to=2026-12-31&mode=business&country=US"`}
+        docsHref="/docs/integrations/date-difference"
+      />
     </div>
   );
 }

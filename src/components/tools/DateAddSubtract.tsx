@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Plus, Minus, Calendar } from "lucide-react";
 import { COUNTRY_HOLIDAYS } from "../../data/countries";
 import { getToolI18n } from "../../utils/toolTranslations";
+import ToolSdkPanel from "./ToolSdkPanel";
 
 interface Props { lang?: string; }
 
@@ -121,6 +122,27 @@ export default function DateAddSubtract({ lang = "en" }: Props) {
           )}
         </div>
       </div>
+      <ToolSdkPanel
+        summary="Add or subtract years / months / weeks / days from a date. Business mode skips weekends + country holidays."
+        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+// 30 calendar days later
+await client.time.add({ date: "2026-07-08", days: 30 });
+// → { input: "2026-07-08", output: "2026-08-07", business: false }
+
+// 14 business days later (US holidays excluded)
+await client.time.add({
+  date: "2026-07-08",
+  days: 14,
+  business: true,
+  country: "US",
+});
+// → { input: "2026-07-08", output: "2026-07-29", business: true }`}
+        curlCode={`curl "https://timeanddatepro.com/api/v1/time/add?date=2026-07-08&days=14&business=true&country=US"`}
+        docsHref="/docs/integrations/date-math"
+      />
     </div>
   );
 }

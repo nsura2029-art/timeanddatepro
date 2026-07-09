@@ -22,7 +22,10 @@ import {
   FileCode,
   CalendarRange,
   Type,
-  Plus
+  Plus,
+  Code2,
+  BookOpen,
+  Braces
 } from "lucide-react";
 import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
 import { 
@@ -49,6 +52,58 @@ import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
+import DocsPage from "./pages/docs/DocsPage";
+
+export interface ApiColumnItem {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+}
+
+export interface ApiColumnProps {
+  title: string;
+  intro: string;
+  badge?: string;
+  items: ApiColumnItem[];
+}
+
+export function ApiColumn({ title, intro, badge, items }: ApiColumnProps) {
+  return (
+    <div>
+      <div className="mb-2 flex items-baseline justify-between border-b border-slate-100 pb-1.5">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</div>
+        {badge && (
+          <span className="rounded border border-emerald-200 bg-emerald-50 px-1 py-0 text-[8px] font-extrabold tracking-wider text-emerald-700">
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className="mb-2 text-[10px] text-slate-500">{intro}</p>
+      <ul className="space-y-0.5">
+        {items.map((it) => (
+          <li key={it.href + it.label}>
+            <a
+              href={it.href}
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState(null, "", it.href);
+                window.dispatchEvent(new Event("tdp:navigate"));
+              }}
+              className="flex items-start gap-2 rounded-md px-2 py-1.5 text-slate-700 hover:bg-indigo-50/70 hover:text-indigo-700 transition-colors"
+            >
+              <span className="mt-0.5">{it.icon}</span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-semibold">{it.label}</div>
+                <div className="truncate text-[10px] text-slate-500">{it.desc}</div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 const LOCALIZED_NAMES: Record<string, Record<string, { city: string, country: string }>> = {
   en: {
@@ -269,10 +324,38 @@ export default function App() {
   // Navigation & Dropdown states
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
   const [showDateToolsDropdown, setShowDateToolsDropdown] = useState(false);
+  const [showApisDropdown, setShowApisDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [browserPath, setBrowserPath] = useState<string>(() =>
+    typeof window !== "undefined" ? window.location.pathname : "/"
+  );
 
   // Scroll visibility refs
   const headerRef = useRef<HTMLDivElement | null>(null);
+
+  // Sync `browserPath` with the current URL so the docs site re-renders on
+  // back/forward and any in-app navigation that uses pushState.
+  useEffect(() => {
+    const sync = () => setBrowserPath(window.location.pathname);
+    window.addEventListener("popstate", sync);
+    window.addEventListener("tdp:navigate", sync as EventListener);
+    return () => {
+      window.removeEventListener("popstate", sync);
+      window.removeEventListener("tdp:navigate", sync as EventListener);
+    };
+  }, []);
+
+  const isDocsPath = browserPath.toLowerCase().startsWith("/docs");
+
+  // Close any open header dropdowns when entering the docs site
+  useEffect(() => {
+    if (isDocsPath) {
+      setShowToolsDropdown(false);
+      setShowDateToolsDropdown(false);
+      setShowApisDropdown(false);
+      setShowMobileMenu(false);
+    }
+  }, [isDocsPath]);
 
   // --- CUSTOM POPSTATE & NAVIGATION FOR LANGUAGE/CITY ROUTING SEGMENTS ---
   const navigateToRoutePath = (lang: string) => {
@@ -788,6 +871,11 @@ export default function App() {
   const offsetData = getTimezoneOffsetAndAbbr(preferences.timezone, liveDate);
   const t = getTheme(preferences.theme);
 
+  // ---- /docs/* early return — DocLayout renders its own header, no marketing chrome. ----
+  if (isDocsPath) {
+    return <DocsPage pathname={browserPath} />;
+  }
+
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
       
@@ -1045,7 +1133,69 @@ export default function App() {
               )}
             </div>
 
-            <button 
+            {/* APIs Dropdown — Node.js SDK + REST endpoints + per-tool integration guides */}
+            <div className="relative">
+              <button
+                onClick={() => setShowApisDropdown(!showApisDropdown)}
+                onMouseEnter={() => setShowApisDropdown(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1 cursor-pointer ${isDocsPath ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
+              >
+                <Code2 size={12} />
+                <span>APIs</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${showApisDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              {showApisDropdown && (
+                <div
+                  className={`absolute right-0 mt-1.5 w-[640px] rounded-xl border ${t.border} ${t.bg === "bg-white" ? "bg-white" : "bg-slate-900"} shadow-2xl p-2 z-50 animate-fade-in`}
+                  onMouseLeave={() => setShowApisDropdown(false)}
+                >
+                  <div className="grid grid-cols-3 gap-3 px-2 py-1">
+                    <ApiColumn
+                      title="REST API"
+                      intro="15 endpoints, JSON envelope, no signup."
+                      items={[
+                        { href: "/docs/getting-started/introduction", icon: <BookOpen size={13} className="text-indigo-500" />, label: "Introduction", desc: "What the API does" },
+                        { href: "/docs/getting-started/quickstart", icon: <ChevronRight size={13} className="text-indigo-500" />, label: "Quickstart", desc: "First call in 2 min" },
+                        { href: "/docs/api-reference/time/now", icon: <Clock size={13} className="text-indigo-500" />, label: "Time API", desc: "now · convert · diff · add · unix · iso · words" },
+                        { href: "/docs/api-reference/cities", icon: <Globe size={13} className="text-indigo-500" />, label: "Cities", desc: "Index + per-city live clock" },
+                        { href: "/docs/api-reference/countries", icon: <Calendar size={13} className="text-indigo-500" />, label: "Countries", desc: "List + holidays + working hours" },
+                        { href: "/docs/api-reference/meeting/best", icon: <Users size={13} className="text-indigo-500" />, label: "Meeting", desc: "Best-overlap across cities" },
+                        { href: "/docs/api-reference/pairs/:from/:to", icon: <ArrowRightLeft size={13} className="text-indigo-500" />, label: "City Pairs", desc: "Programmatic SEO backbone" },
+                      ]}
+                    />
+                    <ApiColumn
+                      title="Node.js SDK"
+                      intro="Zero-dep. Native fetch. Full TypeScript."
+                      badge="NEW"
+                      items={[
+                        { href: "/docs/sdk/nodejs", icon: <Braces size={13} className="text-emerald-500" />, label: "Installation", desc: "npm install @timeanddatepro/sdk" },
+                        { href: "/docs/sdk/nodejs#errors", icon: <BookOpen size={13} className="text-emerald-500" />, label: "Error reference", desc: "ApiClientError + status codes" },
+                        { href: "/docs/api-reference/time/now", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.time.*", desc: "now · convert · diff · add · unix · iso · words" },
+                        { href: "/docs/api-reference/cities", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.cities.*", desc: "list · get" },
+                        { href: "/docs/api-reference/countries", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.countries.*", desc: "list · get · holidays · workingHours" },
+                        { href: "/docs/api-reference/meeting/best", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.meeting.*", desc: "best({ cities })" },
+                        { href: "/docs/api-reference/pairs/:from/:to", icon: <Code2 size={13} className="text-emerald-500" />, label: "client.pairs.*", desc: "get(from, to)" },
+                      ]}
+                    />
+                    <ApiColumn
+                      title="Integrations"
+                      intro="Power your own UI with the same engine."
+                      items={[
+                        { href: "/docs/integrations/time-zone-converter", icon: <ArrowRightLeft size={13} className="text-amber-500" />, label: "Time Zone Converter", desc: "Wall-clock conversion widget" },
+                        { href: "/docs/integrations/meeting-finder", icon: <Users size={13} className="text-amber-500" />, label: "Meeting Finder", desc: "Best-overlap engine" },
+                        { href: "/docs/integrations/world-clock", icon: <Globe size={13} className="text-amber-500" />, label: "World Clock", desc: "Multi-clock dashboard" },
+                        { href: "/docs/integrations/holiday-hours", icon: <CalendarDays size={13} className="text-amber-500" />, label: "Holiday & Hours", desc: "Holidays + working hours" },
+                        { href: "/docs/integrations/unix-timestamp", icon: <Terminal size={13} className="text-amber-500" />, label: "Unix Timestamp", desc: "Live epoch clock" },
+                        { href: "/docs/integrations/iso8601-formatter", icon: <FileCode size={13} className="text-amber-500" />, label: "ISO 8601 Formatter", desc: "6 output formats" },
+                        { href: "/docs/getting-started/authentication", icon: <BookOpen size={13} className="text-slate-500" />, label: "Authentication", desc: "Rate limits + Pro tier (Q3)" },
+                      ]}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
               onClick={() => handleScrollToSection("insights-section")}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 cursor-pointer`}
             >
