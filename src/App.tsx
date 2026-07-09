@@ -53,6 +53,7 @@ import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
+import PairConverter from "./components/tools/PairConverter";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
 import { parsePairPath } from "./utils/pairRoutes";
 import { CITY_BY_CODE } from "./data/cities";
@@ -512,10 +513,8 @@ export default function App() {
       targetPath = `${cfg.path}/meeting-finder`;
     } else if (currentPathRoute?.isWorldClock) {
       targetPath = `${cfg.path}/worldclock`;
-    } else if (currentPathRoute?.tool || currentPathRoute?.pair) {
-      targetPath = currentPathRoute?.pair
-        ? `/${currentPathRoute.lang}/${currentPathRoute.pair.slug}`
-        : `${cfg.path}/${currentPathRoute.tool}`;
+    } else if (currentPathRoute?.tool) {
+      targetPath = `${cfg.path}/${currentPathRoute.tool}`;
     }
 
     // Update URL
@@ -1414,7 +1413,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isWorldClock && !currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && (
       <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
 
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
@@ -1748,7 +1747,7 @@ export default function App() {
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
-            {currentPathRoute.pair && <TimeZoneConverter lang={currentPathRoute.pair.lang} pair={currentPathRoute.pair} />}
+            {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
           </div>
         ) : currentPathRoute?.isMeetingFinder ? (
           <div className="animate-fade-in">
