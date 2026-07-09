@@ -661,7 +661,17 @@ export default function App() {
       }
     };
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    // In-app nav (header menu, pair cards, language picker) fires
+    // `tdp:navigate` after `pushState`. We MUST sync currentPathRoute
+    // for SPA navigation, not just for browser back/forward, otherwise
+    // the dispatch gate (`currentPathRoute?.tool` / `?.pair` /
+    // `?.isMeetingFinder`) stays stale and the page keeps showing the
+    // previous component even though the URL bar has updated.
+    window.addEventListener("tdp:navigate", handlePopState as EventListener);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("tdp:navigate", handlePopState as EventListener);
+    };
   }, []);
 
   // --- GUARD: re-sync state when user lands on / with mismatched URL on hard refresh ---
