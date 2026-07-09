@@ -22,9 +22,8 @@ export function useNavigateToPair(lang: string) {
   return useCallback(
     (pair: PairSuggestion) => {
       if (typeof window === "undefined") return;
-      // Phase 3 Commit B will switch this to pairHrefForLang(pair, lang).
-      // Until that route exists, fall back to the converter with ?cities=.
-      const target = converterHrefForLang(pair.fromCode, pair.toCode, lang);
+      // Phase 3 Commit B: dedicated pair route is now wired.
+      const target = pairHrefForLang(pair, lang);
       window.history.pushState(null, "", target);
       window.dispatchEvent(new Event("tdp:navigate"));
     },

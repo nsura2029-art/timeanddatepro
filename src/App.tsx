@@ -54,6 +54,8 @@ import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
 import { parseToolPath, ToolSlug } from "./utils/toolRoutes";
+import { parsePairPath } from "./utils/pairRoutes";
+import { CITY_BY_CODE } from "./data/cities";
 import DocsPage from "./pages/docs/DocsPage";
 
 export interface ApiColumnItem {
@@ -156,6 +158,24 @@ function parseRouteFromPath() {
       tool: toolRoute.tool
     };
   }
+
+  // Check for /<lang>/<from>-to-<to>-time dedicated pair routes
+  const pairRoute = parsePairPath(path);
+  if (pairRoute) {
+    const fromTz = CITY_BY_CODE[pairRoute.fromCode]?.timezone || "UTC";
+    const fromCountry = CITY_BY_CODE[pairRoute.fromCode]?.countryCode || "OTHER";
+    return {
+      lang: pairRoute.lang,
+      city: pairRoute.fromName.toLowerCase().replace(/\s+/g, "_"),
+      country: fromCountry,
+      timezone: fromTz,
+      isWorldClock: false,
+      isMeetingFinder: false,
+      pair: pairRoute,
+      tool: undefined,
+    };
+  }
+
 
   if (path.startsWith("/fr") || path === "/paris") {
     return { lang: "fr", city: "paris", country: "FR" as CountryCode, timezone: "Europe/Paris", isWorldClock, isMeetingFinder: path.includes("/meeting-finder"), tool: undefined };
@@ -1726,6 +1746,7 @@ export default function App() {
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.pair && <TimeZoneConverter lang={currentPathRoute.pair.lang} pair={currentPathRoute.pair} />}
           </div>
         ) : currentPathRoute?.isMeetingFinder ? (
           <div className="animate-fade-in">

@@ -8,10 +8,12 @@ import { LocationPicker } from "../common/LocationPicker";
 import { TimeZoneGrid } from "./TimeZoneGrid";
 import PopularPairs from "./PopularPairs";
 import TimeZoneFaq from "./TimeZoneFaq";
+import HowToUsePair from "./HowToUsePair";
 import ToolSdkPanel from "./ToolSdkPanel";
 import { CITY_BY_CODE, CityEntry } from "../../data/cities";
 import { getToolI18n } from "../../utils/toolTranslations";
 import { detectHomeCity, deserializeSharePayload } from "../../data/lookup";
+import type { PairRoute } from "../../utils/pairRoutes";
 import {
   captureElement,
   shareImageWithUrl,
@@ -19,7 +21,7 @@ import {
   triggerDownload,
 } from "../../utils/screenshot";
 
-interface Props { lang?: string; }
+interface Props { lang?: string; pair?: PairRoute; }
 
 const STORAGE_KEY = "tdp_tz_converter_cities_v2";
 const DEFAULT_HUBS = ["TYO", "LON", "DXB", "SIN", "SYD", "PAR", "BER", "BOM"];
@@ -49,9 +51,13 @@ function detectInitialCodes(): string[] {
   return Array.from(set).slice(0, 8);
 }
 
-export default function TimeZoneConverter({ lang = "en" }: Props) {
+export default function TimeZoneConverter({ lang = "en", pair }: Props) {
   const t = getToolI18n(lang);
-  const [cityCodes, setCityCodes] = useState<string[]>(() => detectInitialCodes());
+  const initialCities = useMemo(() => {
+    if (pair) return [pair.fromCode, pair.toCode];
+    return detectInitialCodes();
+  }, [pair]);
+  const [cityCodes, setCityCodes] = useState<string[]>(initialCities);
   const [baseDate, setBaseDate] = useState<Date>(() => new Date());
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -265,14 +271,15 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
       <header className="mb-1">
         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 inline-flex items-center gap-1.5">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          TIME ZONE CONVERTER · {lang.toUpperCase()}
+          {pair ? `${pair.fromName.toUpperCase()} → ${pair.toName.toUpperCase()} TIME · ${lang.toUpperCase()}` : `TIME ZONE CONVERTER · ${lang.toUpperCase()}`}
         </span>
         <h1 className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
-          Time Zone Converter
+          {pair ? `${pair.fromName} to ${pair.toName} time conversion` : "Time Zone Converter"}
         </h1>
         <p className="mt-1 text-sm text-slate-600 max-w-2xl">
-          Add a city, state, or country — see how the time shifts, find meeting overlaps, share the result.
-          Uses your browser timezone for the home clock.
+          {pair
+            ? <>Live time difference between {pair.fromName} and {pair.toName}. Add more cities, see working-hour overlap, export to your calendar.</>
+            : "Add a city, state, or country — see how the time shifts, find meeting overlaps, share the result. Uses your browser timezone for the home clock."}
         </p>
       </header>
 
@@ -301,7 +308,7 @@ export default function TimeZoneConverter({ lang = "en" }: Props) {
       <PopularPairs />
 
       {/* FAQ + FAQPage JSON-LD schema */}
-      <TimeZoneFaq lang={lang} />
+      {pair ? <HowToUsePair pair={pair} lang={lang} /> : <TimeZoneFaq lang={lang} />}
 
       {/* SDK panel */}
       <ToolSdkPanel
