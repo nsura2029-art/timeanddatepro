@@ -796,6 +796,28 @@ export default function App() {
     const elem = document.getElementById(sectionId);
     if (elem) {
       elem.scrollIntoView({ behavior: "smooth" });
+      setShowMobileMenu(false);
+      return;
+    }
+    // Section doesn't exist on the current route (e.g. user is on a tool
+    // page). Fall back to the landing page so the section can be found
+    // and scrolled to. Same SPA pattern: pushState + tdp:navigate, then
+    // wait a frame for the new tree to mount, then scroll.
+    const onLanding =
+      !currentPathRoute?.isMeetingFinder &&
+      !currentPathRoute?.isWorldClock &&
+      !currentPathRoute?.tool &&
+      !currentPathRoute?.pair;
+    if (!onLanding) {
+      navigateToRoutePath(currentPathRoute?.lang || "default");
+      // Two RAFs: one for state commit, one for the new tree to mount
+      // and render the section element.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const el = document.getElementById(sectionId);
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        });
+      });
     }
     setShowMobileMenu(false);
   };
@@ -1081,7 +1103,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleLaunchTool("planner")}
+                    onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
                   >
                     <Users size={13} className="text-emerald-500" />
@@ -1091,7 +1113,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleLaunchTool("business")}
+                    onClick={() => navigateToTool("date-math")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-amber-50/60 transition-colors cursor-pointer`}
                   >
                     <CalendarDays size={13} className="text-amber-500" />
@@ -1101,7 +1123,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleLaunchTool("diff")}
+                    onClick={() => navigateToTool("date-diff")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-purple-50/60 transition-colors cursor-pointer`}
                   >
                     <Calendar size={13} className="text-purple-500" />
@@ -1111,7 +1133,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleLaunchTool("countdown")}
+                    onClick={() => { window.history.pushState(null, "", "/docs/getting-started/quickstart"); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-rose-50/60 transition-colors cursor-pointer`}
                   >
                     <Hourglass size={13} className="text-rose-500" />
@@ -1121,7 +1143,7 @@ export default function App() {
                     </div>
                   </button>
                   <button
-                    onClick={() => handleLaunchTool("unix")}
+                    onClick={() => navigateToTool("unix")}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-sky-50/60 transition-colors cursor-pointer`}
                   >
                     <Terminal size={13} className="text-sky-500" />
@@ -1404,7 +1426,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("planner")}
+                  onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
@@ -1414,7 +1436,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("business")}
+                  onClick={() => navigateToTool("date-math")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
@@ -1424,7 +1446,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("diff")}
+                  onClick={() => navigateToTool("date-diff")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
@@ -1434,7 +1456,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("countdown")}
+                  onClick={() => { window.history.pushState(null, "", "/docs/getting-started/quickstart"); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
@@ -1444,7 +1466,7 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
-                  onClick={() => handleLaunchTool("unix")}
+                  onClick={() => navigateToTool("unix")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
                   <span className="flex items-center gap-2 font-semibold">
@@ -1931,11 +1953,29 @@ export default function App() {
             &copy; 2026 Global Time & Date Workspace. Designed for modern decentralized distributed teams.
           </div>
           <div className="flex gap-4 text-xs font-mono text-slate-400">
-            <span className="hover:text-slate-200 transition cursor-pointer">SaaS SLA</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/docs/getting-started/introduction"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              API Integration Docs
+            </button>
             <span>•</span>
-            <span className="hover:text-slate-200 transition cursor-pointer">Security Standards</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/docs/resources/changelog"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Changelog
+            </button>
             <span>•</span>
-            <span className="hover:text-slate-200 transition cursor-pointer">API Integration Docs</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/docs/resources/support"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Support
+            </button>
           </div>
           {/* Language Picker */}
           <div className="flex items-center gap-2">
