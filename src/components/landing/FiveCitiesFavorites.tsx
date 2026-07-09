@@ -3,12 +3,11 @@
 //
 // Two visual groups in one continuous grid:
 //   - **Defaults** (row 1): the curated 5 cities from browse/home.topFive.
-//     Always shown, never removed. No click, no star indicator — these
-//     are the "starting lineup" every user gets on first visit.
+//     Always shown, never removed. Neutral white cards with dotted outline.
 //   - **User-added** (rows 2+): every city the user has clicked in
-//     TopPopularCities. Click any card to remove it from the list.
-//     Filled star indicator on each card; click handler dispatches
-//     `tdp:add-city` to remove.
+//     TopPopularCities. Each gets a unique color from the NotebookLM
+//     9-color palette based on its add-order index (cycles through the
+//     palette so colors don't repeat adjacent). Click to remove.
 //
 // Layout: a single 5-col grid that wraps naturally. Defaults take row 1
 // (and any overflow on smaller screens). User additions fill the next
@@ -29,6 +28,7 @@ import {
   formatSubsecShared,
   formatShortOffsetShared,
 } from "../../utils/landingFormatters";
+import "../../styles/notebooklm-palette.css";
 
 interface Props {
   liveDate: Date;
@@ -36,6 +36,20 @@ interface Props {
   defaults: CityEntry[];
   /** Cities the user has added by clicking TopPopularCities — removable. */
   userAdded: CityEntry[];
+}
+
+/** NotebookLM palette order for cycling through user-added city cards.
+ * Index 0 → indigo, 1 → emerald, etc. Matches the visual rhythm in the
+ * reference screenshot where each card has a distinct color. */
+const NLM_PALETTE_ORDER = [
+  "indigo", "emerald", "amber", "cyan",
+  "purple", "blue", "pink", "lime",
+  "red",
+] as const;
+type NlmPalette = (typeof NLM_PALETTE_ORDER)[number];
+
+function paletteForIndex(idx: number): NlmPalette {
+  return NLM_PALETTE_ORDER[idx % NLM_PALETTE_ORDER.length];
 }
 
 export function FiveCitiesFavorites({ liveDate, defaults, userAdded }: Props) {
@@ -57,13 +71,18 @@ export function FiveCitiesFavorites({ liveDate, defaults, userAdded }: Props) {
         </span>
       </div>
       <div className="tdp-cities-row">
-        {/* Row 1 — curated defaults. Non-interactive. */}
+        {/* Row 1 — curated defaults. Non-interactive, neutral style. */}
         {defaults.map((c) => (
           <DefaultCityTickerCard key={`d-${c.code}`} city={c} liveDate={liveDate} />
         ))}
-        {/* Rows 2+ — user-added. Click ★ to remove. */}
-        {userAdded.map((c) => (
-          <RemovableCityTickerCard key={`u-${c.code}`} city={c} liveDate={liveDate} />
+        {/* Rows 2+ — user-added. Each gets a unique NotebookLM palette color. */}
+        {userAdded.map((c, idx) => (
+          <RemovableCityTickerCard
+            key={`u-${c.code}`}
+            city={c}
+            liveDate={liveDate}
+            palette={paletteForIndex(idx)}
+          />
         ))}
       </div>
     </section>
@@ -96,7 +115,15 @@ function DefaultCityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: 
   );
 }
 
-function RemovableCityTickerCard({ city, liveDate }: { city: CityEntry; liveDate: Date }) {
+function RemovableCityTickerCard({
+  city,
+  liveDate,
+  palette,
+}: {
+  city: CityEntry;
+  liveDate: Date;
+  palette: NlmPalette;
+}) {
   const hh = formatTimeHHMMSSShared(liveDate, city.timezone);
   const sub = formatSubsecShared(liveDate);
   const offset = formatShortOffsetShared(liveDate, city.timezone);
@@ -104,7 +131,7 @@ function RemovableCityTickerCard({ city, liveDate }: { city: CityEntry; liveDate
   return (
     <button
       type="button"
-      className="tdp-city-card is-favorite"
+      className={`tdp-city-card is-favorite nlm-card-${palette}`}
       onClick={() => {
         if (typeof window === "undefined") return;
         window.dispatchEvent(

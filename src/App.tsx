@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Menu,
   ArrowRightLeft,
+  Users,
   CalendarDays,
   Hourglass,
   Terminal,
@@ -40,6 +41,7 @@ import QuickActions from "./components/QuickActions";
 import { TRANSLATIONS } from "./utils/translations";
 import { useClickOutside } from "./utils/useClickOutside";
 import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
+import MeetingFinder from "./components/MeetingFinder";
 import UnixTimestampConverter from "./components/tools/UnixTimestampConverter";
 import ISO8601Formatter from "./components/tools/ISO8601Formatter";
 import DateAddSubtract from "./components/tools/DateAddSubtract";
@@ -157,6 +159,12 @@ function parseRouteFromPath() {
   }
   if (path.startsWith("/ja") || path.includes("tokyo")) {
     return { lang: "ja", city: "tokyo", country: "JP" as CountryCode, timezone: "Asia/Tokyo", tool: undefined };
+  }
+  if (path === "/meeting-finder" || path.endsWith("/meeting-finder")) {
+    let lang = "en";
+    const m = path.match(/^\/([a-z]{2})\/meeting-finder$/);
+    if (m) lang = m[1];
+    return { lang, city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isMeetingFinder: true };
   }
   if (path.startsWith("/en") || path.includes("london")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined };
@@ -493,6 +501,47 @@ export default function App() {
     });
   };
 
+  // Meeting Finder — restored in polish-3 from commit 746354c.
+  const navigateToMeetingFinder = (lang: string) => {
+    const path = lang === "default" || lang === "en" ? "/meeting-finder" : `/${lang}/meeting-finder`;
+    window.history.pushState({ lang, meetingFinder: true }, "", path);
+
+    let country: CountryCode = "GB";
+    let timezone = "Europe/London";
+
+    if (lang === "fr") {
+      country = "FR";
+      timezone = "Europe/Paris";
+    } else if (lang === "zh") {
+      country = "CN";
+      timezone = "Asia/Shanghai";
+    } else if (lang === "ja") {
+      country = "JP";
+      timezone = "Asia/Tokyo";
+    } else if (lang === "en") {
+      country = "GB";
+      timezone = "Europe/London";
+    }
+
+    const defaults = DEFAULT_PREFERENCES[country];
+    if (defaults) {
+      setPreferences(defaults);
+      setHolidays(COUNTRY_HOLIDAYS[country] || []);
+    }
+
+    setCurrentPathRoute({
+      lang,
+      city: lang === "en" ? "london" : lang === "fr" ? "paris" : lang === "zh" ? "beijing" : "tokyo",
+      country,
+      timezone,
+      isWorldClock: false,
+      isMeetingFinder: true
+    });
+
+    setShowToolsDropdown(false);
+    setShowMobileMenu(false);
+  };
+
   // --- NAVIGATE TO A TOOL PAGE (/lang/tool-slug) ---
   const navigateToTool = (tool: ToolSlug) => {
     const lang = currentPathRoute?.lang || preferences.country === "GB" ? "en" : preferences.country === "FR" ? "fr" : preferences.country === "CN" ? "zh" : preferences.country === "JP" ? "ja" : "en";
@@ -681,7 +730,6 @@ export default function App() {
     // wait a frame for the new tree to mount, then scroll.
     const onLanding =
       !currentPathRoute?.isMeetingFinder &&
-      !currentPathRoute?.isWorldClock &&
       !currentPathRoute?.tool &&
       !currentPathRoute?.pair;
     if (!onLanding) {
@@ -930,6 +978,16 @@ export default function App() {
             >
               Today
             </button>
+            <button
+              onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentPathRoute?.isMeetingFinder
+                  ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm"
+                  : `${t.text} hover:bg-slate-100/50`
+              }`}
+            >
+              Meeting Finder
+            </button>
 
             {/* Time Tools Dropdown Trigger */}
             <div
@@ -967,6 +1025,16 @@ export default function App() {
                     <div>
                       <div className="font-semibold">Time Zone Converter</div>
                       <div className="text-[10px] text-slate-400">Wall-clock conversion + overlap grid</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-emerald-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Users size={13} className="text-emerald-500" />
+                    <div>
+                      <div className="font-semibold">Meeting Finder</div>
+                      <div className="text-[10px] text-slate-400">Best-overlap across time zones</div>
                     </div>
                   </button>
                   <button
@@ -1323,6 +1391,16 @@ export default function App() {
                   <ChevronRight size={12} className="text-slate-400" />
                 </button>
                 <button
+                  onClick={() => navigateToMeetingFinder(currentPathRoute?.lang || "en")}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    <Users size={13} className="text-emerald-500" />
+                    Meeting Finder
+                  </span>
+                  <ChevronRight size={12} className="text-slate-400" />
+                </button>
+                <button
                   onClick={() => navigateToTool("date-math")}
                   className={`w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50/50 hover:bg-slate-50 text-xs text-left ${t.text}`}
                 >
@@ -1389,7 +1467,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
         <LandingPage
@@ -1742,6 +1820,10 @@ export default function App() {
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "currency-converter" && <CurrencyConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
+          </div>
+        ) : currentPathRoute?.isMeetingFinder ? (
+          <div className="animate-fade-in">
+            <MeetingFinder lang={currentPathRoute?.lang || "en"} />
           </div>
         ) : (
           <>

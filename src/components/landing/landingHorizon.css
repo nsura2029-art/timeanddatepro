@@ -173,9 +173,11 @@
 }
 
 .tdp-seven {
+  flex-wrap: wrap;
+  row-gap: 0.1em;
   font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
   font-weight: bold;
-  font-size: clamp(80px, 16vw, 200px);
+  font-size: clamp(56px, 14vw, 200px);
   line-height: 1;
   color: var(--seven);
   letter-spacing: -0.04em;
@@ -1714,4 +1716,66 @@
   color: var(--hero-text-muted);
   cursor: default;
   opacity: 0.85;
+}
+
+/* ============================================================================
+ * NotebookLM palette accents for hero (subtle — sun pills + sync block + LIVE)
+ * Uses the same 9-color palette as ExploreMore + city cards for cohesion.
+ * ============================================================================ */
+
+/* Sun pills pick up the amber (sunrise/sunset) family from NotebookLM */
+.tdp-sun-above .tdp-sun-pill:nth-of-type(1) {
+  background: rgba(254, 243, 199, 0.7);
+  border-color: rgba(252, 211, 77, 0.45);
+  color: #78350f;
+}
+.tdp-sun-above .tdp-sun-pill:nth-of-type(2) {
+  background: rgba(254, 226, 226, 0.7);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #7f1d1d;
+}
+.tdp-sun-above .tdp-sun-pill:nth-of-type(3) {
+  background: rgba(220, 252, 231, 0.7);
+  border-color: rgba(134, 239, 172, 0.45);
+  color: #064e3b;
+}
+
+/* Sync block gets a subtle emerald tint matching NotebookLM "Video Overview" */
+.tdp-sync {
+  background: rgba(209, 250, 229, 0.45);
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+/* LIVE pill — emerald accent (matches NotebookLM "Video Overview" green) */
+.tdp-pill .tdp-dot {
+  background: var(--nlm-emerald-500, #10b981);
+}
+@keyframes tdp-ping {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+/* "Current time in..." headline — pick up a soft indigo accent on region */
+.tdp-hero-clock-loc {
+  background: rgba(224, 231, 255, 0.35);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(199, 210, 254, 0.5);
+  display: inline-flex;
+}
+
+/* Responsive — smaller screens: tighten padding, smaller font */
+@media (max-width: 540px) {
+  .tdp-hero-clock-loc {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+  .tdp-hero-eyebrow {
+    gap: 8px;
+    font-size: 12px;
+  }
+  .tdp-pill { font-size: 10px; padding: 3px 10px; }
+  .tdp-seven {
+    font-size: clamp(50px, 18vw, 80px) !important;
+  }
 }

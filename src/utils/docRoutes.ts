@@ -101,6 +101,7 @@ export const DOC_SECTIONS: DocSection[] = [
     title: "Integrations",
     pages: [
       { slug: "time-zone-converter", title: "Time Zone Converter", description: "Power the web tool" },
+      { slug: "meeting-finder", title: "Meeting Finder", description: "Best-overlap engine" },
       { slug: "holiday-hours", title: "Holiday & Hours", description: "Holidays + working hours calculator" },
       { slug: "unix-timestamp", title: "Unix Timestamp", description: "Live epoch clock" },
       { slug: "iso8601-formatter", title: "ISO 8601 Formatter", description: "Format any date string" },

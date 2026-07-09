@@ -1,0 +1,88 @@
+/* ============================================================================
+ * NotebookLM-inspired palette — 9 saturated accent colors with soft pastel
+ * backgrounds. Used across ExploreMore tool cards, user-added city cards,
+ * and subtle hero accents. Mirrors the exact color palette from the
+ * reference screenshot (Audio Overview / Slide Deck / Video Overview /
+ * Mind Map / Reports / Flashcards / Quiz / Infographic / Data Table).
+ * ============================================================================ */
+
+:root {
+  /* ----- Saturated accent (text + icon chip + arrow hover) ----- */
+  --nlm-indigo-600: #6366f1;   /* Audio Overview, Time Zone Converter */
+  --nlm-amber-500:  #f59e0b;   /* Slide Deck, Holidays & Hours */
+  --nlm-emerald-500: #10b981;  /* Video Overview, Meeting Finder */
+  --nlm-pink-500:   #ec4899;   /* Mind Map */
+  --nlm-lime-500:   #84cc16;   /* Reports */
+  --nlm-red-500:    #ef4444;   /* Flashcards */
+  --nlm-cyan-500:   #06b6d4;   /* Quiz, World Clock */
+  --nlm-purple-500: #a855f7;   /* Infographic, 12-Month Calendar */
+  --nlm-blue-500:   #3b82f6;   /* Data Table, API Docs */
+
+  /* ----- Light pastel background (card surface) ----- */
+  --nlm-indigo-100: #e0e7ff;
+  --nlm-amber-100:  #fef3c7;
+  --nlm-emerald-100: #d1fae5;
+  --nlm-pink-100:   #fce7f3;
+  --nlm-lime-100:   #ecfccb;
+  --nlm-red-100:    #fee2e2;
+  --nlm-cyan-100:   #cffafe;
+  --nlm-purple-100: #f3e8ff;
+  --nlm-blue-100:   #dbeafe;
+
+  /* ----- Mid-tone gradient stop ----- */
+  --nlm-indigo-200: #c7d2fe;
+  --nlm-amber-200:  #fde68a;
+  --nlm-emerald-200: #a7f3d0;
+  --nlm-pink-200:   #fbcfe8;
+  --nlm-lime-200:   #d9f99d;
+  --nlm-red-200:    #fecaca;
+  --nlm-cyan-200:   #a5f3fc;
+  --nlm-purple-200: #e9d5ff;
+  --nlm-blue-200:   #bfdbfe;
+
+  /* ----- Dark text (matching each accent family) ----- */
+  --nlm-indigo-900: #312e81;
+  --nlm-amber-900:  #78350f;
+  --nlm-emerald-900: #064e3b;
+  --nlm-pink-900:   #831843;
+  --nlm-lime-900:   #365314;
+  --nlm-red-900:    #7f1d1d;
+  --nlm-cyan-900:   #164e63;
+  --nlm-purple-900: #581c87;
+  --nlm-blue-900:   #1e3a8a;
+}
+
+/* ----- 9 named theme classes for any element (cards, chips, accents) ----- */
+.nlm-card-indigo { background: linear-gradient(135deg, var(--nlm-indigo-100) 0%, var(--nlm-indigo-200) 100%); border: 1px solid var(--nlm-indigo-200); color: var(--nlm-indigo-900); }
+.nlm-card-amber  { background: linear-gradient(135deg, var(--nlm-amber-100) 0%, var(--nlm-amber-200) 100%); border: 1px solid var(--nlm-amber-200); color: var(--nlm-amber-900); }
+.nlm-card-emerald { background: linear-gradient(135deg, var(--nlm-emerald-100) 0%, var(--nlm-emerald-200) 100%); border: 1px solid var(--nlm-emerald-200); color: var(--nlm-emerald-900); }
+.nlm-card-pink   { background: linear-gradient(135deg, var(--nlm-pink-100) 0%, var(--nlm-pink-200) 100%); border: 1px solid var(--nlm-pink-200); color: var(--nlm-pink-900); }
+.nlm-card-lime   { background: linear-gradient(135deg, var(--nlm-lime-100) 0%, var(--nlm-lime-200) 100%); border: 1px solid var(--nlm-lime-200); color: var(--nlm-lime-900); }
+.nlm-card-red    { background: linear-gradient(135deg, var(--nlm-red-100) 0%, var(--nlm-red-200) 100%); border: 1px solid var(--nlm-red-200); color: var(--nlm-red-900); }
+.nlm-card-cyan   { background: linear-gradient(135deg, var(--nlm-cyan-100) 0%, var(--nlm-cyan-200) 100%); border: 1px solid var(--nlm-cyan-200); color: var(--nlm-cyan-900); }
+.nlm-card-purple { background: linear-gradient(135deg, var(--nlm-purple-100) 0%, var(--nlm-purple-200) 100%); border: 1px solid var(--nlm-purple-200); color: var(--nlm-purple-900); }
+.nlm-card-blue   { background: linear-gradient(135deg, var(--nlm-blue-100) 0%, var(--nlm-blue-200) 100%); border: 1px solid var(--nlm-blue-200); color: var(--nlm-blue-900); }
+
+/* Icon chip inside the card — white-ish blurred background to lift the icon */
+.nlm-card-indigo .nlm-icon-chip,
+.nlm-card-amber  .nlm-icon-chip,
+.nlm-card-emerald .nlm-icon-chip,
+.nlm-card-pink   .nlm-icon-chip,
+.nlm-card-lime   .nlm-icon-chip,
+.nlm-card-red    .nlm-icon-chip,
+.nlm-card-cyan   .nlm-icon-chip,
+.nlm-card-purple .nlm-icon-chip,
+.nlm-card-blue   .nlm-icon-chip {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.nlm-card-indigo .nlm-icon-chip { color: var(--nlm-indigo-600); }
+.nlm-card-amber  .nlm-icon-chip { color: var(--nlm-amber-500); }
+.nlm-card-emerald .nlm-icon-chip { color: var(--nlm-emerald-500); }
+.nlm-card-pink   .nlm-icon-chip { color: var(--nlm-pink-500); }
+.nlm-card-lime   .nlm-icon-chip { color: var(--nlm-lime-500); }
+.nlm-card-red    .nlm-icon-chip { color: var(--nlm-red-500); }
+.nlm-card-cyan   .nlm-icon-chip { color: var(--nlm-cyan-500); }
+.nlm-card-purple .nlm-icon-chip { color: var(--nlm-purple-500); }
+.nlm-card-blue   .nlm-icon-chip { color: var(--nlm-blue-500); }

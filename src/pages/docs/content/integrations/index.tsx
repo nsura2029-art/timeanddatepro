@@ -111,6 +111,38 @@ console.log(\`Hour difference: \${result.differenceHours}\`);`}
   );
 }
 
+function MeetingFinder() {
+  return (
+    <IntegrationShell
+      tool="Meeting Finder"
+      apiEndpoint="/api/v1/meeting/best"
+      apiSummary="Our meeting-overlap engine: 24 candidate hours ranked by how many cities fall inside working hours. Used on the home page and the meeting-finder widget."
+      sdkSnippet={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+
+const client = new TimeAndDatePro();
+
+const result = await client.meeting.best({
+  cities: ["NYC", "LDN", "TYO"],
+  start: 9,        // working-hours start (per-city local)
+  end: 17,         // working-hours end
+  duration: 60,    // slot length in minutes
+});
+
+// Top 3 slots
+result.topSlots.slice(0, 3).forEach((s) => {
+  console.log(\`\${s.utcHour}:00Z → score \${s.score.toFixed(2)}\`);
+});`}
+      cUrlSnippet={`curl "https://timeanddatepro.com/api/v1/meeting/best?cities=NYC,LDN,TYO"`}
+      demoParams={[
+        { name: "cities", label: "Cities (comma-separated)", defaultValue: "NYC,LDN,TYO" },
+        { name: "start", label: "Working-hours start", defaultValue: "9" },
+        { name: "end", label: "Working-hours end", defaultValue: "17" },
+      ]}
+      demoHighlights={["data.workingHours", "data.topSlots"]}
+    />
+  );
+}
+
 function HolidayHours() {
   return (
     <IntegrationShell
@@ -283,6 +315,7 @@ await client.time.words({ date: "2026-07-08", lang: "fr" });
 
 export const integrations: Record<string, React.ComponentType> = {
   "time-zone-converter": TimeZoneConverter,
+  "meeting-finder":       MeetingFinder,
   "holiday-hours":        HolidayHours,
   "unix-timestamp":       UnixTimestamp,
   "iso8601-formatter":    ISO8601Formatter,
