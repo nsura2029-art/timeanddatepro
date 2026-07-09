@@ -21,25 +21,35 @@ import {
 import ToolSdkPanel from "./tools/ToolSdkPanel";
 import ApiVerifyChip from "./tools/ApiVerifyChip";
 import { meetingFinderVerify } from "../utils/apiToolMap";
+import { LocationPicker } from "./common/LocationPicker";
+import { CITY_BY_CODE } from "../data/cities";
+import { flagFor } from "../data/flags";
 
-// 15 Cities specified in instructions
-const CITIES_DATA = [
-  { name: "New York", country: "USA", code: "US", timezone: "America/New_York", flag: "🇺🇸" },
-  { name: "London", country: "UK", code: "GB", timezone: "Europe/London", flag: "🇬🇧" },
-  { name: "Mumbai", country: "India", code: "IN", timezone: "Asia/Kolkata", flag: "🇮🇳" },
-  { name: "Tokyo", country: "Japan", code: "JP", timezone: "Asia/Tokyo", flag: "🇯🇵" },
-  { name: "Singapore", country: "Singapore", code: "SG", timezone: "Asia/Singapore", flag: "🇸🇬" },
-  { name: "Sydney", country: "Australia", code: "AU", timezone: "Australia/Sydney", flag: "🇦🇺" },
-  { name: "Dubai", country: "UAE", code: "AE", timezone: "Asia/Dubai", flag: "🇦🇪" },
-  { name: "Berlin", country: "Germany", code: "DE", timezone: "Europe/Berlin", flag: "🇩🇪" },
-  { name: "Paris", country: "France", code: "FR", timezone: "Europe/Paris", flag: "🇫🇷" },
-  { name: "Los Angeles", country: "USA", code: "US", timezone: "America/Los_Angeles", flag: "🇺🇸" },
-  { name: "Chicago", country: "USA", code: "US", timezone: "America/Chicago", flag: "🇺🇸" },
-  { name: "Toronto", country: "Canada", code: "CA", timezone: "America/Toronto", flag: "🇨🇦" },
-  { name: "São Paulo", country: "Brazil", code: "BR", timezone: "America/Sao_Paulo", flag: "🇧🇷" },
-  { name: "Hong Kong", country: "Hong Kong", code: "HK", timezone: "Asia/Hong_Kong", flag: "🇭🇰" },
-  { name: "Seoul", country: "South Korea", code: "KR", timezone: "Asia/Seoul", flag: "🇰🇷" }
-];
+// Backwards-compat shim — returns the shape MeetingFinder used inline:
+// { name, country, code, timezone, flag }. Search by either city name
+// or the 3-letter city code used by CITY_BY_CODE.
+function resolveCityLike(input: string): { name: string; country: string; code: string; timezone: string; flag: string } {
+  if (!input) return { name: "Singapore", country: "Singapore", code: "SIN", timezone: "Asia/Singapore", flag: "🇸🇬" };
+  if (CITY_BY_CODE[input]) {
+    const c = CITY_BY_CODE[input];
+    return { name: c.name, country: c.country, code: c.code, timezone: c.timezone, flag: flagFor(c.countryCode) };
+  }
+  // name lookup (case-insensitive)
+  for (const c of Object.values(CITY_BY_CODE)) {
+    if (c.name.toLowerCase() === input.toLowerCase()) {
+      return { name: c.name, country: c.country, code: c.code, timezone: c.timezone, flag: flagFor(c.countryCode) };
+    }
+  }
+  return { name: "Singapore", country: "Singapore", code: "SIN", timezone: "Asia/Singapore", flag: "🇸🇬" };
+}
+
+// Default 4 demo cities (timezone code is the storage key now).
+const DEFAULT_PARTICIPANT_CODES = ["NYC", "LON", "BOM", "TYO"];
+
+// Convert a code to the legacy inline shape for any callers still using one.
+function shapeFromCode(code: string) {
+  return resolveCityLike(code);
+}
 
 // Pastel color config
 const PASTEL_COLORS = [
@@ -96,7 +106,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
   // Modal State for adding participant
   const [showAddModal, setShowAddModal] = useState(false);
   const [newParticipantName, setNewParticipantName] = useState("");
-  const [newParticipantCity, setNewParticipantCity] = useState("Singapore");
+  const [newParticipantCity, setNewParticipantCity] = useState("SIN");
 
   // Results state
   const [results, setResults] = useState<MeetingSlot[]>([]);
@@ -128,7 +138,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
           if (parts.length >= 2) {
             const name = decodeURIComponent(parts[0]);
             const city = decodeURIComponent(parts[1]);
-            const cityObj = CITIES_DATA.find(c => c.name.toLowerCase() === city.toLowerCase());
+            const cityObj = resolveCityLike(city);
             if (cityObj) {
               parsed.push({
                 id: (index + 1).toString(),
@@ -182,7 +192,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
         if (parts.length >= 2) {
           const name = decodeURIComponent(parts[0]);
           const city = decodeURIComponent(parts[1]);
-          const cityObj = CITIES_DATA.find(c => c.name.toLowerCase() === city.toLowerCase());
+          const cityObj = resolveCityLike(city);
           if (cityObj) {
             parsed.push({
               id: (index + 1).toString(),
@@ -408,7 +418,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
   const handleAddParticipant = () => {
     if (!newParticipantName.trim()) return;
 
-    const cityObj = CITIES_DATA.find(c => c.name === newParticipantCity) || CITIES_DATA[0];
+    const cityObj = resolveCityLike(newParticipantCity);
     const newPart: Participant = {
       id: Math.random().toString(36).substr(2, 9),
       name: newParticipantName.trim(),
@@ -466,7 +476,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
 
   // Helper to resolve flag for city name
   const getCityFlag = (cityName: string) => {
-    return CITIES_DATA.find(c => c.name === cityName)?.flag || "🌐";
+    return resolveCityLike(cityName).flag || "🌐";
   };
 
   // Render timezone text helper
@@ -704,22 +714,15 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
 
               <div>
                 <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-[#616161] mb-1.5">
-                  Teammate City (15 major choices)
+                  Teammate City
                 </label>
-                <div className="relative">
-                  <select 
-                    value={newParticipantCity}
-                    onChange={(e) => setNewParticipantCity(e.target.value)}
-                    className="w-full bg-[#fafafa] border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-xs text-[#212121] font-semibold outline-none focus:border-[#3f51b5] transition appearance-none cursor-pointer"
-                  >
-                    {CITIES_DATA.map(c => (
-                      <option key={c.name} value={c.name}>
-                        {c.flag} {c.name} ({c.country})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9e9e9e] pointer-events-none" />
-                </div>
+                <LocationPicker
+                  value={newParticipantCity ? [newParticipantCity] : []}
+                  onChange={(codes) => setNewParticipantCity(codes[0] ?? "")}
+                  placeholder="Pick a city, state, or country…"
+                  maxSelections={1}
+                  hidePills
+                />
               </div>
             </div>
 
