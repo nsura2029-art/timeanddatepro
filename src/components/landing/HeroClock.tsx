@@ -1,7 +1,8 @@
 // src/components/landing/HeroClock.tsx
-// DSEG7-classic numeric clock with sub-second + sync drift + accuracy status.
+// DSEG14-Classic-Bold numeric clock with 2-digit sub-second + sync drift +
+// accuracy status. Renders HH:MM:SS big + :cc (centiseconds, smaller).
 // Pulled from 03-horizon.html hero block; rendered into React while preserving
-// the same visual (Inter 800-900 + DSEG7 + emerald glow + steps(2) colon blink).
+// the same visual (Inter 800-900 + DSEG14 + emerald glow + steps(2) colon blink).
 //
 // One component = ONE job: display the current time for a specific timezone
 // plus the sync status from the browse/home payload.
@@ -44,7 +45,9 @@ function fmtClock(d: Date, tz: string) {
     hh: map.hour ?? "00",
     mm: map.minute ?? "00",
     ss: map.second ?? "00",
-    subsec: pad(Math.floor(d.getMilliseconds() / 100), 1), // single sub-digit (0-9)
+    // 2-digit sub-second: centiseconds (00-99).
+    // Math.floor(ms/10) gives 0-99, padded to 2 digits.
+    cs: pad(Math.floor(d.getMilliseconds() / 10), 2),
   };
 }
 
@@ -100,9 +103,10 @@ export function HeroClock({
           <span>--</span>
           <span className="tdp-colon">:</span>
           <span>--</span>
-          <span className="tdp-subsec">.-</span>
+          <span className="tdp-subsec-sep">:</span>
+          <span className="tdp-subsec">--</span>
         </div>
-        <div className="tdp-subsec-label">HH : MM : SS . SUB-SECOND</div>
+        <div className="tdp-subsec-label">HH : MM : SS : CENTISECONDS</div>
       </div>
     );
   }
@@ -133,15 +137,16 @@ export function HeroClock({
         </div>
       )}
 
-      <div className="tdp-seven" aria-label={`Time ${clock.hh}:${clock.mm}:${clock.ss} in ${timezone}`}>
+      <div className="tdp-seven" aria-label={`Time ${clock.hh}:${clock.mm}:${clock.ss}.${clock.cs} in ${timezone}`}>
         <span>{clock.hh}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.mm}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.ss}</span>
-        <span className="tdp-subsec">.{clock.subsec}</span>
+        <span className="tdp-subsec-sep">:</span>
+        <span className="tdp-subsec">{clock.cs}</span>
       </div>
-      <div className="tdp-subsec-label">HH : MM : SS . SUB-SECOND</div>
+      <div className="tdp-subsec-label">HH : MM : SS : CENTISECONDS</div>
 
       {sync && (
         <div className="tdp-sync">

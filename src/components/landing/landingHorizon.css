@@ -15,9 +15,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
+/* DSEG14-Classic-Bold — 14-segment display font. Renders digits as classic
+ * 7-segment shapes (with extra segments lit when letters appear), giving a
+ * chunkier, more pixelated look than DSEG7-Classic. Same SIL OFL license.
+ * Self-hosted at /public/fonts/ because the jsdelivr gh-source mirror
+ * doesn't expose the .woff2 binaries (they live in the v0.46 release zip
+ * only, not in the source tree).
+ */
+@font-face {
+  font-family: 'DSEG14';
+  src: url('/fonts/DSEG14Classic-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* DSEG7-Classic-Bold — kept for sub-second variant if we want to mix.
+ * Sub-second is also rendered in DSEG14 in the current layout, but having
+ * DSEG7 available means a designer can swap back to the smaller digit font
+ * with a single class change.
+ */
 @font-face {
   font-family: 'DSEG7';
-  src: url('https://cdn.jsdelivr.net/gh/keshikan/DSEG@v0.46/fonts/woff2/DSEG7Classic-Bold.woff2') format('woff2');
+  src: url('/fonts/DSEG7Classic-Bold.woff2') format('woff2');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
@@ -145,7 +165,7 @@
   color: var(--accent-primary-deep);
 }
 
-/* DSEG7 hero clock ------------------------------------------------------- */
+/* DSEG14 hero clock ------------------------------------------------------ */
 .tdp-hero-clock {
   text-align: center;
   margin: 0 auto;
@@ -153,7 +173,7 @@
 }
 
 .tdp-seven {
-  font-family: 'DSEG7', 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
   font-weight: bold;
   font-size: clamp(80px, 16vw, 200px);
   line-height: 1;
@@ -179,12 +199,27 @@
   50%, 100% { opacity: 0.25; }
 }
 
-.tdp-subsec {
-  font-size: 0.32em;
-  opacity: 0.65;
+/* Sub-second separator (smaller, between seconds and centiseconds) */
+.tdp-subsec-sep {
+  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.55em;
+  color: var(--seven);
+  opacity: 0.55;
   font-weight: bold;
-  margin-left: 0.04em;
+  margin-left: 0.02em;
+  margin-right: -0.02em;
+  letter-spacing: 0;
+  align-self: center;
+}
+
+/* 2-digit centiseconds — slightly smaller, lower opacity */
+.tdp-subsec {
+  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.55em;
+  opacity: 0.62;
+  font-weight: bold;
   letter-spacing: -0.02em;
+  align-self: center;
 }
 
 .tdp-subsec-label {
