@@ -68,6 +68,25 @@ export default function TimeZoneConverter({ lang = "en", pair }: Props) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cityCodes)); } catch {/* noop */}
   }, [cityCodes]);
 
+  // Per-pair document.title + meta description for SEO. Pair pages need
+  // their own <title> because the global one is generic. Cheap SEO win
+  // until the dedicated <SeoHead> component lands.
+  useEffect(() => {
+    if (!pair) return;
+    const oldTitle = document.title;
+    const oldDesc = document.querySelector('meta[name="description"]')?.getAttribute("content") ?? "";
+    document.title = `${pair.fromName} to ${pair.toName} time conversion — live grid | TimeAndDatePro`;
+    const meta = document.querySelector('meta[name="description"]') ?? document.createElement("meta");
+    meta.setAttribute("name", "description");
+    meta.setAttribute("content", `Live time difference between ${pair.fromName} and ${pair.toName}. Add more cities, see working-hour overlap, export to your calendar.`);
+    if (!meta.isConnected) document.head.appendChild(meta);
+    return () => {
+      document.title = oldTitle;
+      const m = document.querySelector('meta[name="description"]');
+      if (m && oldDesc) m.setAttribute("content", oldDesc);
+    };
+  }, [pair]);
+
   // Live-tick the grid every minute so the "current time" column moves
   useEffect(() => {
     const tick = setInterval(() => setBaseDate(new Date()), 60_000);
