@@ -17,6 +17,8 @@ import {
 import { CountryPreferences, Holiday, CountryCode } from "../types";
 import { formatLocalTime, getTimezoneOffsetAndAbbr, COUNTRY_HOLIDAYS, CITY_DATA, ALL_LOCATIONS_LIST } from "../data/countries";
 import { getTheme } from "../utils/theme";
+import ApiVerifyChip from "./tools/ApiVerifyChip";
+import { converterVerify } from "../utils/apiToolMap";
 
 interface QuickActionsProps {
   preferences: CountryPreferences;
@@ -784,6 +786,14 @@ export default function QuickActions({
 
         </div>
       )}
+      <ApiVerifyChip
+        config={converterVerify}
+        state={{
+          from: convSourceTz,
+          to: convTargetTz,
+          time: `${String(convHourScrub).padStart(2, "0")}:00`,
+        }}
+      />
     </div>
   );
 }

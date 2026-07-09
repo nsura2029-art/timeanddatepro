@@ -20,6 +20,8 @@ import { getTheme } from "../utils/theme";
 import { getTimezoneOffsetAndAbbr, formatLocalTime } from "../data/countries";
 import AnalogClock from "./AnalogClock";
 import ToolSdkPanel from "./tools/ToolSdkPanel";
+import ApiVerifyChip from "./tools/ApiVerifyChip";
+import { worldClockVerify } from "../utils/apiToolMap";
 
 interface WorldClockDashboardProps {
   preferences: CountryPreferences;
@@ -708,6 +710,10 @@ const nyc = await client.cities.get("NYC");
         curlCode={`curl "https://timeanddatepro.com/api/v1/cities"
 curl "https://timeanddatepro.com/api/v1/cities/TYO"`}
         docsHref="/docs/integrations/world-clock"
+      />
+      <ApiVerifyChip
+        config={worldClockVerify}
+        state={{ code: preferences.timezone === "America/New_York" ? "NYC" : "TYO" }}
       />
     </div>
   );

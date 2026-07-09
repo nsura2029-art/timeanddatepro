@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { CalendarRange, ArrowRight, Calendar } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
+import ApiVerifyChip from "./ApiVerifyChip";
+import { dateDiffVerify } from "../../utils/apiToolMap";
 
 interface Props { lang?: string; }
 
@@ -141,6 +143,7 @@ console.log(cal.totalDays, biz.businessDays);`}
         curlCode={`curl "https://timeanddatepro.com/api/v1/time/diff?from=2026-01-01&to=2026-12-31&mode=business&country=US"`}
         docsHref="/docs/integrations/date-difference"
       />
+      <ApiVerifyChip config={dateDiffVerify} state={{ from: start, to: end, mode: "calendar", country: "US" }} />
     </div>
   );
 }

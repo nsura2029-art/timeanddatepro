@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Clock, Copy, Check, Hash } from "lucide-react";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
+import ApiVerifyChip from "./ApiVerifyChip";
+import { unixVerify } from "../../utils/apiToolMap";
 
 interface Props { lang?: string; }
 
@@ -55,6 +57,7 @@ export default function UnixTimestampConverter({ lang = "en" }: Props) {
 
   return (
     <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in text-[#212121]">
+      <ApiVerifyChip config={unixVerify} state={{ epoch, unit }} />
       <div className="rounded-3xl bg-gradient-to-r from-[#e8eaf6] via-[#e0f2f1] to-[#e8f5e9] p-8 md:p-12 text-center relative overflow-hidden shadow-sm border border-[#e0e0e0]">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#fce4ec]/30 rounded-full blur-3xl pointer-events-none" />
