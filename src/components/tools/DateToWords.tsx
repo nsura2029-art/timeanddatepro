@@ -100,21 +100,14 @@ export default function DateToWords({ lang = "en" }: Props) {
 
   return (
     <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in text-[#212121]">
-      <div className="rounded-3xl bg-gradient-to-r from-[#e8eaf6] via-[#e0f2f1] to-[#e8f5e9] p-8 md:p-12 text-center relative overflow-hidden shadow-sm border border-[#e0e0e0]">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#fce4ec]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-2xl mx-auto space-y-4 relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-[#2e7d32] text-xs font-semibold shadow-sm border border-[#eeeeee]">
-            <Type size={14} /> DATE-TO-WORDS ENGINE
-          </span>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-[#212121]">{t.writeInWords}</h1>
-          <p className="text-sm md:text-base text-[#616161] font-sans leading-relaxed">
-            {t.spokenForm} · {t.dayOfWeek} · {t.relativeTime}
-          </p>
-        </div>
-      </div>
-
       <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-xl p-6 md:p-8 space-y-6">
+        <header className="mb-2">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 inline-flex items-center gap-1.5">
+            <Type size={11} /> DATE-TO-WORDS ENGINE
+          </span>
+          <h1 className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#212121]">{t.writeInWords}</h1>
+          <p className="mt-1 text-sm text-[#616161]">{t.spokenForm} · {t.dayOfWeek} · {t.relativeTime}</p>
+        </header>
         <div>
           <label className="block text-[10px] font-mono font-bold text-[#3f51b5] uppercase tracking-wider mb-2">{t.fullDate}</label>
           <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)}
