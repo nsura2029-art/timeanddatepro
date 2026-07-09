@@ -27,6 +27,8 @@ export interface TimeZoneGridProps {
   onShare?: () => void;
   onAddToCalendar?: (provider: "outlook" | "google" | "ics" | "yahoo") => void;
   onCopyToClipboard?: () => void;
+  /** Optional ref attached to the outer container — used for screenshot capture. */
+  innerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const LEGEND: Array<{ kind: CellKind; label: string; color: string }> = [
@@ -147,6 +149,7 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
     onShare,
     onAddToCalendar,
     onCopyToClipboard,
+    innerRef,
   } = props;
 
   const [hoverCol, setHoverCol] = useState<number | null>(null);
@@ -189,7 +192,7 @@ export function TimeZoneGrid(props: TimeZoneGridProps) {
   const refCity = cities[0];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 overflow-hidden">
+    <div ref={innerRef} className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 overflow-hidden">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/50">
         <button

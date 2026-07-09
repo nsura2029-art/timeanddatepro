@@ -118,6 +118,7 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pParam = params.get("p");
+    const citiesParam = params.get("cities");
     const dParam = params.get("d");
     const wParam = params.get("w");
     const eParam = params.get("e");
@@ -161,10 +162,35 @@ export default function MeetingFinder({ lang = "en" }: MeetingFinderProps) {
     if (eParam) setEarliest(eParam);
     if (lParam) setLatest(lParam);
 
+    // 1b. ?cities=NYC,LDN,BOM,TYO — pre-fill participants from a converter
+    //     share-link (one Teammate slot per city, default names).
+    if (citiesParam && !pParam) {
+      try {
+        const codes = citiesParam.split(",").map((s) => s.trim()).filter(Boolean);
+        const seeded: Participant[] = codes.slice(0, 8).map((code, i) => {
+          const city = resolveCityLike(code);
+          return {
+            id: Math.random().toString(36).slice(2, 11),
+            name: i === 0 ? "You" : `Teammate ${i + 1}`,
+            city: city.name,
+            timezone: city.timezone,
+            colorIndex: i % PASTEL_COLORS.length,
+          };
+        });
+        if (seeded.length >= 2) setParticipants(seeded);
+      } catch {/* noop */}
+    }
+
     // If query contains parameters, auto-calculate
     if (pParam) {
       setTimeout(() => {
         calculateBestSlotsDirectly(pParam, dParam, wParam, eParam, lParam);
+      }, 300);
+    } else if (citiesParam) {
+      // Auto-calculate from the new ?cities= prefill
+      setTimeout(() => {
+        const draft = [...participants];
+        calculateBestSlotsDirectly(JSON.stringify(draft), dParam, wParam, eParam, lParam);
       }, 300);
     }
   }, []);

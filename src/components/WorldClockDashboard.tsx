@@ -191,6 +191,25 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
 
   // Slot customizer states (Persisted to localStorage)
   const [customSlots, setCustomSlots] = useState<string[]>(() => {
+    // 1. Share link wins (cross-tool URL pre-fill from converter)
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const shared = params.get("cities");
+        if (shared) {
+          const codes = shared.split(",").map((s) => s.trim()).filter(Boolean);
+          const tzs = codes
+            .map((code) => CITY_BY_CODE[code]?.timezone)
+            .filter(Boolean) as string[];
+          if (tzs.length >= 1) {
+            // Pad with last tz to keep 5 slots, or trim to 5
+            while (tzs.length < 5) tzs.push(tzs[tzs.length - 1]);
+            return tzs.slice(0, 5);
+          }
+        }
+      } catch {/* noop */}
+    }
+
     const saved = localStorage.getItem("world_clock_custom_slots");
     if (saved) {
       try {
