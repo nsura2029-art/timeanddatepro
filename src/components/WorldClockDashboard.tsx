@@ -22,6 +22,8 @@ import AnalogClock from "./AnalogClock";
 import ToolSdkPanel from "./tools/ToolSdkPanel";
 import ApiVerifyChip from "./tools/ApiVerifyChip";
 import { worldClockVerify } from "../utils/apiToolMap";
+import { LocationPicker } from "./common/LocationPicker";
+import { CITY_BY_CODE } from "../data/cities";
 
 interface WorldClockDashboardProps {
   preferences: CountryPreferences;
@@ -235,6 +237,16 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
     setActiveCustomizeSlot(null);
   };
 
+  // Slot customizer via LocationPicker: change the slot's IANA timezone
+  // when the user picks a city code from the new picker.
+  const handleSlotPickerChange = (slotIndex: number, codes: string[]) => {
+    const code = codes[0];
+    if (!code) return;
+    const city = CITY_BY_CODE[code];
+    if (!city) return;
+    handleSelectSlotCity(slotIndex, city.timezone);
+  };
+
   // Teleport action to set the chosen card as active Command Center
   const handleTeleport = (city: WorldClockCity) => {
     onSelectTimezone(city.timezone, city.countryCode, city.country);
@@ -407,17 +419,19 @@ export default function WorldClockDashboard({ preferences, onSelectTimezone, lan
 
                 {isCustomizing ? (
                   <div className="w-full py-2 space-y-2">
-                    <select 
-                      onChange={(e) => handleSelectSlotCity(index, e.target.value)}
-                      defaultValue={tz}
-                      className="w-full bg-slate-950 border border-slate-800 text-xs rounded-md p-1.5 outline-none text-slate-200"
-                    >
-                      <option value="" disabled>{loc.selectCity}</option>
-                      {WORLD_CITIES.map(c => (
-                        <option key={c.id} value={c.timezone}>{c.fullName} ({c.code})</option>
-                      ))}
-                    </select>
-                    <button 
+                    <LocationPicker
+                      value={(() => {
+                        // Look up the slot's current tz → matching CITY_BY_CODE.code
+                        const found = Object.values(CITY_BY_CODE).find(c => c.timezone === tz);
+                        return found ? [found.code] : [];
+                      })()}
+                      onChange={(codes) => handleSlotPickerChange(index, codes)}
+                      placeholder={loc.selectCity}
+                      maxSelections={1}
+                      hidePills
+                      kinds={["city"]}
+                    />
+                    <button
                       onClick={() => setActiveCustomizeSlot(null)}
                       className="w-full text-[10px] font-mono py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300"
                     >
