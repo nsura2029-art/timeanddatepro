@@ -8,17 +8,33 @@
  * (sticky TOC | content) → footer of doc.
  *
  * Shared between PrivacyPolicy, TermsOfService, AboutPage (the legal
- * .lp- prefix), with About-specific .ap- additions in AboutPage.css. */
+ * .lp- prefix), with About-specific .ap- additions in AboutPage.css.
+ *
+ * =====================================================================
+ * WIDTH STANDARD (polish-8) — every page in the app follows this rule
+ * =====================================================================
+ * - Outer page wrapper:  max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8
+ *   (matches topnav, footer, tool pages, world cup, timezone map)
+ * - Content column:      max-w-[1120px] mx-auto
+ *   (matches .tdp-section in landingHorizon.css, world cup details)
+ * - Full-bleed sections: max-w-[1600px] (hero clock, wide grids)
+ * - Mobile padding:      px-4 (16px) on small screens
+ * The grid below uses the same 1600 / 1120 boundary so the document
+ * content aligns with the rest of the app at every viewport.
+ * ===================================================================== */
 
-/* Page wrapper (fits inside the standard <main>) */
+/* Page wrapper — outer 1600px to match topnav, footer, tool pages */
 .lp {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0;
+  padding: 0 16px;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #0f172a;
   line-height: 1.7;
 }
+
+@media (min-width: 640px)  { .lp { padding: 0 24px; } }
+@media (min-width: 1024px) { .lp { padding: 0 32px; } }
 
 /* Breadcrumb — sits at the top, before the title */
 .lp-breadcrumb {
@@ -91,10 +107,15 @@
   font-weight: 600;
 }
 
-/* 2-column grid: sticky TOC sidebar + content */
+/* 2-column grid: sticky TOC sidebar (240px) + content (fills 1fr).
+   The outer .lp wrapper is 1600px; the sidebar takes 240px and the
+   gap is 64px, so the content column is at most 1296px on the
+   widest viewports — well under the 1600px outer so the .lp-content
+   inner wrapper centers the actual text at 1120px (matching the
+   rest of the app's section content width). */
 .lp-grid {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 64px;
   align-items: start;
 }
@@ -161,8 +182,15 @@
   background: rgba(37, 99, 235, 0.08);
 }
 
-/* Right column — the document content */
-.lp-content { min-width: 0; }
+/* Right column — the document content. Inner width capped at 1120px
+   to match .tdp-section (landing page section width) and the world
+   cup detail blocks. This is the "standard content width" for the app. */
+.lp-content {
+  max-width: 1120px;
+  min-width: 0;
+  width: 100%;
+  margin: 0 auto;
+}
 
 .lp-section {
   margin-bottom: 48px;
@@ -310,7 +338,9 @@
 
 .lp-meta__sep { color: #cbd5e1; }
 
-/* Responsive: single column on mobile, TOC moves to top */
+/* Responsive: single column on tablet, TOC moves to top.
+   The 1024px breakpoint matches the rest of the app's "stacks below
+   desktop" threshold (see .tdp-cities-row media queries). */
 @media (max-width: 1024px) {
   .lp-grid {
     grid-template-columns: 1fr;
