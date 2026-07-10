@@ -1,11 +1,15 @@
 // src/pages/legal/TermsOfService.tsx
 // Terms of Service — AdSense + standard SaaS disclaimers.
-// Cloudconvert-style 2-column layout: sticky TOC sidebar on the left,
-// document content on the right. Renders INSIDE the standard app shell
-// (topnav + footer) for visual consistency with the rest of the app.
+//
+// Content guidelines (polish-7):
+// - 3-4 min read target
+// - 7 sections (was 11); merged Acceptance/Accounts, IP/Third-party,
+//   Disclaimers/Liability, Termination/Indemnification
+// - Plain language, short sentences
+// - i18n-ready: no idioms, consistent terminology, present tense
 
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Mail, Printer, Globe, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Mail, Printer, Globe } from "lucide-react";
 
 const LAST_UPDATED = "2026-07-10";
 const EFFECTIVE_DATE = "2026-07-15";
@@ -16,78 +20,69 @@ const SITE_URL = "https://timeanddatepro.com";
 const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   {
     id: "acceptance",
-    title: "Acceptance of these terms",
-    body: (
-      <p>
-        By accessing or using {SITE_NAME} (the "Service") at {SITE_URL} or
-        any subdomain thereof, you agree to be bound by these Terms of
-        Service ("Terms"). If you do not agree, do not use the Service.
-        Your continued use after we post changes constitutes acceptance of
-        the updated Terms.
-      </p>
-    ),
-  },
-  {
-    id: "service",
-    title: "What the Service is",
+    title: "Acceptance",
     body: (
       <>
         <p>
-          {SITE_NAME} is a free public utility for looking up current time,
-          converting between time zones, scheduling meetings across time
-          zones, and reading related reference content (calendars, holiday
-          lists, daylight-saving time schedules, sports schedules, etc.).
+          By using {SITE_NAME} at {SITE_URL}, you agree to these Terms.
+          If you do not agree, do not use the Service. Your continued
+          use after we post changes means you accept the updated Terms.
         </p>
         <p>
-          The Service is provided "as is". Time zone data is sourced from
-          the IANA Time Zone Database and authoritative government /
-          public sources. We work hard to keep it accurate but we do not
-          guarantee 100% accuracy. For legal, financial, or medical
-          scheduling, double-check with a qualified professional.
+          {SITE_NAME} does not require an account. All preferences live
+          in your browser through <code>localStorage</code>. If you
+          clear your browser data, your preferences are lost. We have
+          no server copy.
         </p>
       </>
     ),
   },
   {
-    id: "accounts",
-    title: "No account required",
+    id: "service",
+    title: "The service",
     body: (
-      <p>
-        {SITE_NAME} does not require an account. All preferences are stored
-        locally in your browser via <code>localStorage</code>. If you clear
-        your browser data, your preferences are lost — we have no server
-        copy to restore them.
-      </p>
+      <>
+        <p>
+          {SITE_NAME} is a free public utility for current time lookups,
+          time zone conversion, meeting scheduling, and related
+          reference content.
+        </p>
+        <p>
+          Time zone data comes from the IANA Time Zone Database. We work
+          to keep it accurate but we do not guarantee 100% accuracy. For
+          legal, financial, or medical scheduling, verify with a
+          qualified professional.
+        </p>
+      </>
     ),
   },
   {
-    id: "user-conduct",
-    title: "Acceptable use",
+    id: "use",
+    title: "Your responsibilities",
     body: (
       <>
         <p>You agree not to:</p>
         <ul>
-          <li>Use the Service to violate any applicable law or regulation.</li>
-          <li>Scrape, crawl, or systematically download data at a rate that exceeds 1 request per second per IP. (Our public API has higher published limits; see the API docs.)</li>
-          <li>Attempt to bypass rate limiting, security controls, or access controls.</li>
-          <li>Use the Service to attack, disrupt, or interfere with our infrastructure or other users.</li>
-          <li>Republish our content (including the IANA-derived time zone data) as if it were yours, without attribution.</li>
-          <li>Use the Service in any way that would cause Google to disable our AdSense account (e.g., clicking your own ads, encouraging clicks, etc.).</li>
+          <li>Use the Service to violate any law or regulation.</li>
+          <li>Scrape or systematically download data faster than 1 request per second per IP. (Our public API has higher published limits.)</li>
+          <li>Attempt to bypass rate limits, security controls, or access controls.</li>
+          <li>Attack, disrupt, or interfere with our infrastructure or other users.</li>
+          <li>Republish our content as your own without attribution.</li>
+          <li>Click your own ads or encourage others to click them. (This can disable our AdSense account.)</li>
         </ul>
       </>
     ),
   },
   {
-    id: "intellectual-property",
-    title: "Intellectual property",
+    id: "content",
+    title: "Our content and third parties",
     body: (
       <>
         <p>
           The {SITE_NAME} brand, design, code, and original content are
-          owned by us and our contributors. Time zone data is provided
-          under the IANA license; holiday data is sourced from
-          government / public-domain references and is used with
-          attribution.
+          owned by us. Time zone data is provided under the IANA
+          license. Holiday data comes from public-domain government
+          sources.
         </p>
         <p>
           You may quote brief excerpts (under 200 words) from our
@@ -95,45 +90,28 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
           attribution. For longer quotes or commercial use, email{" "}
           <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
-      </>
-    ),
-  },
-  {
-    id: "third-party",
-    title: "Third-party services and links",
-    body: (
-      <>
         <p>
-          The Service may contain links to third-party websites and embeds
-          from third-party services (Google AdSense for ads, Wikipedia
-          for reference content, etc.). We do not control and are not
-          responsible for the content, policies, or practices of any
-          third party. Your use of third-party services is at your own
-          risk and subject to their terms.
-        </p>
-        <p>
-          Specifically, advertising on {SITE_NAME} is provided by Google
-          AdSense. Your interactions with ads are governed by{" "}
-          <a className="lp-link" href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer noopener">Google's ad policies</a>{" "}
-          and Google's privacy practices. We do not endorse or guarantee
-          any advertised product or service.
+          The Service may link to or embed third-party content (Google
+          AdSense, Wikipedia, and others). We do not control and are
+          not responsible for third-party content or policies. Your
+          use of any third-party service is at your own risk.
         </p>
       </>
     ),
   },
   {
     id: "disclaimers",
-    title: "Disclaimers",
+    title: "Disclaimers and liability",
     body: (
       <div className="lp-callout">
         <AlertTriangle size={20} className="lp-callout__icon" aria-hidden />
         <p className="lp-callout__body">
-          The Service is provided <strong>"as is" and "as available"</strong> without
-          warranties of any kind, express or implied, including but not
-          limited to warranties of merchantability, fitness for a
-          particular purpose, non-infringement, or accuracy. We do not
-          warrant that the Service will be uninterrupted, secure, or
-          error-free.
+          The Service is provided <strong>"as is" and "as available"</strong>
+          without warranties of any kind, express or implied. This
+          includes warranties of merchantability, fitness for a
+          particular purpose, non-infringement, and accuracy. We do
+          not warrant that the Service will be uninterrupted, secure,
+          or error-free.
         </p>
       </div>
     ),
@@ -143,56 +121,49 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
     title: "Limitation of liability",
     body: (
       <p>
-        To the maximum extent permitted by law, in no event shall {SITE_NAME}, its operators, contributors, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages (including loss of data, revenue, profits, or business opportunity) arising out of or related to your use of the Service, even if advised of the possibility of such damages. Our total aggregate liability for any claim shall not exceed <strong>US$100</strong>.
+        To the maximum extent permitted by law, {SITE_NAME} and its
+        operators are not liable for any indirect, incidental, special,
+        consequential, or punitive damages arising from your use of
+        the Service. Our total liability for any claim is limited to{" "}
+        <strong>US$100</strong>.
       </p>
-    ),
-  },
-  {
-    id: "indemnification",
-    title: "Indemnification",
-    body: (
-      <p>You agree to defend, indemnify, and hold harmless {SITE_NAME} from any claim, demand, loss, or expense (including reasonable attorneys' fees) arising from your use of the Service, your violation of these Terms, or your violation of any third-party right.</p>
     ),
   },
   {
     id: "termination",
-    title: "Termination",
-    body: (
-      <p>
-        We may suspend or terminate the Service at any time, with or
-        without notice, for any reason or no reason. We may also block
-        specific users or IP ranges that violate these Terms. Upon
-        termination, your right to use the Service ceases. Sections
-        5, 7, 8, 9, and 11 survive termination.
-      </p>
-    ),
-  },
-  {
-    id: "misc",
-    title: "Miscellaneous",
+    title: "Termination, governing law, contact",
     body: (
       <>
         <p>
-          <strong>Governing law:</strong> These Terms are governed by the
-          laws of the State of Delaware, United States, without regard
-          to its conflict-of-law principles.
+          We may suspend or terminate the Service at any time, with or
+          without notice. We may also block specific users or IP
+          ranges that violate these Terms. Sections about our
+          disclaimers, liability, and governing law survive
+          termination.
         </p>
         <p>
-          <strong>Dispute resolution:</strong> Any dispute arising from
-          these Terms will be resolved by binding arbitration in
-          Wilmington, Delaware, under the rules of the American
-          Arbitration Association. You waive any right to participate in
-          a class action.
+          <strong>Governing law:</strong> These Terms are governed by
+          the laws of the State of Delaware, United States.
         </p>
         <p>
-          <strong>Severability:</strong> If any provision of these Terms
-          is held invalid, the remaining provisions remain in full
-          force and effect.
+          <strong>Disputes:</strong> Any dispute will be resolved by
+          binding arbitration in Wilmington, Delaware, under the rules
+          of the American Arbitration Association. You waive any right
+          to participate in a class action.
         </p>
         <p>
-          <strong>Entire agreement:</strong> These Terms, together with
-          the Privacy Policy, constitute the entire agreement between
-          you and {SITE_NAME} regarding the Service.
+          <strong>Severability:</strong> If any provision of these
+          Terms is held invalid, the remaining provisions remain in
+          full force and effect.
+        </p>
+        <p>
+          <strong>Entire agreement:</strong> These Terms and the Privacy
+          Policy are the entire agreement between you and {SITE_NAME}.
+        </p>
+        <p>
+          For any question, email{" "}
+          <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          We respond within five business days.
         </p>
       </>
     ),
@@ -240,11 +211,9 @@ export function TermsOfService() {
         <div className="lp-eyebrow">Legal · Terms</div>
         <h1 className="lp-title">Terms of Service</h1>
         <div className="lp-meta__row">
-          <span className="lp-meta__badge">Last updated · {LAST_UPDATED}</span>
+          <span className="lp-meta__badge">Updated · {LAST_UPDATED}</span>
           <span className="lp-meta__sep">•</span>
-          <span>Effective {EFFECTIVE_DATE}</span>
-          <span className="lp-meta__sep">•</span>
-          <span>~10 min read</span>
+          <span>~3 min read</span>
         </div>
       </header>
 
@@ -280,7 +249,7 @@ export function TermsOfService() {
           <footer className="lp-foot">
             <p>
               <Mail size={14} style={{ verticalAlign: "middle" }} />{" "}
-              Questions? <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+              <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             </p>
             <div className="lp-foot__actions">
               <button

@@ -1,15 +1,25 @@
 // src/pages/about/AboutPage.tsx
-// About page — cloudconvert-style. Same 2-column layout (sticky TOC
-// sidebar + content) as the legal pages, with a Quick Facts card and
-// stat tiles in the sidebar to match the cloudconvert "About Us" feel.
+// About — convertio.co/about style. Customer-centric story, not
+// company-centric. 5 sections, 3-4 min read, plain language.
 //
-// AdSense requires a contact method. This page also lists the
-// project's data sources, credits, roadmap, and GitHub link.
+// Story arc (convertio framework):
+//   1. Story — problem → solution → mission (the "why we exist")
+//   2. What we built — concrete product description
+//   3. Open source — credibility signal
+//   4. Roadmap — what is shipped, what is next (concise timeline)
+//   5. Contact — short, real-person sign-off
+//
+// Content guidelines (polish-7):
+// - 3-4 min read
+// - No Quick Facts card (was visual noise) — moved 4 facts into Story
+// - No GitHub dark CTA card (was redundant with footer link)
+// - Stat tiles reduced to one compact line (dropped redundant ones)
+// - Credits in a single compact list (was 2-col grid)
+// - Roadmap compact (was vertical timeline — too busy)
+// - i18n-ready: short sentences, no idioms, no culture-specific jokes
 
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Mail, Printer, Globe, Github, Sparkles, Heart, Code } from "lucide-react";
-import { Link } from "react-router-dom";
-import { navigateToRoute } from "../../utils/router";
+import { Mail, Printer, Globe, Github } from "lucide-react";
 import "./AboutPage.css";
 
 const SITE_NAME = "TimeAndDatePro";
@@ -21,125 +31,104 @@ const GITHUB_URL = "https://github.com/nsura2029-art/timeanddatepro";
 
 const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   {
-    id: "what",
-    title: "What this is",
+    id: "story",
+    title: "Our story",
     body: (
       <>
         <p>
-          {SITE_NAME} is a free public utility for looking up the current
-          time in any city, converting between time zones, scheduling
-          meetings across time zones, and reading related reference
-          content. No account required. No data collected. Just useful
-          tools that load fast and look good.
+          Every existing time and date website is stuck in 2010. Tables
+          of data, low-density information, ads everywhere. We asked:
+          what would a time utility look like if it were designed in
+          2026?
         </p>
+        <p>
+          We built {SITE_NAME} as the answer. A clean hero with a
+          seven-segment clock. 39 cities visible at a glance. Full
+          timezone conversion. Meeting planning. A public REST API that
+          any developer can hit for free.
+        </p>
+        <p>
+          Our mission is simple: <strong>make the world's time tools
+          beautiful, fast, and open.</strong> No account. No tracking.
+          No bloat. Just useful tools that load quickly and look good.
+        </p>
+        <p>
+          We are a small team. We read every email. We respond within
+          five business days.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "what",
+    title: "What we built",
+    body: (
+      <>
+        <p>{SITE_NAME} is a set of focused time tools:</p>
+        <ul>
+          <li>
+            <strong>Live world clock</strong> with 39 major cities and
+            a sub-second ticking hero clock.
+          </li>
+          <li>
+            <strong>Time Zone Converter</strong> with wall-clock
+            conversion and a meeting-time overlap grid.
+          </li>
+          <li>
+            <strong>Meeting Finder</strong> that finds the best
+            meeting time across multiple participants.
+          </li>
+          <li>
+            <strong>12-Month Calendar</strong> and{" "}
+            <strong>Holidays and Hours</strong> for planning.
+          </li>
+          <li>
+            <strong>Timezone Map</strong> — a full-width interactive
+            world map for visual browsing.
+          </li>
+          <li>
+            <strong>World Cup 2026</strong> bracket predictor and
+            schedule.
+          </li>
+          <li>
+            <strong>Public REST API</strong> with 17 endpoints for
+            developers.
+          </li>
+        </ul>
+        <p>
+          All preferences live in your browser. We do not store user
+          data on our servers. Time conversions happen in your
+          browser using the standard JavaScript{" "}
+          <code>Intl.DateTimeFormat</code> API.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "open",
+    title: "Open source",
+    body: (
+      <>
         <p>
           The whole project is open source on{" "}
           <a className="lp-link" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
-            <Github size={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
             GitHub
           </a>{" "}
-          — feel free to read the code, file issues, or submit pull
-          requests.
-        </p>
-        <div className="ap-github">
-          <p className="ap-github__text">
-            <strong>Open source, MIT licensed.</strong> Read the source, file issues, contribute.
-          </p>
-          <a className="ap-github__btn" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
-            <Github size={14} /> View on GitHub
-          </a>
-        </div>
-      </>
-    ),
-  },
-  {
-    id: "why",
-    title: "Why we built it",
-    body: (
-      <>
-        <p>
-          Every existing time/date website is stuck in 2010. Tables,
-          low-density information, ads everywhere. We thought: "what
-          would a time utility look like if it were designed in 2026?"
-          The answer is what you're looking at — a clean hero with a
-          seven-segment clock, 39 cities visible in a glance, full
-          timezone conversion, meeting planning, and a public REST API
-          that any developer can hit for free.
+          under the MIT license. Read the source. File issues. Submit
+          pull requests. We accept community contributions.
         </p>
         <p>
-          We are not trying to replace <em>timeanddate.com</em> (25 years of
-          content), <em>worldtimebuddy.com</em> (meeting focus), or{" "}
-          <em>time.is</em> (minimalist). We are trying to be the{" "}
-          <strong>third option</strong>: modern UI, AI-citable structured
-          data, embed-friendly, and built on an open data stack.
-        </p>
-      </>
-    ),
-  },
-  {
-    id: "how",
-    title: "How it works",
-    body: (
-      <>
-        <p>
-          The app is a single-page React + TypeScript app built with
-          Vite, served by a small Node.js + SQLite backend. The
-          database holds the curated city list, the popular-timezones
-          ranking, country reference data, and the admin panel state.
-          No user data is stored on the server — your preferences live
-          in your browser's <code>localStorage</code>.
+          We build on the work of others. Time zone data comes from the
+          IANA Time Zone Database. Country reference data comes from
+          public-domain government sources plus Wikipedia (CC BY-SA).
+          Holiday data comes from official government calendars. We
+          thank every maintainer who makes this project possible.
         </p>
         <p>
-          Time conversions are computed client-side using the standard{" "}
-          <code>Intl.DateTimeFormat</code> API, which delegates to the
-          browser's own copy of the IANA Time Zone Database. The hero
-          clock ticks once per second (we tested every interval from
-          10ms to 1000ms; 1s is the right tradeoff between smoothness
-          and CPU).
+          We also use Lucide icons, the DSEG14 seven-segment font, the
+          Inter and Sora and JetBrains Mono typography, and the
+          NotebookLM palette as design inspiration.
         </p>
-      </>
-    ),
-  },
-  {
-    id: "data",
-    title: "Data sources",
-    body: (
-      <p>
-        Time zone data comes from the IANA Time Zone Database (the same
-        source every operating system uses). Country reference data
-        comes from public-domain government sources plus Wikipedia
-        (CC BY-SA, with attribution). Holiday data is curated from each
-        country's official government calendar. We update the
-        underlying timezone data quarterly.
-      </p>
-    ),
-  },
-  {
-    id: "credits",
-    title: "Credits",
-    body: (
-      <>
-        <p style={{ color: "#475569", fontSize: "0.95rem" }}>
-          We stand on the shoulders of these open-source projects and
-          public datasets. Thank you to everyone who maintains them.
-        </p>
-        <ul className="ap-credits">
-          {[
-            { name: "IANA Time Zone Database", url: "https://www.iana.org/time-zones", note: "Source of truth for all timezone + DST data" },
-            { name: "Wikipedia (CC BY-SA)", url: "https://en.wikipedia.org", note: "Country reference + history (with attribution)" },
-            { name: "Open-Meteo", url: "https://open-meteo.com", note: "Free weather data for the world map page" },
-            { name: "Open Exchange Rates / ECB", url: "https://www.ecb.europa.eu/stats/policy_and_exchange_rates", note: "Currency conversion reference rates" },
-            { name: "Lucide Icons", url: "https://lucide.dev", note: "Icon system across the app" },
-            { name: "DSEG14 Font", url: "https://github.com/keshikan/DSEG", note: "Seven-segment display font for the hero clock" },
-            { name: "Inter + Sora + JetBrains Mono", url: "https://fonts.google.com", note: "Typography stack" },
-            { name: "NotebookLM palette", url: "https://notebooklm.google", note: "Inspiration for the 9-color accent system" },
-          ].map((c) => (
-            <li key={c.name}>
-              <a className="lp-link" href={c.url} target="_blank" rel="noreferrer noopener">{c.name}</a>
-              <span className="ap-credits__note"> — {c.note}</span>
-            </li>
-          ))}
-        </ul>
       </>
     ),
   },
@@ -148,32 +137,23 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
     title: "Roadmap",
     body: (
       <>
-        <p style={{ color: "#475569", fontSize: "0.95rem" }}>
-          What's shipped, what we're working on, and what's coming next.
+        <p>
+          <strong>Shipped:</strong> Hero + 7 tools, World Cup 2026
+          page, Timezone Map, Public REST API, Admin panel, full
+          documentation site.
         </p>
-        <div className="ap-roadmap">
-          {[
-            { status: "shipped", title: "Hero + 7 tools (T4.x)", body: "Time Zone Converter, Meeting Finder, World Clock, Calendar, Holidays & Hours, 12-Month Calendar, API Docs" },
-            { status: "shipped", title: "World Cup 2026 dedicated page", body: "Bracket predictor + subscribe-to-reminders form" },
-            { status: "shipped", title: "Timezone Map", body: "Full-width interactive world map with 6 timezone bands + click-to-select + CTA into the converter" },
-            { status: "in-progress", title: "AdSense integration", body: "Manual ad units placed per the strategy doc; awaiting AdSense approval" },
-            { status: "in-progress", title: "SEO city pages", body: "5,000+ /time-in/[city] programmatic pages for long-tail organic traffic" },
-            { status: "next", title: "Time-zone conversion pairs", body: "200+ /tz-from-X-to-Y pages to own the 'est to ist' / 'pst to est' SERPs" },
-            { status: "next", title: "Holiday calendar pages", body: "/holidays/[country]/[year] — 197 countries × 10 years" },
-            { status: "later", title: "Embeddable clock widget", body: "One-line iframe any site can drop in — viral growth channel" },
-            { status: "later", title: "Public beta launch", body: "Product Hunt + Show HN + dev.to launch" },
-          ].map((item) => (
-            <div key={item.title} className={`ap-roadmap__item ap-roadmap__item--${item.status}`}>
-              <div className="ap-roadmap__title">
-                <span className={`ap-roadmap__status ap-roadmap__status--${item.status}`}>
-                  {item.status === "shipped" ? "Shipped" : item.status === "in-progress" ? "Building" : item.status === "next" ? "Next" : "Later"}
-                </span>
-                {item.title}
-              </div>
-              <div className="ap-roadmap__body">{item.body}</div>
-            </div>
-          ))}
-        </div>
+        <p>
+          <strong>Now:</strong> AdSense integration, 5,000+ SEO city
+          pages (/time-in/[city]).
+        </p>
+        <p>
+          <strong>Next:</strong> Time-zone conversion pair pages
+          (/tz-from-X-to-Y), holiday calendar pages.
+        </p>
+        <p>
+          <strong>Later:</strong> Embeddable clock widget for any
+          site, public beta launch on Product Hunt and Hacker News.
+        </p>
       </>
     ),
   },
@@ -182,27 +162,24 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
     title: "Contact",
     body: (
       <>
-        <p>
-          We are a small team and we read every email. Pick the address
-          that matches your question:
-        </p>
-        <ul className="ap-emails">
+        <p>Pick the address that matches your question:</p>
+        <ul>
           <li>
-            <strong>General</strong>
+            <strong>General</strong> —{" "}
             <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </li>
           <li>
-            <strong>Bug reports + feature requests</strong>
+            <strong>Bug reports and feature requests</strong> —{" "}
             <a className="lp-link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
           </li>
           <li>
-            <strong>Privacy + data requests</strong>
+            <strong>Privacy and data requests</strong> —{" "}
             <a className="lp-link" href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a>
           </li>
         </ul>
-        <p style={{ marginTop: 16, fontSize: "0.85em", color: "#64748b" }}>
-          We aim to respond within 5 business days. We never spam, never
-          share your email, and never sell it.
+        <p>
+          We respond within five business days. We never spam. We never
+          share your email. We never sell it.
         </p>
       </>
     ),
@@ -210,7 +187,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
 ];
 
 export function AboutPage() {
-  const [activeId, setActiveId] = useState<string>(SECTIONS[0]?.id || "what");
+  const [activeId, setActiveId] = useState<string>(SECTIONS[0]?.id || "story");
 
   useEffect(() => {
     if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
@@ -253,16 +230,22 @@ export function AboutPage() {
       </nav>
 
       <header className="lp-head">
-        <div className="lp-eyebrow" style={{ background: "rgba(168, 85, 247, 0.08)", color: "#7e22ce" }}>
+        <div
+          className="lp-eyebrow"
+          style={{ background: "rgba(168, 85, 247, 0.08)", color: "#7e22ce" }}
+        >
           About
         </div>
         <h1 className="lp-title">About {SITE_NAME}</h1>
         <div className="lp-meta__row">
-          <span className="lp-meta__badge" style={{ background: "rgba(168, 85, 247, 0.1)", color: "#7e22ce" }}>
+          <span
+            className="lp-meta__badge"
+            style={{ background: "rgba(168, 85, 247, 0.1)", color: "#7e22ce" }}
+          >
             Public beta · 2026
           </span>
           <span className="lp-meta__sep">•</span>
-          <span>A free, fast, beautifully-designed time utility for the modern web.</span>
+          <span>~3 min read</span>
         </div>
       </header>
 
@@ -284,53 +267,9 @@ export function AboutPage() {
               </li>
             ))}
           </ol>
-
-          {/* Stat tiles (cloudconvert-style) */}
-          <div className="ap-toc-stats">
-            <div className="ap-toc-stat">
-              <div className="ap-toc-stat__num">39</div>
-              <div className="ap-toc-stat__label">Cities</div>
-            </div>
-            <div className="ap-toc-stat">
-              <div className="ap-toc-stat__num">17</div>
-              <div className="ap-toc-stat__label">APIs</div>
-            </div>
-            <div className="ap-toc-stat">
-              <div className="ap-toc-stat__num">7</div>
-              <div className="ap-toc-stat__label">Tools</div>
-            </div>
-            <div className="ap-toc-stat">
-              <div className="ap-toc-stat__num">0</div>
-              <div className="ap-toc-stat__label">Cookies set</div>
-            </div>
-          </div>
         </aside>
 
         <div className="lp-content">
-          {/* Quick facts — sits at the top of the content column, before sections */}
-          <div className="ap-quickfacts">
-            <div>
-              <div className="ap-quickfact__label">Founded</div>
-              <div className="ap-quickfact__value">2026</div>
-              <div className="ap-quickfact__sub">Public beta</div>
-            </div>
-            <div>
-              <div className="ap-quickfact__label">Made by</div>
-              <div className="ap-quickfact__value">Solo founder + AI</div>
-              <div className="ap-quickfact__sub">Distributed team of one + a few AIs</div>
-            </div>
-            <div>
-              <div className="ap-quickfact__label">License</div>
-              <div className="ap-quickfact__value">MIT</div>
-              <div className="ap-quickfact__sub">Open source, free forever</div>
-            </div>
-            <div>
-              <div className="ap-quickfact__label">Backend</div>
-              <div className="ap-quickfact__value">Node + SQLite</div>
-              <div className="ap-quickfact__sub">Cloudflare edge</div>
-            </div>
-          </div>
-
           {SECTIONS.map((s, idx) => (
             <section key={s.id} id={s.id} className="lp-section">
               <div className="lp-section__num">{String(idx + 1).padStart(2, "0")}</div>
@@ -346,13 +285,23 @@ export function AboutPage() {
             </p>
             <div className="lp-foot__actions">
               <a className="lp-foot__btn" href="/privacy" onClick={(e) => navigateToLegal("privacy", e)}>
-                Privacy Policy
+                Privacy
               </a>
               <a className="lp-foot__btn" href="/terms" onClick={(e) => navigateToLegal("terms", e)}>
-                Terms of Service
+                Terms
               </a>
               <a className="lp-foot__btn" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
                 <Github size={13} /> Source
+              </a>
+              <button
+                type="button"
+                className="lp-foot__btn"
+                onClick={() => { if (typeof window !== "undefined") window.print(); }}
+              >
+                <Printer size={13} /> Print
+              </button>
+              <a className="lp-foot__btn" href={SITE_URL}>
+                <Globe size={13} /> {SITE_URL.replace(/^https?:\/\//, "")}
               </a>
             </div>
           </footer>
