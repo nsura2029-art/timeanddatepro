@@ -1,0 +1,624 @@
+/* ============================================================================
+ * Timezone Map Page
+ * Full-width interactive world map with 6 timezone bands, click-to-select
+ * city dots, search-with-highlight, comparison timeline, and a CTA into
+ * the existing TimeZoneConverter tool.
+ * ============================================================================ */
+
+.tzmp {
+  background: var(--color-bg, #f8fbff);
+  color: var(--color-text, #07111f);
+  font-family: var(--font-body, "Inter", system-ui, sans-serif);
+  min-height: 100vh;
+  padding-bottom: var(--space-12, 48px);
+}
+
+/* Header (mini) */
+.tzmp-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tzmp-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: inherit;
+  text-decoration: none;
+}
+.tzmp-brand-globe {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.tzmp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tzmp-back:hover {
+  background: var(--color-bg-soft, #eef7ff);
+  transform: translateX(-2px);
+}
+
+/* Hero */
+.tzmp-hero {
+  padding: 64px 24px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  text-align: center;
+}
+.tzmp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(6, 182, 212, 0.1);
+  color: #0e7490;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.tzmp-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 0 0 #06b6d4;
+  animation: tzmp-pulse 1.6s infinite;
+}
+@keyframes tzmp-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.6); }
+  50%      { box-shadow: 0 0 0 6px rgba(6, 182, 212, 0); }
+}
+.tzmp-title {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #07111f 0%, #2563eb 70%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 0 16px;
+}
+.tzmp-sub {
+  font-size: 1.125rem;
+  color: #64748b;
+  max-width: 640px;
+  margin: 0 auto 32px;
+}
+
+/* Search */
+.tzmp-search-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+.tzmp-search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  pointer-events: none;
+}
+.tzmp-search-input {
+  width: 100%;
+  padding: 18px 22px 18px 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  font-family: inherit;
+  font-size: 1rem;
+  color: inherit;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  transition: all 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+.tzmp-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+.tzmp-search-input::placeholder { color: #64748b; }
+
+.tzmp-search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  max-height: 360px;
+  overflow-y: auto;
+  display: none;
+  z-index: 40;
+}
+.tzmp-search-dropdown.active { display: block; }
+.tzmp-search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-family: inherit;
+}
+.tzmp-search-result:last-child { border-bottom: none; }
+.tzmp-search-result:hover { background: #eef7ff; }
+.tzmp-search-result-flag { font-size: 22px; flex-shrink: 0; }
+.tzmp-search-result-info { flex: 1; min-width: 0; }
+.tzmp-search-result-city { font-weight: 700; font-size: 0.95rem; }
+.tzmp-search-result-country { font-size: 0.75rem; color: #64748b; }
+.tzmp-search-result-tz { font-family: "JetBrains Mono", monospace; font-size: 0.75rem; color: #2563eb; font-weight: 600; }
+
+/* Map — full width */
+.tzmp-map-section {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+.tzmp-map-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+.tzmp-map-wrap {
+  position: relative;
+  background:
+    radial-gradient(at 30% 30%, rgba(37, 99, 235, 0.06) 0, transparent 50%),
+    radial-gradient(at 70% 70%, rgba(6, 182, 212, 0.06) 0, transparent 50%),
+    linear-gradient(180deg, #eaf4ff 0%, #d6e9ff 100%);
+  aspect-ratio: 2 / 1;
+  width: 100%;
+}
+.tzmp-map-wrap svg { width: 100%; height: 100%; display: block; }
+
+/* 6 timezone bands — wider, more saturated than the HTML prototype's 27 bands */
+.tzmp-tz-band {
+  cursor: pointer;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tzmp-tz-band:hover { opacity: 0.32; }
+.tzmp-tz-band-label {
+  fill: rgba(7, 17, 31, 0.55);
+  font-family: "JetBrains Mono", monospace;
+  /* viewBox is 0 0 100 50 — so units are %s. 2 units = ~2% of width = tiny label */
+  font-size: 2.4px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* City dots */
+.tzmp-city-dot {
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+  transform-box: fill-box;
+}
+.tzmp-city-dot:hover { transform: scale(1.6); }
+.tzmp-city-dot .ring {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 1.5;
+  opacity: 0.6;
+}
+.tzmp-city-dot .dot {
+  fill: white;
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+.tzmp-city-dot.user .ring { stroke: #10b981; }
+.tzmp-city-dot.user .dot { stroke: #10b981; }
+.tzmp-city-dot.selected .ring {
+  stroke: #f59e0b;
+  stroke-width: 2.5;
+  opacity: 1;
+}
+.tzmp-city-dot.selected .dot {
+  fill: #f59e0b;
+  stroke: white;
+}
+.tzmp-city-dot.highlight .ring {
+  stroke: #ec4899;
+  stroke-width: 3;
+  opacity: 1;
+}
+.tzmp-city-dot.highlight .dot {
+  stroke: #ec4899;
+  fill: #ec4899;
+  opacity: 0.7;
+}
+.tzmp-city-dot .pulse {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0;
+}
+.tzmp-city-dot.selected .pulse {
+  stroke: #f59e0b;
+  animation: tzmp-city-pulse 2.4s ease-out infinite;
+}
+@keyframes tzmp-city-pulse {
+  0%   { r: 4;  opacity: 0.7; }
+  100% { r: 14; opacity: 0;   }
+}
+
+/* Tooltip */
+.tzmp-tooltip {
+  position: absolute;
+  background: rgba(7, 17, 31, 0.92);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 14px));
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+  min-width: 180px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.tzmp-tooltip.active { opacity: 1; }
+.tzmp-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: rgba(7, 17, 31, 0.92);
+}
+.tzmp-tt-city { font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.tzmp-tt-time { font-family: "JetBrains Mono", monospace; font-size: 1rem; font-weight: 600; color: #6ee7b7; margin-bottom: 2px; }
+.tzmp-tt-meta { font-size: 0.75rem; opacity: 0.7; }
+
+/* Map legend */
+.tzmp-map-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.tzmp-legend-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.tzmp-legend-dot::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.tzmp-legend-dot.user::before { background: #10b981; }
+.tzmp-legend-dot.selected::before { background: #f59e0b; }
+.tzmp-legend-dot.highlight::before { background: #ec4899; }
+
+/* Detail panel (full-width below map) */
+.tzmp-detail-section {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 24px 32px;
+}
+.tzmp-detail-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.tzmp-detail-empty {
+  text-align: center;
+  padding: 64px 32px;
+  color: #64748b;
+}
+.tzmp-detail-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.tzmp-detail-empty-title {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #07111f;
+  margin-bottom: 6px;
+}
+
+.tzmp-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.tzmp-detail-flag {
+  font-size: 56px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.tzmp-detail-country-name {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+.tzmp-detail-capital {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.tzmp-detail-time-big {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 12px 0 4px;
+}
+.tzmp-detail-date {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+.tzmp-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  gap: 12px;
+}
+.tzmp-detail-row:last-child { border-bottom: none; }
+.tzmp-detail-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tzmp-detail-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: right;
+}
+.tzmp-detail-value.mono { font-family: "JetBrains Mono", monospace; }
+.tzmp-dst-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.tzmp-dst-active { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+.tzmp-dst-inactive { background: rgba(16, 185, 129, 0.12); color: #047857; }
+
+/* Right column inside detail card: comparison + CTA */
+.tzmp-detail-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.tzmp-comparison-block {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(6, 182, 212, 0.05));
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 18px;
+  padding: 20px;
+}
+.tzmp-comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.tzmp-comparison-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tzmp-comparison-flag { font-size: 30px; }
+.tzmp-comparison-info { flex: 1; min-width: 0; }
+.tzmp-comparison-city {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.tzmp-comparison-time {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+.tzmp-comparison-difference {
+  text-align: center;
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 12px;
+}
+
+/* CTA → Time Zone Converter */
+.tzmp-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.4);
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+}
+.tzmp-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -8px rgba(37, 99, 235, 0.5);
+}
+
+/* Popular timezones */
+.tzmp-shortcuts-section {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+.tzmp-section-label {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+.tzmp-section-meta {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 24px;
+}
+.tzmp-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.tzmp-shortcut-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  font-family: inherit;
+  width: 100%;
+  color: inherit;
+}
+.tzmp-shortcut-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  border-color: #2563eb;
+}
+.tzmp-shortcut-card.matched {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+}
+.tzmp-shortcut-flag {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+.tzmp-shortcut-city {
+  font-family: "Sora", "Inter", system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.tzmp-shortcut-country {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.tzmp-shortcut-time {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+.tzmp-shortcut-tz {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .tzmp-detail-card {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+  .tzmp-detail-time-big { font-size: 2.25rem; }
+}
+@media (max-width: 540px) {
+  .tzmp-hero { padding: 32px 16px 16px; }
+  .tzmp-comparison-row { grid-template-columns: 1fr; gap: 8px; }
+  .tzmp-detail-flag { font-size: 42px; }
+  .tzmp-detail-time-big { font-size: 1.85rem; }
+  .tzmp-detail-card { padding: 20px; }
+}

@@ -60,6 +60,7 @@ import { LandingHeroHorizon } from "./components/landing/LandingHeroHorizon";
 import { LandingPage } from "./components/landing/LandingPage";
 import { WorldCupTeaser } from "./components/landing/WorldCupTeaser";
 import { WorldCupPage } from "./pages/worldcup/WorldCupPage";
+import { TimezoneMapPage } from "./pages/timezonemap/TimezoneMapPage";
 import { useHomeData } from "./hooks/useHomeData";
 
 /* ApiColumn helpers removed during nav cleanup — APIs menu is now flat
@@ -186,6 +187,13 @@ function parseRouteFromPath() {
       tool: undefined,
       isWorldcup: true,
     };
+  }
+  // /timezone-map and /<lang>/timezone-map dedicated pages
+  if (path === "/timezone-map" || path.endsWith("/timezone-map")) {
+    let lang = "en";
+    const m = path.match(/^\/([a-z]{2})\/timezone-map$/);
+    if (m) lang = m[1];
+    return { lang, city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isTimezoneMap: true };
   }
   return null;
 }
@@ -906,6 +914,11 @@ export default function App() {
     return <WorldCupPage />;
   }
 
+  // ---- /timezone-map early return - dedicated page with own chrome ----
+  if (currentPathRoute?.isTimezoneMap || browserPath.toLowerCase().endsWith("/timezone-map")) {
+    return <TimezoneMapPage />;
+  }
+
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
 
@@ -1001,7 +1014,7 @@ export default function App() {
                 onMouseEnter={() => setShowToolsDropdown(true)}
                 aria-haspopup="menu"
                 aria-expanded={showToolsDropdown}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${t.text} hover:bg-slate-100/50 flex items-center gap-1 cursor-pointer`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${currentPathRoute?.isTimezoneMap ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`} flex items-center gap-1 cursor-pointer`}
               >
                 <span>Time Tools</span>
                 <ChevronDown size={12} className={`transition-transform duration-200 ${showToolsDropdown ? 'rotate-180' : ''}`} />
@@ -1017,6 +1030,16 @@ export default function App() {
                     Time Tools
                   </div>
                   <div className="grid grid-cols-2 gap-1">
+                  <button
+                    onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/timezone-map`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-cyan-50/60 transition-colors cursor-pointer`}
+                  >
+                    <Globe size={13} className="text-cyan-500" />
+                    <div>
+                      <div className="font-semibold">Timezone Map</div>
+                      <div className="text-[10px] text-slate-400">Live world map · 6 bands · click any city</div>
+                    </div>
+                  </button>
                   <button
                     onClick={() => { window.history.pushState(null, "", `/${currentPathRoute?.lang || "en"}/time-zone-converter`); window.dispatchEvent(new Event("tdp:navigate")); setShowToolsDropdown(false); setShowMobileMenu(false); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-xs ${t.text} hover:bg-blue-50/60 transition-colors cursor-pointer`}
@@ -1467,7 +1490,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
         <LandingPage
