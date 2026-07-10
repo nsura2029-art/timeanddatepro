@@ -8,6 +8,7 @@ import type { BrowseHome } from "../../utils/homeApi";
 import { CITY_BY_CODE, type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
 import { FiveCitiesFavorites } from "./FiveCitiesFavorites";
+import { UserCitiesExploreCards } from "./UserCitiesExploreCards";
 import { CityDetailCard, type SunSummary } from "./CityDetailCard";
 import { ExploreMore } from "./ExploreMore";
 import { TopPopularCities } from "./TopPopularCities";
@@ -126,6 +127,13 @@ export function LandingPage({
             );
           }}
         />
+      )}
+
+      {/* User-added Explore-style cards (polish-4): same NotebookLM
+          palette as ExploreMore, lets the user scan their favorites
+          without the live-ticker density. */}
+      {userAddedFiltered.length > 0 && (
+        <UserCitiesExploreCards userAdded={userAddedFiltered} />
       )}
 
       {/* Explore more (hooks) ----------------------------------- */}

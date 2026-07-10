@@ -500,7 +500,8 @@ app.get("/api/v1/holidays/year", H("/api/v1/holidays/year", 86400, (req: any) =>
 
 // === POPULAR CITIES ===
 app.get("/api/v1/popular/cities", H("/api/v1/popular/cities", 86400, (req: any) => {
-  const limit = parseInt((req.query.limit as string) || "20", 10);
+  // Default raised to 55 in polish-4 — well past the 50+ SEO target.
+  const limit = Math.min(Math.max(parseInt((req.query.limit as string) || "55", 10), 1), 100);
   return { cities: getPopularCities(limit) };
 }));
 

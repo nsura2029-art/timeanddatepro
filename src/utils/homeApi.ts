@@ -215,7 +215,8 @@ export async function buildBrowseHome(opts: {
   const nextEvent = getNextBigEvent(now);
 
   // === POPULAR CITIES ===
-  const popular = getPopularCities(20);
+  // polish-4: bumped from 20 to 55 to satisfy the 50+ SEO target.
+  const popular = getPopularCities(55);
   const topFive = popular.slice(0, 5).map((c) => CITY_BY_CODE[c.code] ?? c);
   const topTwenty = popular;
 

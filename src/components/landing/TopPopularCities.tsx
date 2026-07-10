@@ -1,5 +1,5 @@
 // src/components/landing/TopPopularCities.tsx
-// Top-20 most-popular cities. One component = one purpose: surface the
+// Top 50+ most-popular cities. One component = one purpose: surface the
 // click-to-add cards so the user can build out their favorites from the
 // most-looked-up list.
 //
@@ -7,10 +7,16 @@
 // dot + city name + country + ticking HH:MM:SS.cc + offset. No rank
 // numbers. A hollow/filled star in the top-right indicates favorite state.
 //
-// Source: BrowseHome.topTwenty from /api/v1/browse/home.
+// Source: BrowseHome.topTwenty (now 55 entries, raised in polish-4 for SEO).
 // Click → toggles city in/out of favorites (App-level listener writes to
 // localStorage and re-renders the favorites grid above, with the new
 // card appearing on the next row of the wraparound grid).
+//
+// Row dividers: a horizontal gradient line is inserted between every
+// row of cards (via `tdp-cities-row--popular-rows` grid background-image
+// with calculated row-gap containing the gradient). Subtle emerald-on-
+// transparent so it reads as a section divider without competing with
+// the cards.
 
 import React from "react";
 import type { CityEntry } from "../../data/cities";
@@ -41,7 +47,7 @@ export function TopPopularCities({
 }: Props) {
   if (!cities || cities.length === 0) return null;
 
-  // Hide the 5 default cities from the Top 20 grid — they're already
+  // Hide the 5 default cities from the Top list — they're already
   // visible in the favorites row above, so showing them here too is
   // redundant. The user can still see them marked as favorite (if they
   // happen to scroll) by checking the home row.
@@ -50,14 +56,14 @@ export function TopPopularCities({
   if (nonDefault.length === 0) return null;
 
   return (
-    <section className="tdp-section" aria-label="Top 20 most popular cities">
+    <section className="tdp-section" aria-label="Top 50+ most popular cities">
       <div className="tdp-section-label">
         <span className="tag" style={{ background: "var(--accent-tertiary)", color: "white" }}>↻</span>
-        Top 20 · most popular
+        Top {nonDefault.length} · most popular
         <span className="meta">click ★ to add to your favorites</span>
       </div>
-      <div className="tdp-cities-row tdp-cities-row--popular">
-        {nonDefault.slice(0, 20).map((c) => (
+      <div className="tdp-cities-row tdp-cities-row--popular tdp-cities-row--with-dividers">
+        {nonDefault.slice(0, 60).map((c) => (
           <PopularCityCard
             key={c.code}
             city={c}
@@ -132,3 +138,4 @@ function PopularCityCard({
     </button>
   );
 }
+

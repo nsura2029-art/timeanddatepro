@@ -169,7 +169,15 @@
 .tdp-hero-clock {
   text-align: center;
   margin: 0 auto;
-  max-width: 720px;
+  /* Clock spans wider than the centered hero-inner so the digits
+     have room to breathe on desktop / ultrawide. The headline,
+     sun pills, and sync block stay centered; only the digits
+     themselves expand.
+     polish-4: max cap raised from 1280 → 1600 so on 1920px ultrawide
+     displays the clock fills ~80% of the viewport instead of being
+     capped at 60%. Caps at 95vw on mobile so it never overflows. */
+  max-width: min(1600px, 95vw);
+  width: 100%;
 }
 
 .tdp-seven {
@@ -177,7 +185,9 @@
   row-gap: 0.1em;
   font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
   font-weight: bold;
-  font-size: clamp(56px, 14vw, 200px);
+  /* Responsive sizing across ALL devices — smoothly scales from
+     375px mobile up to 1920px ultrawide without jarring jumps. */
+  font-size: clamp(56px, 13vw, 240px);
   line-height: 1;
   color: var(--seven);
   letter-spacing: -0.04em;
@@ -187,6 +197,15 @@
   justify-content: center;
   gap: 0.05em;
   user-select: none;
+}
+
+/* On wider screens, prevent the digits from wrapping so the clock
+   stays on one row and uses the full hero-clock width. */
+@media (min-width: 720px) {
+  .tdp-seven {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
 }
 
 .tdp-colon {
@@ -398,15 +417,38 @@
 }
 
 .tdp-cities-row--popular {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+}
+
+/* polish-4: gradient line divider between every row of Top Popular cards.
+   Implemented via background-image layered on top of grid rows — the
+   row-gap holds the gradient as a horizontal stripe between rows.
+   Uses emerald so it picks up the existing accent palette without
+   competing with the NotebookLM city-card colors. */
+.tdp-cities-row--with-dividers {
+  background-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(16, 185, 129, 0.35) 15%,
+    rgba(16, 185, 129, 0.55) 50%,
+    rgba(16, 185, 129, 0.35) 85%,
+    transparent 100%
+  );
+  background-repeat: repeat-y;
+  background-position: 0 50%;
+  /* row-gap (12px) + 2px stripe gives a visible band */
+}
+
+.tdp-cities-row--with-dividers {
+  background-size: 100% calc(2px + 12px);
 }
 
 @media (max-width: 1100px) {
-  .tdp-cities-row--popular { grid-template-columns: repeat(3, 1fr); }
+  .tdp-cities-row--popular { grid-template-columns: repeat(4, 1fr); }
 }
 @media (max-width: 900px) {
   .tdp-cities-row { grid-template-columns: repeat(3, 1fr); }
-  .tdp-cities-row--popular { grid-template-columns: repeat(2, 1fr); }
+  .tdp-cities-row--popular { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 600px) {
   .tdp-cities-row,
@@ -1778,4 +1820,107 @@
   .tdp-seven {
     font-size: clamp(50px, 18vw, 80px) !important;
   }
+}
+
+/* ============================================================================
+ * UserCitiesExploreCards — Explore-pattern cards for user-added favorites.
+ * NotebookLM palette per index (via nlm-card-* classes), 3-col grid
+ * collapsing to 2-col then 1-col on small screens.
+ * ============================================================================ */
+
+.tdp-user-cities-explore {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 920px) {
+  .tdp-user-cities-explore {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .tdp-user-cities-explore {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tdp-user-city-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  position: relative;
+  transition: transform 220ms var(--ease-smooth, ease), box-shadow 220ms var(--ease-smooth, ease);
+}
+
+.tdp-user-city-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.18);
+}
+
+.tdp-user-city-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.tdp-user-city-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tdp-user-city-tagline {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.tdp-user-city-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tdp-user-city-meta {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.65;
+  margin-top: 2px;
+}
+
+.tdp-user-city-remove {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #1e293b;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: background 150ms, transform 150ms;
+  flex-shrink: 0;
+}
+
+.tdp-user-city-remove:hover {
+  background: rgba(239, 68, 68, 0.85);
+  color: white;
+  border-color: transparent;
+  transform: scale(1.1);
 }

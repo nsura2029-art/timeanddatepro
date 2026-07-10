@@ -2,6 +2,15 @@
 // Composes HeroDateBlock + HeroClock, fed by useHomeData + the liveDate ticker.
 // Single source of truth for the hero — replaces the inline hero markup in
 // App.tsx (gated by VITE_LANDING_V2 flag, off by default for now).
+//
+// polish-4 layout split:
+//   - .tdp-hero-inner (max-width 1120px) wraps the centered chrome:
+//     eyebrow row, date block, sun pills, sync footer, and the 12h/24h
+//     toggle button. These stay focused and centered.
+//   - .tdp-hero-clock (max-width 1600px / 95vw) lives OUTSIDE the inner
+//     so the digits can span full viewport width on ultrawide displays.
+//     The clock itself is still text-aligned center, but the larger
+//     available width lets it scale up to 240px DSEG font on 1920px+.
 
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
@@ -71,6 +80,7 @@ export function LandingHeroHorizon({
 
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
+      {/* Centered chrome (eyebrow + date + sun + sync + toggle) capped at 1120px */}
       <div className="tdp-hero-inner">
         <HeroDateBlock
           liveDate={liveDate}
@@ -99,18 +109,22 @@ export function LandingHeroHorizon({
           <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
           <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
         </button>
-
-        <HeroClock
-          liveDate={liveDate}
-          timezone={timezone}
-          sync={data?.sync}
-          cityName={cityName}
-          cityRegion={cityRegion}
-          countryName={countryName}
-          sun={data?.sun}
-          hour12={hour12}
-        />
       </div>
+
+      {/* Full-width clock — lives outside .tdp-hero-inner so it can span
+          up to min(1600px, 95vw) on ultrawide displays. Still text-align
+          center inside its own wrapper so the digits stay centered.
+          The sync footer block is rendered internally by HeroClock. */}
+      <HeroClock
+        liveDate={liveDate}
+        timezone={timezone}
+        sync={data?.sync}
+        cityName={cityName}
+        cityRegion={cityRegion}
+        countryName={countryName}
+        sun={data?.sun}
+        hour12={hour12}
+      />
     </section>
   );
 }
