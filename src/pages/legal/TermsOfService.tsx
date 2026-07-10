@@ -252,6 +252,9 @@ export function TermsOfService() {
               <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             </p>
             <div className="lp-foot__actions">
+              <a className="lp-foot__btn" href="/feedback" onClick={(e) => { e.preventDefault(); if (typeof window !== "undefined") { window.history.pushState(null, "", "/feedback"); window.dispatchEvent(new Event("tdp:navigate")); } }}>
+                Feedback
+              </a>
               <button
                 type="button"
                 className="lp-foot__btn"

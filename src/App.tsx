@@ -64,11 +64,13 @@ import { TimezoneMapPage } from "./pages/timezonemap/TimezoneMapPage";
 import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
 import { TermsOfService } from "./pages/legal/TermsOfService";
 import { AboutPage } from "./pages/about/AboutPage";
+import { FeedbackPage } from "./pages/feedback/FeedbackPage";
 import { CookieConsent } from "./components/common/CookieConsent";
 import { useHomeData } from "./hooks/useHomeData";
 
 import "./pages/legal/PrivacyPolicy.css";
 import "./pages/about/AboutPage.css";
+import "./pages/feedback/FeedbackPage.css";
 import "./components/common/CookieConsent.css";
 
 /* ApiColumn helpers removed during nav cleanup — APIs menu is now flat
@@ -204,6 +206,10 @@ function parseRouteFromPath() {
   // /about + /<lang>/about — dedicated About page.
   if (path === "/about" || path.endsWith("/about")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isAbout: true };
+  }
+  // /feedback + /<lang>/feedback — feedback and tool suggestion page.
+  if (path === "/feedback" || path.endsWith("/feedback")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isFeedback: true };
   }
   return null;
 }
@@ -1557,7 +1563,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.isFeedback && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
         <LandingPage
@@ -1904,6 +1910,7 @@ export default function App() {
         {currentPathRoute?.isPrivacy && <PrivacyPolicy />}
         {currentPathRoute?.isTerms && <TermsOfService />}
         {currentPathRoute?.isAbout && <AboutPage />}
+        {currentPathRoute?.isFeedback && <FeedbackPage />}
 
         {(currentPathRoute?.tool || currentPathRoute?.pair) ? (
           <div className="animate-fade-in">
@@ -1985,6 +1992,14 @@ export default function App() {
               className="hover:text-slate-200 transition cursor-pointer"
             >
               About
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/feedback"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Feedback
             </button>
             <span>•</span>
             <button

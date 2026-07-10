@@ -290,6 +290,9 @@ export function AboutPage() {
               <a className="lp-foot__btn" href="/terms" onClick={(e) => navigateToLegal("terms", e)}>
                 Terms
               </a>
+              <a className="lp-foot__btn" href="/feedback" onClick={(e) => navigateToLegal("feedback", e)}>
+                Feedback
+              </a>
               <a className="lp-foot__btn" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
                 <Github size={13} /> Source
               </a>
