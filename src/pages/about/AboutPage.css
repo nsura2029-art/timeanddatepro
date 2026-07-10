@@ -1,139 +1,54 @@
 /* src/pages/about/AboutPage.css
- * About page styling — shares base .pp class with the legal pages but
- * adds roadmap + credits list styles specific to About. */
+ * About page — cloudconvert-style. Uses the same .lp- layout grid
+ * (sticky TOC + content) as the legal pages. The .ap- prefix adds
+ * About-specific content styles (credits grid, roadmap cards, contact
+ * rows). The "Contents" of the TOC are the 7 sections of the About
+ * page. */
 
-.ap {
-  min-height: 100vh;
-  background: #f8fbff;
-  color: #0f172a;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.65;
-  padding-bottom: 80px;
-}
-
-.ap-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(248, 251, 255, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  padding: 14px 24px;
-}
-
-.ap-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
+/* Quick-info card at the top of the content column */
+.ap-quickfacts {
   background: #fff;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  color: inherit;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 180ms ease;
-}
-.ap-back:hover {
-  background: #eef7ff;
-  transform: translateX(-2px);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 32px;
 }
 
-.ap-doc {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 56px 24px 32px;
-}
-
-.ap-doc__head {
-  margin-bottom: 48px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.ap-eyebrow {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.08);
-  color: #7e22ce;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+.ap-quickfact__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 4px;
 }
 
-.ap-title {
+.ap-quickfact__value {
   font-family: "Sora", "Inter", sans-serif;
-  font-size: clamp(2rem, 5vw, 3rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: #07111f;
+  line-height: 1.3;
 }
 
-.ap-tagline {
-  font-size: 1.125rem;
-  color: #475569;
-  margin: 0;
-  max-width: 600px;
+.ap-quickfact__sub {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin-top: 2px;
+  font-weight: 400;
 }
 
-.ap-block {
-  margin-bottom: 40px;
-}
-
-.ap-block h2 {
-  font-family: "Sora", "Inter", sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0 0 12px;
-  color: #07111f;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ap-block p {
-  margin: 0 0 12px;
-  font-size: 1rem;
-  color: #1e293b;
-}
-
-.ap-block code {
-  background: rgba(15, 23, 42, 0.05);
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-family: "JetBrains Mono", "Menlo", monospace;
-  font-size: 0.875em;
-  color: #1e293b;
-}
-
-.ap-link {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-  border-bottom: 1px dashed #2563eb;
-  transition: all 180ms ease;
-}
-.ap-link:hover {
-  color: #1d4ed8;
-  border-bottom-style: solid;
-}
-
+/* Credits grid (2 columns, 8 entries) */
 .ap-credits {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
 .ap-credits li {
@@ -143,6 +58,12 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 8px;
   line-height: 1.5;
+  transition: all 180ms ease;
+}
+.ap-credits li:hover {
+  border-color: rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .ap-credits__note {
@@ -150,27 +71,57 @@
   font-size: 0.8rem;
   display: block;
   margin-top: 2px;
-  border-bottom: none !important;
 }
 
+/* Roadmap — vertical timeline with status color rail */
 .ap-roadmap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  position: relative;
+  margin-left: 8px;
+  padding-left: 28px;
+}
+.ap-roadmap::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, #10b981 0%, #f59e0b 25%, #2563eb 60%, #cbd5e1 100%);
+  border-radius: 2px;
 }
 
 .ap-roadmap__item {
   background: #fff;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 10px;
-  padding: 12px 16px;
-  border-left-width: 3px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  position: relative;
 }
+.ap-roadmap__item::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #cbd5e1;
+  box-shadow: 0 0 0 3px #fff;
+}
+.ap-roadmap__item--shipped::before     { border-color: #10b981; }
+.ap-roadmap__item--in-progress::before { border-color: #f59e0b; animation: ap-pulse 1.6s infinite; }
+.ap-roadmap__item--next::before        { border-color: #2563eb; }
+.ap-roadmap__item--later::before       { border-color: #cbd5e1; }
 
-.ap-roadmap__item--shipped     { border-left-color: #10b981; }
-.ap-roadmap__item--in-progress { border-left-color: #f59e0b; }
-.ap-roadmap__item--next        { border-left-color: #2563eb; }
-.ap-roadmap__item--later       { border-left-color: #cbd5e1; }
+@keyframes ap-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50%      { box-shadow: 0 0 0 3px #fff, 0 0 0 6px rgba(245, 158, 11, 0); }
+}
 
 .ap-roadmap__title {
   font-weight: 600;
@@ -182,42 +133,136 @@
 .ap-roadmap__body {
   font-size: 0.875rem;
   color: #64748b;
+  line-height: 1.5;
 }
 
-.ap-contact ul,
-.ap-legal-links ul {
+.ap-roadmap__status {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.ap-roadmap__status--shipped     { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.ap-roadmap__status--in-progress { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+.ap-roadmap__status--next        { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+.ap-roadmap__status--later       { background: rgba(148, 163, 184, 0.16); color: #475569; }
+
+/* Contact rows */
+.ap-emails {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.ap-emails li,
-.ap-legal-links li {
-  font-size: 0.95rem;
-  padding: 6px 0;
-  color: #1e293b;
-}
-
-.ap-emails strong {
-  color: #07111f;
-  font-weight: 600;
-  min-width: 200px;
-  display: inline-block;
-}
-
-.ap-legal-links ul {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.ap-legal-links li {
-  padding: 0;
+.ap-emails li {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.ap-emails strong {
+  color: #07111f;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ap-emails a.lp-link { font-size: 0.875rem; }
+
+/* Stat highlight cards in TOC area */
+.ap-toc-stats {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ap-toc-stat {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(6, 182, 212, 0.04));
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.ap-toc-stat__num {
+  font-family: "Sora", "Inter", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.ap-toc-stat__label {
+  font-size: 0.6875rem;
+  color: #475569;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* In-page GitHub CTA block */
+.ap-github {
+  background: #0f172a;
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px 0 8px;
+}
+
+.ap-github__text {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.ap-github__text strong { color: #fff; }
+
+.ap-github__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #fff;
+  color: #0f172a;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+.ap-github__btn:hover { background: #f1f5f9; }
+
+@media (max-width: 1024px) {
+  .ap-quickfacts { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 640px) {
-  .ap-doc { padding: 32px 16px; }
   .ap-credits { grid-template-columns: 1fr; }
-  .ap-block h2 { font-size: 1.15rem; }
-  .ap-emails strong { min-width: 0; display: block; margin-bottom: 2px; }
+  .ap-quickfacts { grid-template-columns: 1fr; gap: 12px; }
+  .ap-emails li { grid-template-columns: 1fr; gap: 4px; }
+  .ap-roadmap { padding-left: 22px; }
+  .ap-github { flex-direction: column; align-items: stretch; }
+  .ap-github__btn { justify-content: center; }
 }

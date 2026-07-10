@@ -980,15 +980,11 @@ export default function App() {
   // These three are part of the MVP BLOCKER list (required by AdSense
   // program policies + GDPR). They share the .pp class for the legal
   // docs and the .ap class for About — each renders its own header.
-  if (currentPathRoute?.isPrivacy || browserPath.toLowerCase().endsWith("/privacy")) {
-    return <PrivacyPolicy />;
-  }
-  if (currentPathRoute?.isTerms || browserPath.toLowerCase().endsWith("/terms")) {
-    return <TermsOfService />;
-  }
-  if (currentPathRoute?.isAbout || browserPath.toLowerCase().endsWith("/about")) {
-    return <AboutPage />;
-  }
+  // polish-6: legal pages no longer early-return. They render INSIDE the
+  // standard app shell (topnav + main + footer) so the chrome is
+  // consistent with the rest of the app. The cloudconvert-style 2-column
+  // layout (sticky TOC + content) is implemented inside the page
+  // components themselves.
 
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
@@ -1902,6 +1898,13 @@ export default function App() {
 
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+        {/* Legal & About pages (polish-6) — cloudconvert-style 2-column
+            layout (sticky TOC sidebar + content) rendered INSIDE the
+            standard app shell so the topnav + footer are consistent. */}
+        {currentPathRoute?.isPrivacy && <PrivacyPolicy />}
+        {currentPathRoute?.isTerms && <TermsOfService />}
+        {currentPathRoute?.isAbout && <AboutPage />}
+
         {(currentPathRoute?.tool || currentPathRoute?.pair) ? (
           <div className="animate-fade-in">
             {currentPathRoute.tool === "holidays" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
@@ -1967,7 +1970,7 @@ export default function App() {
           <div className="text-xs text-slate-500 font-mono">
             &copy; 2026 Global Time & Date Workspace. Designed for modern decentralized distributed teams.
           </div>
-          <div className="flex gap-4 text-xs font-mono text-slate-400">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-mono text-slate-400 justify-center">
             <button
               type="button"
               onClick={() => { window.history.pushState(null, "", "/docs/getting-started/introduction"); window.dispatchEvent(new Event("tdp:navigate")); }}

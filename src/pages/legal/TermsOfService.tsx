@@ -1,26 +1,22 @@
 // src/pages/legal/TermsOfService.tsx
 // Terms of Service — AdSense + standard SaaS disclaimers.
-// Same visual style as PrivacyPolicy (uses the same CSS file).
-//
-// Plain prose, 11 sections, covers the disclaimers required by:
-//   - Google AdSense Program Policies (publisher must have T&Cs)
-//   - Standard limitation of liability / DMCA / governing law
-//
-// Last-updated date is rendered at the top.
+// Cloudconvert-style 2-column layout: sticky TOC sidebar on the left,
+// document content on the right. Renders INSIDE the standard app shell
+// (topnav + footer) for visual consistency with the rest of the app.
 
-import React from "react";
-import { ArrowLeft, Mail } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, Mail, Printer, Globe, AlertTriangle } from "lucide-react";
 
 const LAST_UPDATED = "2026-07-10";
+const EFFECTIVE_DATE = "2026-07-15";
 const CONTACT_EMAIL = "legal@timeanddatepro.com";
 const SITE_NAME = "TimeAndDatePro";
 const SITE_URL = "https://timeanddatepro.com";
-const EFFECTIVE_DATE = "2026-07-15";
 
 const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   {
     id: "acceptance",
-    title: "1. Acceptance of these terms",
+    title: "Acceptance of these terms",
     body: (
       <p>
         By accessing or using {SITE_NAME} (the "Service") at {SITE_URL} or
@@ -33,7 +29,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "service",
-    title: "2. What the Service is",
+    title: "What the Service is",
     body: (
       <>
         <p>
@@ -54,7 +50,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "accounts",
-    title: "3. No account required",
+    title: "No account required",
     body: (
       <p>
         {SITE_NAME} does not require an account. All preferences are stored
@@ -66,7 +62,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "user-conduct",
-    title: "4. Acceptable use",
+    title: "Acceptable use",
     body: (
       <>
         <p>You agree not to:</p>
@@ -83,7 +79,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "intellectual-property",
-    title: "5. Intellectual property",
+    title: "Intellectual property",
     body: (
       <>
         <p>
@@ -97,14 +93,14 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
           You may quote brief excerpts (under 200 words) from our
           reference content for non-commercial purposes with
           attribution. For longer quotes or commercial use, email{" "}
-          <a className="pp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
       </>
     ),
   },
   {
     id: "third-party",
-    title: "6. Third-party services and links",
+    title: "Third-party services and links",
     body: (
       <>
         <p>
@@ -118,7 +114,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
         <p>
           Specifically, advertising on {SITE_NAME} is provided by Google
           AdSense. Your interactions with ads are governed by{" "}
-          <a className="pp-link" href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer noopener">Google's ad policies</a>{" "}
+          <a className="lp-link" href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer noopener">Google's ad policies</a>{" "}
           and Google's privacy practices. We do not endorse or guarantee
           any advertised product or service.
         </p>
@@ -127,36 +123,40 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "disclaimers",
-    title: "7. Disclaimers",
+    title: "Disclaimers",
     body: (
-      <p>
-        The Service is provided "as is" and "as available" without
-        warranties of any kind, express or implied, including but not
-        limited to warranties of merchantability, fitness for a particular
-        purpose, non-infringement, or accuracy. We do not warrant that
-        the Service will be uninterrupted, secure, or error-free.
-      </p>
+      <div className="lp-callout">
+        <AlertTriangle size={20} className="lp-callout__icon" aria-hidden />
+        <p className="lp-callout__body">
+          The Service is provided <strong>"as is" and "as available"</strong> without
+          warranties of any kind, express or implied, including but not
+          limited to warranties of merchantability, fitness for a
+          particular purpose, non-infringement, or accuracy. We do not
+          warrant that the Service will be uninterrupted, secure, or
+          error-free.
+        </p>
+      </div>
     ),
   },
   {
     id: "liability",
-    title: "8. Limitation of liability",
+    title: "Limitation of liability",
     body: (
       <p>
-        To the maximum extent permitted by law, in no event shall {SITE_NAME}, its operators, contributors, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages (including loss of data, revenue, profits, or business opportunity) arising out of or related to your use of the Service, even if advised of the possibility of such damages. Our total aggregate liability for any claim shall not exceed US$100.
+        To the maximum extent permitted by law, in no event shall {SITE_NAME}, its operators, contributors, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages (including loss of data, revenue, profits, or business opportunity) arising out of or related to your use of the Service, even if advised of the possibility of such damages. Our total aggregate liability for any claim shall not exceed <strong>US$100</strong>.
       </p>
     ),
   },
   {
     id: "indemnification",
-    title: "9. Indemnification",
+    title: "Indemnification",
     body: (
       <p>You agree to defend, indemnify, and hold harmless {SITE_NAME} from any claim, demand, loss, or expense (including reasonable attorneys' fees) arising from your use of the Service, your violation of these Terms, or your violation of any third-party right.</p>
     ),
   },
   {
     id: "termination",
-    title: "10. Termination",
+    title: "Termination",
     body: (
       <p>
         We may suspend or terminate the Service at any time, with or
@@ -169,7 +169,7 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
   },
   {
     id: "misc",
-    title: "11. Miscellaneous",
+    title: "Miscellaneous",
     body: (
       <>
         <p>
@@ -194,70 +194,110 @@ const SECTIONS: Array<{ id: string; title: string; body: React.ReactNode }> = [
           the Privacy Policy, constitute the entire agreement between
           you and {SITE_NAME} regarding the Service.
         </p>
-        <p style={{ marginTop: 32, fontSize: "0.85em", color: "#64748b" }}>
-          This document is effective {EFFECTIVE_DATE}. Last updated {LAST_UPDATED}.
-        </p>
       </>
     ),
   },
 ];
 
 export function TermsOfService() {
-  const navigateToHome = () => {
+  const [activeId, setActiveId] = useState<string>(SECTIONS[0]?.id || "acceptance");
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
+    const headings = SECTIONS
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => Boolean(el));
+    if (headings.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) setActiveId(visible[0].target.id);
+      },
+      { rootMargin: "-80px 0px -70% 0px", threshold: 0 },
+    );
+    headings.forEach((h) => obs.observe(h));
+    return () => obs.disconnect();
+  }, []);
+
+  const navigateToHome = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (typeof window === "undefined") return;
     window.history.pushState(null, "", "/");
     window.dispatchEvent(new Event("tdp:navigate"));
   };
 
   return (
-    <div className="pp">
-      <header className="pp-header">
-        <a
-          className="pp-back"
-          href="/"
-          onClick={(e) => { e.preventDefault(); navigateToHome(); }}
-        >
-          <ArrowLeft size={14} />
-          <span>Back to home</span>
-        </a>
+    <article className="lp">
+      <nav className="lp-breadcrumb" aria-label="Breadcrumb">
+        <a href="/" onClick={navigateToHome}>Home</a>
+        <span className="lp-breadcrumb__sep">/</span>
+        <span className="lp-breadcrumb__current">Terms of Service</span>
+      </nav>
+
+      <header className="lp-head">
+        <div className="lp-eyebrow">Legal · Terms</div>
+        <h1 className="lp-title">Terms of Service</h1>
+        <div className="lp-meta__row">
+          <span className="lp-meta__badge">Last updated · {LAST_UPDATED}</span>
+          <span className="lp-meta__sep">•</span>
+          <span>Effective {EFFECTIVE_DATE}</span>
+          <span className="lp-meta__sep">•</span>
+          <span>~10 min read</span>
+        </div>
       </header>
 
-      <article className="pp-doc">
-        <header className="pp-doc__head">
-          <div className="pp-eyebrow">Legal</div>
-          <h1 className="pp-title">Terms of Service</h1>
-          <p className="pp-meta">Last updated: {LAST_UPDATED}</p>
-        </header>
-
-        <nav className="pp-toc" aria-label="Table of contents">
-          <div className="pp-toc__label">On this page</div>
-          <ol>
-            {SECTIONS.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`}>{s.title}</a>
+      <div className="lp-grid">
+        <aside className="lp-toc" aria-label="Table of contents">
+          <div className="lp-toc__label">On this page</div>
+          <ol className="lp-toc__list">
+            {SECTIONS.map((s, idx) => (
+              <li key={s.id} className="lp-toc__item">
+                <a
+                  href={`#${s.id}`}
+                  className={`lp-toc__link ${activeId === s.id ? "is-active" : ""}`}
+                >
+                  <span style={{ color: "#94a3b8", marginRight: 8, fontFamily: "JetBrains Mono, monospace", fontSize: "0.75rem" }}>
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  {s.title}
+                </a>
               </li>
             ))}
           </ol>
-        </nav>
+        </aside>
 
-        {SECTIONS.map((s) => (
-          <section key={s.id} id={s.id} className="pp-section">
-            <h2>{s.title}</h2>
-            <div className="pp-section__body">{s.body}</div>
-          </section>
-        ))}
+        <div className="lp-content">
+          {SECTIONS.map((s, idx) => (
+            <section key={s.id} id={s.id} className="lp-section">
+              <div className="lp-section__num">{String(idx + 1).padStart(2, "0")}</div>
+              <h2>{s.title}</h2>
+              <div className="lp-section__body">{s.body}</div>
+            </section>
+          ))}
 
-        <footer className="pp-doc__foot">
-          <p>
-            <Mail size={14} aria-hidden style={{ verticalAlign: "middle" }} />{" "}
-            Email us at{" "}
-            <a className="pp-link" href={`mailto:${CONTACT_EMAIL}`}>
-              {CONTACT_EMAIL}
-            </a>
-          </p>
-        </footer>
-      </article>
-    </div>
+          <footer className="lp-foot">
+            <p>
+              <Mail size={14} style={{ verticalAlign: "middle" }} />{" "}
+              Questions? <a className="lp-link" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+            </p>
+            <div className="lp-foot__actions">
+              <button
+                type="button"
+                className="lp-foot__btn"
+                onClick={() => { if (typeof window !== "undefined") window.print(); }}
+              >
+                <Printer size={13} /> Print
+              </button>
+              <a className="lp-foot__btn" href={SITE_URL}>
+                <Globe size={13} /> {SITE_URL.replace(/^https?:\/\//, "")}
+              </a>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </article>
   );
 }
 
