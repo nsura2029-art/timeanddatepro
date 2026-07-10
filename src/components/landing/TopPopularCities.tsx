@@ -1,22 +1,23 @@
 // src/components/landing/TopPopularCities.tsx
 // Top 50+ most-popular cities. One component = one purpose: surface the
-// click-to-add cards so the user can build out their favorites from the
-// most-looked-up list.
+// world's most-looked-up timezones so the user can click any of them
+// and have the hero reload with that city's local time.
 //
-// Visual: same `.tdp-city-card` chip used in FiveCitiesFavorites — LIVE
-// dot + city name + country + ticking HH:MM:SS.cc + offset. No rank
-// numbers. A hollow/filled star in the top-right indicates favorite state.
+// Visual: clean list-of-rows. Each card is a click target with the city
+// row, country, ticking HH:MM:SS.cc clock, and short UTC label. No
+// colored backgrounds, no star icons, no favorite toggling — purely a
+// navigational entry point.
 //
-// Source: BrowseHome.topTwenty (now 55 entries, raised in polish-4 for SEO).
-// Click → toggles city in/out of favorites (App-level listener writes to
-// localStorage and re-renders the favorites grid above, with the new
-// card appearing on the next row of the wraparound grid).
+// Row dividers: a thin 1px line is inserted between every row of cards
+// (via grid background-image + calculated row-gap). Tinted with the
+// hero's `--section-rule` token so it inherits whatever theme the user
+// is in. No green/emerald — keeps the section visually quiet so the
+// FiveCitiesFavorites row above stays the visual anchor.
 //
-// Row dividers: a horizontal gradient line is inserted between every
-// row of cards (via `tdp-cities-row--popular-rows` grid background-image
-// with calculated row-gap containing the gradient). Subtle emerald-on-
-// transparent so it reads as a section divider without competing with
-// the cards.
+// Click → dispatches `tdp:show-city` with the city code. App.tsx listens
+// for this event, updates the home-timezone preferences, and the hero
+// re-renders with the new city's local time. Window also scrolls
+// smoothly to the top so the user sees the clock update immediately.
 
 import React from "react";
 import type { CityEntry } from "../../data/cities";
@@ -29,13 +30,13 @@ import {
 interface Props {
   liveDate: Date;
   cities: CityEntry[];
-  /** Codes that are visibly part of the favorites row above.
-   * Includes BOTH the curated defaults (always on) AND the user's
-   * localStorage additions. Click toggles user-added only — defaults
-   * can't be removed, so this distinction matters for the click handler.
-   */
+  /** Codes that are visibly part of the favorites row above. Used so we
+   *  can visually mark those (subtle outline) without changing their
+   *  click behavior — they're still navigable like any other card. */
   favoriteCodes?: string[];
-  /** Codes of just the curated defaults (so we know what's removable). */
+  /** Codes of the curated defaults (NYC/LDN/TYO/PAR/DXB). Same visual
+   *  hint as favoriteCodes, but kept separate so future i18n-aware
+   *  features can distinguish user-pick vs curated-default. */
   defaultCodes?: string[];
 }
 
@@ -47,29 +48,29 @@ export function TopPopularCities({
 }: Props) {
   if (!cities || cities.length === 0) return null;
 
-  // Hide the 5 default cities from the Top list — they're already
-  // visible in the favorites row above, so showing them here too is
-  // redundant. The user can still see them marked as favorite (if they
-  // happen to scroll) by checking the home row.
+  // Skip the 5 curated defaults here — they're already in the favorites
+  // row above (FiveCitiesFavorites). Duplicating them in the
+  // click-to-navigate grid is noise; we keep the user's picking list
+  // pure. Visual `isFavorite` hint is preserved on whatever user-picks
+  // they happen to have favorited via the favorites row.
   const defaultSet = new Set(defaultCodes);
-  const nonDefault = cities.filter((c) => !defaultSet.has(c.code));
-  if (nonDefault.length === 0) return null;
+  const navigable = cities.filter((c) => !defaultSet.has(c.code));
+  if (navigable.length === 0) return null;
 
   return (
-    <section className="tdp-section" aria-label="Top 50+ most popular cities">
+    <section className="tdp-section tdp-section--popular" aria-label="Top 50+ most popular cities">
       <div className="tdp-section-label">
         <span className="tag" style={{ background: "var(--accent-tertiary)", color: "white" }}>↻</span>
-        Top {nonDefault.length} · most popular
-        <span className="meta">click ★ to add to your favorites</span>
+        Top {navigable.length} · most popular
+        <span className="meta">click any city to view its local time</span>
       </div>
-      <div className="tdp-cities-row tdp-cities-row--popular tdp-cities-row--with-dividers">
-        {nonDefault.slice(0, 60).map((c) => (
+      <div className="tdp-cities-row tdp-cities-row--popular tdp-cities-row--rows-divider">
+        {navigable.slice(0, 60).map((c) => (
           <PopularCityCard
             key={c.code}
             city={c}
             liveDate={liveDate}
             isFavorite={favoriteCodes.includes(c.code)}
-            isDefault={defaultCodes.includes(c.code)}
           />
         ))}
       </div>
@@ -81,47 +82,48 @@ function PopularCityCard({
   city,
   liveDate,
   isFavorite,
-  isDefault,
 }: {
   city: CityEntry;
   liveDate: Date;
   isFavorite: boolean;
-  /** True if this city is one of the curated defaults (not removable). */
-  isDefault: boolean;
 }) {
   const hh = formatTimeHHMMSSShared(liveDate, city.timezone);
   const sub = formatSubsecShared(liveDate);
   const offset = formatShortOffsetShared(liveDate, city.timezone);
 
-  // For default cities, show the filled star but the card is not
-  // interactive (no click to remove). The visual still shows them as
-  // "favorite" so the user can spot them at a glance.
-  const star = isFavorite ? "★" : "☆";
-  const starClass = `fav-star${isFavorite ? " filled" : ""}`;
-
   return (
     <button
       type="button"
-      className={`tdp-city-card${isFavorite ? " is-favorite" : ""}${
-        isDefault ? " tdp-city-card--default-mark" : ""
-      }`}
-      // Default cards still dispatch the event, but the App.tsx handler
-      // is no-op for them (it only manages user-added).
+      className={`tdp-city-card tdp-city-card--popular${isFavorite ? " is-favorite" : ""}`}
       onClick={() => {
         if (typeof window === "undefined") return;
+        // Dispatch the show-city event — App.tsx listens, updates prefs,
+        // re-renders hero with this timezone, and scrolls the page to
+        // top so the user sees the change immediately.
         window.dispatchEvent(
-          new CustomEvent("tdp:add-city", { detail: { code: city.code } })
+          new CustomEvent("tdp:show-city", {
+            detail: {
+              code: city.code,
+              name: city.name,
+              country: city.country,
+              countryCode: city.countryCode,
+              timezone: city.timezone,
+            },
+          }),
         );
+        // Smooth-scroll to the top of the page so the user sees the
+        // hero clock change. The hero is at the very top of the page
+        // (above this section in the layout), so we scroll the
+        // document to top.
+        try {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch {
+          window.scrollTo(0, 0);
+        }
       }}
-      aria-label={
-        isDefault
-          ? `${city.name} — already in your default favorites`
-          : isFavorite
-            ? `Remove ${city.name} from favorites`
-            : `Add ${city.name} to favorites`
-      }
-      aria-pressed={isFavorite}
-      style={{ all: "unset", cursor: "pointer" }}
+      aria-label={`View current time in ${city.name}, ${city.country}`}
+      data-city-code={city.code}
+      data-testid={`popular-city-${city.code}`}
     >
       <div className="row-top">
         <span className="live-dot" aria-hidden="true" />
@@ -133,9 +135,9 @@ function PopularCityCard({
       <div className="clock">
         {hh}<span className="subsec">.{sub}</span>
       </div>
-      <div className="tz">{city.timezone.split("/").slice(-1)[0]} · UTC{offset}</div>
-      <span className={starClass} aria-hidden="true">{star}</span>
+      <div className="tz">
+        {city.timezone.split("/").slice(-1)[0].replace(/_/g, " ")} · UTC{offset}
+      </div>
     </button>
   );
 }
-

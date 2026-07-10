@@ -102,28 +102,12 @@ function parseRouteFromPath() {
   const path = window.location.pathname.toLowerCase();
 
   // --- ROUTER ASSERTIONS (dev only) ---
-  // These guard against the bug where content-based language detection
-  // (path.includes('tokyo') → JA, 'london' → EN, etc.) overrides the
-  // explicit URL language prefix. If any of these throw in the browser
-  // console, the routing layer is misbehaving. Safe to delete once the
-  // routing layer is refactored to make URL prefix authoritative.
-  if (import.meta.env?.DEV !== false && typeof window !== "undefined") {
-    if (path.startsWith("/en/") || path === "/en") {
-      // Catch bugs like path.includes('tokyo') overriding /en/
-      // We can't enforce the resolved lang from inside this fn since
-      // that's what we're trying to resolve; but we can warn when
-      // content-suffixes are paired with a different-prefix detection.
-      const contentLooksNonEN = /tokyo|london|paris|beijing|tokio/.test(path);
-      if (contentLooksNonEN) {
-        // Mark for the overlay to surface; do not throw — it would
-        // break the entire app for QA testers.
-        // eslint-disable-next-line no-console
-        console.warn(
-          `[router] /en/ URL contains content suffix that may trigger fallthrough heuristics: ${path}`
-        );
-      }
-    }
-  }
+  // The /en landing route was removed in polish-5 (project is
+  // English-only for MVP — /en used to force GB/London regardless of
+  // actual home). The content-suffix override heuristic it guarded
+  // (path.includes('tokyo')→JA, 'london'→EN, etc.) is also gone.
+  // Sub-routes like /en/<tool> still detect via parseToolPath above
+  // and run early. Nothing further to warn about here.
   // Check for /<lang>/<tool> sub-routes first
   const toolRoute = parseToolPath(path);
   if (toolRoute) {
@@ -167,9 +151,14 @@ function parseRouteFromPath() {
     if (m) lang = m[1];
     return { lang, city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isMeetingFinder: true };
   }
-  if (path.startsWith("/en") || path.includes("london")) {
-    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined };
-  }
+  // ---- English landing route REMOVED in polish-5. ----
+  // The project is English-only for MVP, and `/en` always forced
+  // GB/London regardless of the user's actual home country. Visiting
+  // `/en` now falls through to the root landing page (which respects
+  // the browser timezone / saved prefs). Sub-routes like `/en/<tool>`
+  // and `/en/worldcup` still work via the parseToolPath / explicit
+  // worldcup detectors above — those return early with the correct
+  // lang segment. (Intentionally no `return { lang: "en", ... }`.)
   if (path.startsWith("/admin")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isAdmin: true };
   }
@@ -381,6 +370,13 @@ export default function App() {
     }
   });
 
+  // Ref-mirror of `preferences` so the `tdp:show-city` listener (which
+  // is registered once in a []-dep effect) can read the LATEST prefs
+  // without re-subscribing on every prefs change. Same pattern used
+  // for the in-flight fetch guard in useHomeData.
+  const preferencesRef = useRef<CountryPreferences>(preferences);
+  preferencesRef.current = preferences;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     function handleAddCity(ev: Event) {
@@ -403,11 +399,49 @@ export default function App() {
     function handleSwapCity(ev: Event) {
       handleAddCity(ev);
     }
+    // Top Popular / similar surfaces dispatch `tdp:show-city` when the
+    // user wants the hero to swap to a different timezone (instead of
+    // toggling favorites). We update the home-timezone in prefs and
+    // let the existing useHomeData hook re-fetch (the hero rerenders
+    // because `timezone` is a prop). Scroll-to-top is handled by the
+    // dispatching component.
+    function handleShowCity(ev: Event) {
+      const e = ev as CustomEvent<{
+        code: string;
+        name?: string;
+        country?: string;
+        countryCode?: string;
+        timezone?: string;
+      }>;
+      const { timezone, country, countryCode } = e.detail || ({} as any);
+      if (!timezone) return;
+      const currentPrefs = preferencesRef.current;
+      const validCountry: CountryCode =
+        countryCode && DEFAULT_PREFERENCES[countryCode as CountryCode]
+          ? (countryCode as CountryCode)
+          : (country as CountryCode) || currentPrefs.country;
+      const defaults = DEFAULT_PREFERENCES[validCountry] || DEFAULT_PREFERENCES.US;
+      const next: CountryPreferences = {
+        ...defaults,
+        country: validCountry,
+        countryName: (country as string) || defaults.countryName,
+        // Adopt the clicked city's local timezone as the hero's home
+        // timezone — this is the key change that the hero reacts to.
+        timezone,
+      };
+      setPreferences(next);
+      preferencesRef.current = next;
+      try {
+        localStorage.setItem("global_time_workspace_prefs", JSON.stringify(next));
+      } catch { /* noop */ }
+    }
     window.addEventListener("tdp:add-city", handleAddCity as EventListener);
     window.addEventListener("tdp:swap-city", handleSwapCity as EventListener);
+    window.addEventListener("tdp:show-city", handleShowCity as EventListener);
     return () => {
       window.removeEventListener("tdp:add-city", handleAddCity as EventListener);
       window.removeEventListener("tdp:swap-city", handleSwapCity as EventListener);
+      window.removeEventListener("tdp:show-city", handleShowCity as EventListener);
     };
   }, []);
   // Per-dropdown refs for click-outside-to-close
@@ -489,9 +523,11 @@ export default function App() {
       country = "JP";
       timezone = "Asia/Tokyo";
     } else if (lang === "en") {
-      path = "/en";
-      country = "GB";
-      timezone = "Europe/London";
+      // Polish-5: project is English-only for MVP. Don't push to /en
+      // (the explicit /en route was removed because it always forced
+      // GB/London). Stay at "/" so the browser-detected home timezone
+      // wins.
+      path = "/";
     }
 
     window.history.pushState({ lang }, "", path);

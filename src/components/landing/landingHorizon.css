@@ -420,27 +420,24 @@
   grid-template-columns: repeat(5, 1fr);
 }
 
-/* polish-4: gradient line divider between every row of Top Popular cards.
-   Implemented via background-image layered on top of grid rows — the
-   row-gap holds the gradient as a horizontal stripe between rows.
-   Uses emerald so it picks up the existing accent palette without
-   competing with the NotebookLM city-card colors. */
-.tdp-cities-row--with-dividers {
+/* Top Popular (rows): thin neutral divider line between every row of cards.
+   Replaces the polish-4 emerald gradient stripe with a 1px rule that
+   inherits the section-rule token — visually quiet so the cards above
+   (FiveCitiesFavorites, notebooklm-colored) remain the focal row.
+   Implemented via background-image + background-size on the grid
+   itself (consistent with the prior implementation). */
+.tdp-cities-row--rows-divider {
   background-image: linear-gradient(
     to right,
     transparent 0%,
-    rgba(16, 185, 129, 0.35) 15%,
-    rgba(16, 185, 129, 0.55) 50%,
-    rgba(16, 185, 129, 0.35) 85%,
+    var(--section-rule) 8%,
+    var(--section-rule) 92%,
     transparent 100%
   );
   background-repeat: repeat-y;
   background-position: 0 50%;
-  /* row-gap (12px) + 2px stripe gives a visible band */
-}
-
-.tdp-cities-row--with-dividers {
-  background-size: 100% calc(2px + 12px);
+  /* row-gap (16px) + 1px line: stripe lives in the middle of each gap */
+  background-size: 100% calc(1px + 16px);
 }
 
 @media (max-width: 1100px) {
@@ -468,8 +465,20 @@
   font-family: var(--hero-fg-font);
 }
 
+/* Popular-grid variant: no background fill, no green hover tint.
+   Hover gets a subtle 1px border instead so the focus affordance is
+   preserved without a colored card body. */
+.tdp-city-card--popular {
+  background: transparent;
+}
+
 .tdp-city-card:hover {
   background: rgba(5, 150, 105, 0.06);
+  transform: translateY(-1px);
+}
+
+.tdp-city-card--popular:hover {
+  background: rgba(37, 99, 235, 0.04);
   transform: translateY(-1px);
 }
 
@@ -563,6 +572,18 @@
 
 .tdp-city-card.is-favorite .city {
   color: var(--accent-primary-deep);
+}
+
+/* Popular-grid variant: keep the favorites hint but lose the green
+   tint — the popular list is navigation-only, not a favorites list, so
+   a colored card would mislead users into thinking they're picking. */
+.tdp-city-card--popular.is-favorite {
+  background: rgba(37, 99, 235, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.18);
+}
+
+.tdp-city-card--popular.is-favorite .city {
+  color: inherit;
 }
 
 /* Default-row card — non-interactive, no remove star, no click handler.

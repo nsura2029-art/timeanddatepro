@@ -218,14 +218,14 @@ export function TimezoneMapPage() {
     <div className="tzmp">
       {/* Header */}
       <header className="tzmp-header">
-        <a className="tzmp-brand" href="/en" onClick={(e) => { e.preventDefault(); navigateToRoute("/en"); }}>
+        <a className="tzmp-brand" href="/" onClick={(e) => { e.preventDefault(); navigateToRoute("/"); }}>
           <span className="tzmp-brand-globe">🌐</span>
           <span>TimeAndDatePro</span>
         </a>
         <button
           type="button"
           className="tzmp-back"
-          onClick={() => navigateToRoute("/en")}
+          onClick={() => navigateToRoute("/")}
           aria-label="Back to home"
         >
           <ArrowLeft size={14} />

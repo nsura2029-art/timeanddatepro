@@ -57,12 +57,12 @@ export function WorldCupPage() {
       {/* Header ----------------------------------------------------- */}
       <header className="tdp-wc-page-header">
         <a
-          href="/en"
+          href="/"
           className="tdp-wc-back-link"
           onClick={(e) => {
             if (typeof window === "undefined") return;
             e.preventDefault();
-            window.history.pushState(null, "", "/en");
+            window.history.pushState(null, "", "/");
             window.dispatchEvent(new Event("tdp:navigate"));
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
