@@ -1,15 +1,28 @@
 # robots.txt for timeanddatepro
 # https://timeanddatepro.com/robots.txt
 
-# Allow all major crawlers
+# Default: allow all major crawlers
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /dist/
 Disallow: /node_modules/
+Disallow: /admin/
 
-# AI bots — explicitly allow for LLM citation (GEO optimization)
+# Sitemap
+Sitemap: https://timeanddatepro.com/sitemap.xml
+
+# === AI crawlers (allow for AI engine citation = SEO) ===
+# Per Week 1 of the SEO plan: enabling AI crawlers is net-positive
+# because ChatGPT / Perplexity / Claude cite us as a source.
+
 User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
 Allow: /
 
 User-agent: ClaudeBot
@@ -18,11 +31,17 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
 User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
 Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
-
-# Sitemap location
-Sitemap: /sitemap.xml

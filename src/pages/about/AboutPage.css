@@ -1,0 +1,223 @@
+/* src/pages/about/AboutPage.css
+ * About page styling — shares base .pp class with the legal pages but
+ * adds roadmap + credits list styles specific to About. */
+
+.ap {
+  min-height: 100vh;
+  background: #f8fbff;
+  color: #0f172a;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.65;
+  padding-bottom: 80px;
+}
+
+.ap-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(248, 251, 255, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 14px 24px;
+}
+
+.ap-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.ap-back:hover {
+  background: #eef7ff;
+  transform: translateX(-2px);
+}
+
+.ap-doc {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 56px 24px 32px;
+}
+
+.ap-doc__head {
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.ap-eyebrow {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.08);
+  color: #7e22ce;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.ap-title {
+  font-family: "Sora", "Inter", sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  color: #07111f;
+}
+
+.ap-tagline {
+  font-size: 1.125rem;
+  color: #475569;
+  margin: 0;
+  max-width: 600px;
+}
+
+.ap-block {
+  margin-bottom: 40px;
+}
+
+.ap-block h2 {
+  font-family: "Sora", "Inter", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  color: #07111f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ap-block p {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.ap-block code {
+  background: rgba(15, 23, 42, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", "Menlo", monospace;
+  font-size: 0.875em;
+  color: #1e293b;
+}
+
+.ap-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px dashed #2563eb;
+  transition: all 180ms ease;
+}
+.ap-link:hover {
+  color: #1d4ed8;
+  border-bottom-style: solid;
+}
+
+.ap-credits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ap-credits li {
+  font-size: 0.875rem;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.ap-credits__note {
+  color: #64748b;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 2px;
+  border-bottom: none !important;
+}
+
+.ap-roadmap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ap-roadmap__item {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border-left-width: 3px;
+}
+
+.ap-roadmap__item--shipped     { border-left-color: #10b981; }
+.ap-roadmap__item--in-progress { border-left-color: #f59e0b; }
+.ap-roadmap__item--next        { border-left-color: #2563eb; }
+.ap-roadmap__item--later       { border-left-color: #cbd5e1; }
+
+.ap-roadmap__title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #07111f;
+  margin-bottom: 4px;
+}
+
+.ap-roadmap__body {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.ap-contact ul,
+.ap-legal-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ap-emails li,
+.ap-legal-links li {
+  font-size: 0.95rem;
+  padding: 6px 0;
+  color: #1e293b;
+}
+
+.ap-emails strong {
+  color: #07111f;
+  font-weight: 600;
+  min-width: 200px;
+  display: inline-block;
+}
+
+.ap-legal-links ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ap-legal-links li {
+  padding: 0;
+}
+
+@media (max-width: 640px) {
+  .ap-doc { padding: 32px 16px; }
+  .ap-credits { grid-template-columns: 1fr; }
+  .ap-block h2 { font-size: 1.15rem; }
+  .ap-emails strong { min-width: 0; display: block; margin-bottom: 2px; }
+}

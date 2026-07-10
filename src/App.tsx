@@ -61,7 +61,15 @@ import { LandingPage } from "./components/landing/LandingPage";
 import { WorldCupTeaser } from "./components/landing/WorldCupTeaser";
 import { WorldCupPage } from "./pages/worldcup/WorldCupPage";
 import { TimezoneMapPage } from "./pages/timezonemap/TimezoneMapPage";
+import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
+import { TermsOfService } from "./pages/legal/TermsOfService";
+import { AboutPage } from "./pages/about/AboutPage";
+import { CookieConsent } from "./components/common/CookieConsent";
 import { useHomeData } from "./hooks/useHomeData";
+
+import "./pages/legal/PrivacyPolicy.css";
+import "./pages/about/AboutPage.css";
+import "./components/common/CookieConsent.css";
 
 /* ApiColumn helpers removed during nav cleanup — APIs menu is now flat
  * 2-column grid (see showApisDropdown). Kept as no-op stubs to avoid
@@ -183,6 +191,19 @@ function parseRouteFromPath() {
     const m = path.match(/^\/([a-z]{2})\/timezone-map$/);
     if (m) lang = m[1];
     return { lang, city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isTimezoneMap: true };
+  }
+  // /privacy + /<lang>/privacy — dedicated Privacy Policy page.
+  // Generic English-only MVP: same page for every lang segment.
+  if (path === "/privacy" || path.endsWith("/privacy")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isPrivacy: true };
+  }
+  // /terms + /<lang>/terms — dedicated Terms of Service page.
+  if (path === "/terms" || path.endsWith("/terms")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isTerms: true };
+  }
+  // /about + /<lang>/about — dedicated About page.
+  if (path === "/about" || path.endsWith("/about")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isAbout: true };
   }
   return null;
 }
@@ -955,6 +976,20 @@ export default function App() {
     return <TimezoneMapPage />;
   }
 
+  // ---- /privacy /terms /about — legal & about pages, own chrome ----
+  // These three are part of the MVP BLOCKER list (required by AdSense
+  // program policies + GDPR). They share the .pp class for the legal
+  // docs and the .ap class for About — each renders its own header.
+  if (currentPathRoute?.isPrivacy || browserPath.toLowerCase().endsWith("/privacy")) {
+    return <PrivacyPolicy />;
+  }
+  if (currentPathRoute?.isTerms || browserPath.toLowerCase().endsWith("/terms")) {
+    return <TermsOfService />;
+  }
+  if (currentPathRoute?.isAbout || browserPath.toLowerCase().endsWith("/about")) {
+    return <AboutPage />;
+  }
+
   return (
     <div className={`min-h-screen ${t.bg} ${t.text} flex flex-col font-sans select-none selection:bg-blue-500/20 antialiased transition-colors duration-300`}>
 
@@ -1526,7 +1561,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       {import.meta.env?.VITE_LANDING_V2 === "true" && (
         <LandingPage
@@ -1943,10 +1978,38 @@ export default function App() {
             <span>•</span>
             <button
               type="button"
-              onClick={() => { window.history.pushState(null, "", "/docs/resources/changelog"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              onClick={() => { window.history.pushState(null, "", "/about"); window.dispatchEvent(new Event("tdp:navigate")); }}
               className="hover:text-slate-200 transition cursor-pointer"
             >
-              Changelog
+              About
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/privacy"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Privacy
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => { window.history.pushState(null, "", "/terms"); window.dispatchEvent(new Event("tdp:navigate")); }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Terms
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("tdp:open-cookie-settings"));
+                }
+              }}
+              className="hover:text-slate-200 transition cursor-pointer"
+            >
+              Cookie settings
             </button>
             <span>•</span>
             <button
@@ -1960,6 +2023,11 @@ export default function App() {
         </div>
       </footer>
 
+      {/* MVP-BLOCKER: Cookie consent banner. Mounted globally so it
+          appears on every page; reads its own localStorage to decide
+          whether to show. Also exposes the "tdp:open-cookie-settings"
+          event for the footer link above. */}
+      <CookieConsent />
     </div>
   );
 }

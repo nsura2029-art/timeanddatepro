@@ -1,0 +1,294 @@
+/* src/components/common/CookieConsent.css
+ * Bottom banner + settings modal for GDPR / CCPA / AdSense compliance.
+ * Designed to look like a neutral OS-level prompt, not a marketing
+ * popup — no "limited time!" feel, no dark patterns. */
+
+.cc-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9000;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16);
+  animation: cc-slide-up 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@keyframes cc-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.cc-banner__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.cc-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  flex-shrink: 0;
+}
+
+.cc-banner__text { min-width: 0; }
+
+.cc-banner__title {
+  display: block;
+  font-size: 0.95rem;
+  color: #07111f;
+  margin-bottom: 4px;
+}
+
+.cc-banner__text p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.cc-link {
+  color: #2563eb;
+  text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.4);
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.cc-link:hover { text-decoration-color: #2563eb; }
+
+.cc-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.cc-btn--ghost {
+  background: #fff;
+  border-color: rgba(15, 23, 42, 0.16);
+  color: #1e293b;
+}
+.cc-btn--ghost:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.32);
+}
+
+.cc-btn--primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.cc-btn--primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.cc-btn--focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Settings modal */
+.cc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.cc-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.cc-modal__card {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.32);
+  animation: cc-modal-in 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cc-modal-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.cc-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 180ms ease;
+}
+.cc-modal__close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.cc-modal__title {
+  font-family: "Sora", "Inter", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+  color: #07111f;
+}
+
+.cc-modal__sub {
+  font-size: 0.875rem;
+  color: #475569;
+  margin: 0 0 24px;
+}
+
+.cc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+.cc-toggle:last-of-type { border-bottom: none; }
+
+.cc-toggle__info { flex: 1; min-width: 0; }
+
+.cc-toggle__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #07111f;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cc-toggle__desc {
+  font-size: 0.825rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.cc-toggle__switch {
+  flex-shrink: 0;
+  width: 48px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: #cbd5e1;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 4px;
+}
+.cc-toggle__switch::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.cc-toggle__switch--on {
+  background: #10b981;
+  justify-content: flex-end;
+}
+.cc-toggle__switch--on::after { left: 23px; }
+.cc-toggle__switch--locked {
+  background: #cbd5e1;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.cc-toggle__switch--locked::after { left: 3px; }
+
+.cc-modal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.cc-modal__legal {
+  text-align: center;
+  font-size: 0.825rem;
+  color: #64748b;
+  margin: 16px 0 0;
+}
+
+@media (max-width: 720px) {
+  .cc-banner { left: 8px; right: 8px; bottom: 8px; }
+  .cc-banner__inner {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .cc-banner__icon { display: none; }
+  .cc-banner__actions {
+    flex-direction: column-reverse;
+    width: 100%;
+  }
+  .cc-banner__actions .cc-btn {
+    justify-content: center;
+    width: 100%;
+  }
+  .cc-modal__card { padding: 24px 20px; }
+  .cc-modal__title { font-size: 1.25rem; }
+}
