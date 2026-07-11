@@ -203,7 +203,10 @@
      375px mobile up to 1920px ultrawide without jarring jumps.
      Range tuned for Inter 900 (slightly smaller max than DSEG since
      sans-serif glyphs occupy more visual weight). */
-  font-size: clamp(72px, 14vw, 200px);
+  /* Slightly smaller than before (was clamp(72px, 14vw, 200px)) to
+     give the hero more breathing room and let the cities panel feel
+     like a peer, not an afterthought. */
+  font-size: clamp(60px, 12vw, 168px);
   line-height: 1;
   color: var(--seven);
   letter-spacing: -0.05em;
@@ -3043,11 +3046,26 @@
    =========================================================================== */
 
 .tdp-your-cities-panel {
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e1dcf1);
-  border-radius: var(--radius-2xl, 24px);
-  padding: 24px 22px 20px;
-  box-shadow: var(--shadow-sm, 0 6px 18px rgba(48,39,82,0.07));
+  /* Aesthetic: soft lavender-mint gradient background instead of
+     flat white. No border, no glassy blur. The gradient gives the
+     panel a subtle warm tint that ties it to the brand palette
+     without competing with the hero clock. */
+  background:
+    linear-gradient(
+      155deg,
+      rgba(245, 240, 255, 0.92) 0%,
+      rgba(238, 246, 240, 0.92) 55%,
+      rgba(255, 244, 232, 0.92) 100%
+    );
+  border: 0;
+  border-radius: 26px;
+  padding: 26px 24px 22px;
+  /* Softer, more diffuse shadow than before — looks like a floating
+     card rather than a hard-edged box. */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 40px -22px rgba(48, 39, 82, 0.18),
+    0 4px 12px -4px rgba(48, 39, 82, 0.06);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -3056,6 +3074,24 @@
      Stays consistent for users with 1, 5, or 10 tracked cities. */
   min-height: 880px;
   position: relative;
+  /* Subtle inner highlight at the top edge for a soft, tactile feel. */
+  overflow: hidden;
+}
+
+.tdp-your-cities-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .tdp-ycp-header {
