@@ -1,5 +1,5 @@
 // src/data/defaultCities.ts
-// The 5 default cities the hero city picker ships with.
+// The 6 default cities the hero city picker ships with.
 // One per major region so a fresh user gets a globally diverse starting list.
 // The home city (Wesley Chapel) covers the Americas; the user can swap it later.
 
@@ -11,14 +11,17 @@ export interface TrackedCity extends CityEntry {
 }
 
 /**
- * Curated 5-city default list, covering 5 regions:
+ * Curated 6-city default list, covering 6 regions:
  *   - Americas (home)  : Wesley Chapel, US
- *   - Europe           : London, UK
+ *   - Europe (W)       : London, UK
+ *   - Europe (C)       : Paris, France
  *   - Middle East      : Dubai, UAE
  *   - East Asia        : Tokyo, Japan
  *   - Oceania          : Sydney, Australia
  * Codes match the registry in cities.ts so the user can search for them
  * and replace them if they prefer a different city from the same region.
+ * The user can add up to 4 more (10-city hard cap) via the search at the
+ * top of the cities panel.
  */
 export const DEFAULT_CITIES: TrackedCity[] = [
   {
@@ -38,6 +41,15 @@ export const DEFAULT_CITIES: TrackedCity[] = [
     countryCode: "GB",
     timezone: "Europe/London",
     population: 8961989,
+    isHome: false,
+  },
+  {
+    code: "PAR",
+    name: "Paris",
+    country: "France",
+    countryCode: "FR",
+    timezone: "Europe/Paris",
+    population: 2161000,
     isHome: false,
   },
   {

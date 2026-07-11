@@ -28,7 +28,7 @@ import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { HeroExploreCards } from "./HeroExploreCards";
-import { HeroAddCitySearch } from "./HeroAddCitySearch";
+import { YourCitiesPanel } from "./YourCitiesPanel";
 import { useHomeData } from "../../hooks/useHomeData";
 import { CityPickerOverlay } from "./CityPickerOverlay";
 import { CityPickerWelcome } from "./CityPickerWelcome";
@@ -188,7 +188,11 @@ export function LandingHeroHorizon({
 
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
-      <div className="tdp-hero-main">
+      {/* 2-column grid: hero main (1fr) + YourCitiesPanel (420px) on desktop.
+          Stacks to 1 column on tablet/mobile. */}
+      <div className="tdp-hero-grid">
+        {/* Column 1: existing hero content */}
+        <div className="tdp-hero-main">
         {/* Centered chrome (eyebrow + greeting + date + status pills + toggles) */}
         <div className="tdp-hero-inner">
             <HeroDateBlock
@@ -205,18 +209,8 @@ export function LandingHeroHorizon({
                 the date and the clock. Always 3, in fixed order. */}
             <HeroStatusPills pills={data?.statusPills} />
 
-            {/* Top-right action cluster: add city search + city picker + 12H/24H toggle */}
+            {/* Top-right action cluster: city picker + 12H/24H toggle */}
             <div className="tdp-hero-actions">
-              {/* Compact "add another city" search — calls the same
-                  /api/v1/cities/search endpoint the panel uses, but
-                  sits in the hero's top-right so the add action is
-                  always one click away without scrolling. */}
-              <HeroAddCitySearch
-                excludeCodes={trackedCities.map((c) => c.code)}
-                onAdd={onAddCity}
-                disabled={!canAddMore}
-              />
-
               {/* City picker trigger — opens the overlay */}
               <button
                 type="button"
@@ -271,6 +265,22 @@ export function LandingHeroHorizon({
               in 2 rows". */}
           <HeroExploreCards />
         </div>
+
+        {/* Column 2: YourCitiesPanel — home + 5 popular cities by default,
+            with the API-driven search at the top. User can add up to 10. */}
+        <div className="tdp-hero-aside">
+          <YourCitiesPanel
+            cities={trackedCities}
+            activeCode={activeCode}
+            onPick={handlePick}
+            onRemove={onRemoveCity}
+            onAdd={onAddCity}
+            count={trackedCount}
+            max={trackedMax}
+            canAddMore={canAddMore}
+          />
+        </div>
+      </div>
 
       {/* City picker overlay — only mounted when open */}
       <CityPickerOverlay

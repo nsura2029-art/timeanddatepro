@@ -2987,26 +2987,42 @@
      mobile so the panel does not bleed to the edge.
    =========================================================================== */
 
-.tdp-home-cities {
-  max-width: 1460px;
-  margin: 24px auto 48px;
-  padding: 0 24px;
-  width: 100%;
-}
+/* ===========================================================================
+   2-column hero grid
+   - Desktop (≥1024px): hero main (1fr) | YourCitiesPanel (420px)
+   - Tablet (768-1023px): single column, panel stacks below
+   - Mobile (<768px): single column, panel stacks below
+   =========================================================================== */
 
-@media (max-width: 640px) {
-  .tdp-home-cities {
-    padding: 0 16px;
-    margin: 16px auto 32px;
-  }
+.tdp-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 22px;
+  max-width: 1460px;
+  margin: 0 auto;
+  align-items: start;
 }
 
 .tdp-hero-main {
   display: flex;
   flex-direction: column;
   min-width: 0; /* let the clock shrink */
-  max-width: 1460px;
-  margin: 0 auto;
+}
+
+.tdp-hero-aside {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+}
+
+@media (max-width: 1023px) {
+  .tdp-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .tdp-hero-aside {
+    position: static;
+  }
 }
 
 /* ===========================================================================

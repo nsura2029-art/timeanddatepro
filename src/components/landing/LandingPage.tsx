@@ -1,14 +1,14 @@
 // src/components/landing/LandingPage.tsx
-// Composes Hero + YourCitiesPanel + ExploreMore + TopPopularCities into
-// the full landing page. The tracked-cities state lives here (lifted from
-// the hero) so both the hero (for the clock timezone) and the panel
-// (for the UI) can share it without prop-drilling through the hero.
+// Composes Hero (with inline YourCitiesPanel in the right column) +
+// ExploreMore + TopPopularCities into the full landing page.
+// The tracked-cities state lives here (lifted from the hero) so both
+// the hero (for the clock timezone) and the panel (rendered inside
+// the hero's 2-col grid) can share it without prop-drilling.
 
 import React from "react";
 import type { BrowseHome } from "../../utils/homeApi";
 import { type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
-import { YourCitiesPanel } from "./YourCitiesPanel";
 import { ExploreMore } from "./ExploreMore";
 import { TopPopularCities } from "./TopPopularCities";
 import { QuoteBlock } from "./QuoteBlock";
@@ -95,21 +95,6 @@ export function LandingPage({
         trackedCount={trackedCount}
         trackedMax={trackedMax}
       />
-
-      {/* Home city section — full width below the hero.
-          YourCitiesPanel is the persistent widget showing all tracked
-          cities with LIVE times + the API-driven add search at the top. */}
-      <section className="tdp-home-cities" aria-label="Your tracked cities">
-        <YourCitiesPanel
-          cities={trackedCities}
-          activeCode={activeCode}
-          onPick={setActive}
-          onRemove={removeCity}
-          count={trackedCount}
-          max={trackedMax}
-          canAddMore={canAddMore}
-        />
-      </section>
 
       {/* Explore more (hooks) ----------------------------------- */}
       <ExploreMore />

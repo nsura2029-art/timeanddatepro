@@ -1,13 +1,13 @@
 // src/components/landing/YourCitiesPanel.tsx
-// Read-only list of all tracked cities with LIVE current times.
-// The "Your cities" widget — shows all the user's tracked cities
-// below the hero, full width on desktop, stacks on mobile.
-//
-// The "add another city" action moved to the hero's top-right
-// (HeroAddCitySearch). This panel is now a pure read-only list.
+// Right-side panel in the hero (2-col layout). Shows all tracked cities
+// with LIVE current times + the API-driven "add another city" search
+// at the top. Always-visible on desktop (right of the hero), stacks
+// below on mobile.
 //
 // Features:
 //   - Header with title + X/10 counter
+//   - API-driven search at the TOP — type a city, dropdown shows
+//     results with flag + name + region + timezone, click to add
 //   - Per-city row: green LIVE dot, country flag, city + region,
 //     LIVE current time, tz abbr
 //   - Click row to make that city active
@@ -15,9 +15,18 @@
 //   - Live ticker: every city's current time updates every second via
 //     a single React state (no per-city timers).
 
-import { useState, useEffect } from "react";
-import { X, Home, MapPin, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Search,
+  X,
+  Home,
+  Plus,
+  MapPin,
+  ExternalLink,
+  Loader2,
+} from "lucide-react";
 import type { TrackedCity } from "../../data/defaultCities";
+import type { CityEntry } from "../../data/cities";
 
 interface YourCitiesPanelProps {
   /** All tracked cities (already sorted with home first) */
@@ -28,6 +37,10 @@ interface YourCitiesPanelProps {
   onPick: (code: string) => void;
   /** Remove a tracked city (not the home city) */
   onRemove: (code: string) => void;
+  /** Add a new city. Called with the full CityEntry from the search
+      endpoint so the parent doesn't need a second lookup. Returns
+      true if added, false if the cap was reached. */
+  onAdd: (city: CityEntry) => boolean;
   /** Current count + hard cap (for the counter + limit logic) */
   count: number;
   max: number;
@@ -74,11 +87,12 @@ export function YourCitiesPanel({
   activeCode,
   onPick,
   onRemove,
+  onAdd,
   count,
   max,
   canAddMore,
 }: YourCitiesPanelProps) {
-  // Live ticker (1 Hz, aligned to the next second boundary)
+  // ── Live ticker (1 Hz, aligned to the next second boundary) ─────────
   const [now, setNow] = useState<Date>(() => new Date());
   useEffect(() => {
     const ms = 1000 - (Date.now() % 1000);
@@ -92,6 +106,83 @@ export function YourCitiesPanel({
       if (interval) clearInterval(interval);
     };
   }, []);
+
+  // ── API-driven "add another city" search at the TOP ───────────────
+  const [addQuery, setAddQuery] = useState("");
+  const [addResults, setAddResults] = useState<CityEntry[]>([]);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const addInputRef = useRef<HTMLInputElement>(null);
+  const addDropdownRef = useRef<HTMLUListElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Close the dropdown when clicking outside
+  useEffect(() => {
+    if (!addOpen) return;
+    function handleClick(e: MouseEvent) {
+      const t = e.target as Node;
+      if (
+        addInputRef.current && !addInputRef.current.contains(t) &&
+        addDropdownRef.current && !addDropdownRef.current.contains(t)
+      ) {
+        setAddOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [addOpen]);
+
+  // Debounced search call — 200ms
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (abortRef.current) abortRef.current.abort();
+    const q = addQuery.trim();
+    if (q.length < 2) {
+      setAddResults([]);
+      setAddLoading(false);
+      return;
+    }
+    setAddLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      abortRef.current = controller;
+      try {
+        const exclude = cities.map((c) => c.code).join(",");
+        const url = `/api/v1/cities/search?q=${encodeURIComponent(q)}&limit=8&exclude=${encodeURIComponent(exclude)}`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // API response shape: { success, data, meta }
+        // data = { q, count, total, cities: [...] }
+        const json = await res.json();
+        const list: CityEntry[] = json?.data?.cities ?? [];
+        setAddResults(list);
+        setAddOpen(true);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") {
+          setAddResults([]);
+        }
+      } finally {
+        setAddLoading(false);
+      }
+    }, 200);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [addQuery, cities]);
+
+  const handleAddPick = useCallback(
+    (city: CityEntry) => {
+      const ok = onAdd(city);
+      if (ok) {
+        setAddQuery("");
+        setAddResults([]);
+        setAddOpen(false);
+        addInputRef.current?.focus();
+      }
+    },
+    [onAdd]
+  );
 
   return (
     <aside
@@ -108,12 +199,89 @@ export function YourCitiesPanel({
           {count}/{max}
         </span>
       </header>
-      <p className="tdp-ycp-subtitle">
-        Keep up to {max} cities beside your local clock. Use the search
-        in the hero above to add more.
-      </p>
 
-      {/* The list — sized to fit 10 cities by default */}
+      {/* Top: API-driven "add another city" search */}
+      <div className="tdp-ycp-add">
+        <label className="tdp-ycp-add-label" htmlFor="tdp-ycp-add-input">
+          <Plus size={12} aria-hidden />
+          <span>Add another city</span>
+        </label>
+        <div className="tdp-ycp-add-search">
+          <input
+            ref={addInputRef}
+            id="tdp-ycp-add-input"
+            type="text"
+            className="tdp-ycp-add-input"
+            placeholder="Search — e.g. Paris, Berlin, Tokyo…"
+            value={addQuery}
+            onChange={(e) => {
+              setAddQuery(e.target.value);
+              setAddOpen(true);
+            }}
+            onFocus={() => addResults.length > 0 && setAddOpen(true)}
+            disabled={!canAddMore}
+            autoComplete="off"
+            spellCheck={false}
+            aria-label="Search for a city to add"
+            aria-autocomplete="list"
+            aria-expanded={addOpen}
+            aria-controls="tdp-ycp-add-results"
+            data-testid="your-cities-add-input"
+          />
+          {addLoading && (
+            <span className="tdp-ycp-add-spinner" aria-hidden>
+              <Loader2 size={14} className="tdp-spin" />
+            </span>
+          )}
+          {addOpen && addResults.length > 0 && (
+            <ul
+              ref={addDropdownRef}
+              id="tdp-ycp-add-results"
+              role="listbox"
+              className="tdp-ycp-add-dropdown"
+              data-testid="your-cities-add-dropdown"
+            >
+              {addResults.map((city) => (
+                <li
+                  key={city.code}
+                  role="option"
+                  aria-selected="false"
+                  className="tdp-ycp-add-result"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleAddPick(city);
+                  }}
+                  data-testid={`add-result-${city.code}`}
+                >
+                  <span
+                    className="tdp-ycp-add-flag"
+                    style={{ backgroundImage: `url(${flagUrl(city.countryCode, 40)})` }}
+                    aria-hidden
+                  />
+                  <span className="tdp-ycp-add-info">
+                    <span className="tdp-ycp-add-name">{city.name}</span>
+                    <span className="tdp-ycp-add-meta">
+                      {city.state ? `${city.state}, ` : ""}
+                      {city.country}
+                    </span>
+                  </span>
+                  <span className="tdp-ycp-add-tz">{city.timezone.replace(/_/g, " ")}</span>
+                  <span className="tdp-ycp-add-pick" aria-hidden>
+                    <Plus size={14} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {!canAddMore && (
+          <p className="tdp-ycp-add-limit">
+            You’ve reached the {max}-city limit — remove one above to add a new city.
+          </p>
+        )}
+      </div>
+
+      {/* Middle: the list — sized to fit 10 cities by default */}
       <ul className="tdp-ycp-list" data-testid="your-cities-list">
         {cities.map((city) => {
           const isActive = city.code === activeCode;
@@ -180,7 +348,7 @@ export function YourCitiesPanel({
         })}
         {cities.length === 0 && (
           <li className="tdp-ycp-empty">
-            <span>No saved cities yet. Use the search in the hero above to add your first city.</span>
+            <span>No saved cities yet. Add your first city above.</span>
           </li>
         )}
       </ul>
