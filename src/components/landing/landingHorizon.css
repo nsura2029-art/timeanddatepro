@@ -2767,41 +2767,34 @@
 }
 
 /* ===========================================================================
-   NEW: 2-column hero grid
-   - Desktop (≥1024px): hero main | YourCitiesPanel (420px)
-   - Tablet (768-1023px): single column, panel stacks below
-   - Mobile (<768px): single column, panel stacks below
+   NEW: Home cities section (full-width wrapper below the hero)
+   - The YourCitiesPanel used to be a side panel in a 2-col hero grid.
+     Now it's a full-width section below the hero, centered to the
+     same max-width as the hero so the layout stays balanced.
+   - Responsive: full width on all viewports, padding adjusts for
+     mobile so the panel doesn't bleed to the edge.
    =========================================================================== */
 
-.tdp-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  gap: 22px;
+.tdp-home-cities {
   max-width: 1460px;
-  margin: 0 auto;
-  align-items: start;
+  margin: 24px auto 48px;
+  padding: 0 24px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .tdp-home-cities {
+    padding: 0 16px;
+    margin: 16px auto 32px;
+  }
 }
 
 .tdp-hero-main {
   display: flex;
   flex-direction: column;
   min-width: 0; /* let the clock shrink */
-}
-
-.tdp-hero-aside {
-  position: sticky;
-  top: 12px;
-  align-self: start;
-}
-
-@media (max-width: 1023px) {
-  .tdp-hero-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
-  }
-  .tdp-hero-aside {
-    position: static;
-  }
+  max-width: 1460px;
+  margin: 0 auto;
 }
 
 /* ===========================================================================

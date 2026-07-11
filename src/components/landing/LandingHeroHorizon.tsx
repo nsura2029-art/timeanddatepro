@@ -28,12 +28,11 @@ import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { HeroExploreCards } from "./HeroExploreCards";
-import { YourCitiesPanel } from "./YourCitiesPanel";
 import { useHomeData } from "../../hooks/useHomeData";
-import { useTrackedCities } from "../../hooks/useTrackedCities";
 import { CityPickerOverlay } from "./CityPickerOverlay";
 import { CityPickerWelcome } from "./CityPickerWelcome";
 import { DEFAULT_CITIES } from "../../data/defaultCities";
+import type { TrackedCity } from "../../data/defaultCities";
 import { formatLongDateShared } from "../../utils/landingFormatters";
 import "./landingHorizon.css";
 
@@ -54,6 +53,17 @@ interface LandingHeroHorizonProps {
   lang?: "en" | "fr" | "zh" | "ja";
   /** Optional inline test override — bypasses the network call */
   testData?: import("../../utils/homeApi").BrowseHome | null;
+  /** Tracked cities + active city — lifted from LandingPage so the
+      panel (rendered below the hero) can share the same state. */
+  trackedCities: TrackedCity[];
+  activeCode: string;
+  activeCity: TrackedCity | null | undefined;
+  onPickCity: (code: string) => void;
+  onAddCity: (city: import("../../data/cities").CityEntry) => boolean;
+  onRemoveCity: (code: string) => void;
+  canAddMore: boolean;
+  trackedCount: number;
+  trackedMax: number;
 }
 
 /**
@@ -70,21 +80,16 @@ export function LandingHeroHorizon({
   countryName,
   lang = "en",
   testData,
+  trackedCities,
+  activeCode,
+  activeCity,
+  onPickCity,
+  onAddCity,
+  onRemoveCity,
+  canAddMore,
+  trackedCount,
+  trackedMax,
 }: LandingHeroHorizonProps) {
-  // City picker state (manages tracked cities + active city, persists to localStorage)
-  // Declared FIRST because useHomeData below needs activeCity for its params.
-  const {
-    cities: trackedCities,
-    activeCity,
-    activeCode,
-    setActive,
-    addCity,
-    removeCity,
-    canAddMore,
-    count: trackedCount,
-    max: trackedMax,
-  } = useTrackedCities();
-
   // Always call the hook — React rules require hooks in the same order
   // every render. We override the result with testData below.
   // Key the fetch off the ACTIVE CITY (from the picker), not the legacy
@@ -143,27 +148,23 @@ export function LandingHeroHorizon({
 
   const handlePick = useCallback(
     (code: string) => {
-      setActive(code);
+      onPickCity(code);
     },
-    [setActive]
+    [onPickCity]
   );
 
   const handleAdd = useCallback(
     (city: import("../../data/cities").CityEntry) => {
-      return addCity(city);
+      return onAddCity(city);
     },
-    [addCity]
+    [onAddCity]
   );
 
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
-      {/* 2-column grid: hero main (1fr) + YourCitiesPanel (420px) on desktop.
-          Stacks to 1 column on tablet/mobile. */}
-      <div className="tdp-hero-grid">
-        {/* Column 1: existing hero content */}
-        <div className="tdp-hero-main">
-          {/* Centered chrome (eyebrow + greeting + date + status pills + toggles) */}
-          <div className="tdp-hero-inner">
+      <div className="tdp-hero-main">
+        {/* Centered chrome (eyebrow + greeting + date + status pills + toggles) */}
+        <div className="tdp-hero-inner">
             <HeroDateBlock
               liveDate={liveDate}
               timezone={heroTimezone}
@@ -245,22 +246,6 @@ export function LandingHeroHorizon({
           <HeroExploreCards />
         </div>
 
-        {/* Column 2: persistent "Your cities" panel with LIVE times per city.
-            On tablet/mobile, this stacks below the hero main. */}
-        <div className="tdp-hero-aside">
-          <YourCitiesPanel
-            cities={trackedCities}
-            activeCode={activeCode}
-            onPick={handlePick}
-            onRemove={removeCity}
-            onAdd={handleAdd}
-            count={trackedCount}
-            max={trackedMax}
-            canAddMore={canAddMore}
-          />
-        </div>
-      </div>
-
       {/* City picker overlay — only mounted when open */}
       <CityPickerOverlay
         open={pickerOpen}
@@ -269,7 +254,7 @@ export function LandingHeroHorizon({
         activeCode={activeCode}
         onPick={handlePick}
         onAdd={handleAdd}
-        onRemove={removeCity}
+        onRemove={onRemoveCity}
         count={trackedCount}
         max={trackedMax}
         canAddMore={canAddMore}

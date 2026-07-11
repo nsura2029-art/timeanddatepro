@@ -1,18 +1,19 @@
 // src/components/landing/LandingPage.tsx
-// Composes Hero + 5 sections into the full Horizon v4b landing page.
-// One component = one purpose: turn the home data + ticker + preferences
-// into the rendered tree.
+// Composes Hero + YourCitiesPanel + ExploreMore + TopPopularCities into
+// the full landing page. The tracked-cities state lives here (lifted from
+// the hero) so both the hero (for the clock timezone) and the panel
+// (for the UI) can share it without prop-drilling through the hero.
 
 import React from "react";
 import type { BrowseHome } from "../../utils/homeApi";
-import { CITY_BY_CODE, type CityEntry } from "../../data/cities";
+import { type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
-import { UserCitiesExploreCards } from "./UserCitiesExploreCards";
-import { CityDetailCard, type SunSummary } from "./CityDetailCard";
+import { YourCitiesPanel } from "./YourCitiesPanel";
 import { ExploreMore } from "./ExploreMore";
 import { TopPopularCities } from "./TopPopularCities";
 import { QuoteBlock } from "./QuoteBlock";
 import { WorldCupTeaser } from "./WorldCupTeaser";
+import { useTrackedCities } from "../../hooks/useTrackedCities";
 
 interface LandingPageProps {
   /** Same Date instance as App.tsx liveDate — passed down to all tickers */
@@ -46,48 +47,30 @@ export function LandingPage({
   homeData,
   favoriteCodes = [],
 }: LandingPageProps) {
-  // Normalize data — sections can render with partial data (graceful fallbacks).
+  // Tracked cities state — lifted from the hero so the panel can share it.
+  const {
+    cities: trackedCities,
+    activeCity,
+    activeCode,
+    setActive,
+    addCity,
+    removeCity,
+    canAddMore,
+    count: trackedCount,
+    max: trackedMax,
+  } = useTrackedCities();
+
+  // Compute hero values from the active city (falls back to legacy props).
+  // Same logic the hero used to do internally — moved up so the panel
+  // can also read the active city state without prop-drilling.
+  const heroTimezone = activeCity?.timezone ?? timezone;
+  const heroCityName = activeCity?.name ?? cityName;
+  const heroCityRegion = activeCity ? activeCity.state : cityRegion;
+  const heroCountryName = activeCity?.country ?? countryName;
+
+  // The data the hero needs to render the home-page context
   const topFive: CityEntry[] = homeData?.topFive ?? [];
   const topTwenty: CityEntry[] = homeData?.topTwenty ?? [];
-
-  // Resolve user-added favorite codes → CityEntry[].
-  // Lookup priority: browse/home topTwenty (has freshest live ticker data)
-  // → CITY_BY_CODE (covers everything else).
-  const userAdded: CityEntry[] = favoriteCodes
-    .map((code) => {
-      const from20 = topTwenty.find((c) => c.code === code);
-      if (from20) return from20;
-      const byCode = CITY_BY_CODE[code];
-      return byCode as CityEntry | undefined;
-    })
-    .filter((c): c is CityEntry => Boolean(c));
-
-  // Defaults (always shown in row 1) + user-added (rows 2+).
-  // Filter out any user-added that happen to also be in defaults so we
-  // don't render the same card twice.
-  const defaultSet = new Set(topFive.map((c) => c.code));
-  const userAddedFiltered = userAdded.filter((c) => !defaultSet.has(c.code));
-  const allFavorites: CityEntry[] = [...topFive, ...userAddedFiltered];
-
-  const homeCity: CityEntry | undefined = homeData?.home
-    ? {
-        code: "WLC",
-        name: homeData.home.city,
-        country: homeData.home.country,
-        countryCode: homeData.home.countryCode,
-        timezone: homeData.home.timezone,
-      }
-    : undefined;
-  const sun: SunSummary | null = homeData?.sun
-    ? {
-        sunrise: homeData.sun.sunrise,
-        sunset: homeData.sun.sunset,
-        solarNoon: homeData.sun.solarNoon,
-        dayLengthFormatted: homeData.sun.dayLength,
-        azimuthAtNoon: homeData.sun.azimuthAtNoon,
-        elevationAtNoon: homeData.sun.elevationAtNoon,
-      }
-    : null;
   const quote = homeData?.quote ?? null;
 
   return (
@@ -95,36 +78,39 @@ export function LandingPage({
       {/* Hero ---------------------------------------------------- */}
       <LandingHeroHorizon
         liveDate={liveDate}
-        timezone={timezone}
-        country={country}
-        cityName={cityName}
-        cityRegion={cityRegion}
-        countryName={countryName}
+        timezone={heroTimezone}
+        country={activeCity?.countryCode ?? country}
+        cityName={heroCityName}
+        cityRegion={heroCityRegion}
+        countryName={heroCountryName}
         lang={lang}
         testData={homeData}
+        trackedCities={trackedCities}
+        activeCode={activeCode}
+        activeCity={activeCity}
+        onPickCity={setActive}
+        onAddCity={addCity}
+        onRemoveCity={removeCity}
+        canAddMore={canAddMore}
+        trackedCount={trackedCount}
+        trackedMax={trackedMax}
       />
 
-      {/* Featured city (home) ----------------------------------- */}
-      {homeCity && (
-        <CityDetailCard
-          city={homeCity}
-          sun={sun}
-          isFavorite={favoriteCodes.includes(homeCity.code)}
-          onAddFavorite={() => {
-            if (typeof window === "undefined") return;
-            window.dispatchEvent(
-              new CustomEvent("tdp:add-city", { detail: { code: homeCity.code } })
-            );
-          }}
+      {/* Home city section — full width below the hero.
+          YourCitiesPanel is the persistent widget showing all tracked
+          cities with LIVE times + the API-driven add search at the top. */}
+      <section className="tdp-home-cities" aria-label="Your tracked cities">
+        <YourCitiesPanel
+          cities={trackedCities}
+          activeCode={activeCode}
+          onPick={setActive}
+          onRemove={removeCity}
+          onAdd={addCity}
+          count={trackedCount}
+          max={trackedMax}
+          canAddMore={canAddMore}
         />
-      )}
-
-      {/* User-added Explore-style cards (polish-4): same NotebookLM
-          palette as ExploreMore, lets the user scan their favorites
-          without the live-ticker density. */}
-      {userAddedFiltered.length > 0 && (
-        <UserCitiesExploreCards userAdded={userAddedFiltered} />
-      )}
+      </section>
 
       {/* Explore more (hooks) ----------------------------------- */}
       <ExploreMore />
