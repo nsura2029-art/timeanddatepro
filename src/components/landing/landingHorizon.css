@@ -2949,7 +2949,7 @@
 .tdp-ycp-row-btn {
   flex: 1;
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  grid-template-columns: 10px 24px 1fr auto;
   gap: 10px;
   align-items: center;
   padding: 9px 8px 9px 10px;
@@ -2960,6 +2960,30 @@
   font-family: var(--font-family-sans, Inter, sans-serif);
   color: var(--color-ink, #202438);
   min-width: 0;
+}
+
+/* Green LIVE dot — first column of every city row. Pulses gently
+   to reinforce that the time on this row is ticking every second. */
+.tdp-ycp-row-btn::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-emerald-500, #10B981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+  animation: tdp-ycp-live-pulse 1.6s ease-in-out infinite;
+  justify-self: center;
+}
+
+@keyframes tdp-ycp-live-pulse {
+  0%, 100% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10);
+  }
 }
 
 .tdp-ycp-flag {
