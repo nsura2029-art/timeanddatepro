@@ -30,8 +30,6 @@ import {
   detectCountryFromTimezone
 } from "./data/countries";
 import { getTheme } from "./utils/theme";
-import TodaySnapshot from "./components/TodaySnapshot";
-import QuickActions from "./components/QuickActions";
 import { TRANSLATIONS } from "./utils/translations";
 import { useClickOutside } from "./utils/useClickOutside";
 import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
@@ -342,12 +340,6 @@ export default function App() {
 
   // Real-time states
   const [liveDate, setLiveDate] = useState(new Date());
-
-  // Direct tab redirection state for quick actions (consumed by the
-  // V1 QuickActions section we keep at the bottom of the landing page;
-  // V2's LandingPage composes its own tools via ExploreMore nav cards).
-  const [activeToolTab, setActiveToolTab] = useState<string | null>(null);
-  const [prefilledParams, setPrefilledParams] = useState<any>(null);
 
   // Navigation & Dropdown states
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
@@ -768,9 +760,8 @@ export default function App() {
   //   - getGreeting (V1 hero "Good Night, New York" — V2 doesn't greet)
   //   - offsetData (V1 hero's "EDT - UTC Offset: -04:00" line; V2 hero
   //     formats its own offset via the LandingHeroHorizon pipeline)
-  // The V1 sections we keep (TodaySnapshot + QuickActions) below are
-  // driven by `activeToolTab` + `prefilledParams`, which are set by the
-  // nav dropdowns calling `setActiveToolTab` directly.
+  // Legacy V1 sections (TodaySnapshot + QuickActions) removed —
+  // V2's hero OnThisDay + ExploreMore cover the same use cases.
 
   const t = getTheme(preferences.theme);
 
@@ -1418,39 +1409,11 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* V1's TodaySnapshot + QuickActions kept below the V2
-                LandingPage. V2's ExploreMore is nav cards (not inline
-                tool UIs), and the inline Today holiday/events feed has
-                no V2 equivalent yet. Both can be removed in a follow-up
-                if/when V2 grows equivalents. */}
-            {/* Section 1: Today in Your Country */}
-            <div id="today-section" className="scroll-mt-24">
-              <TodaySnapshot preferences={preferences} holidays={holidays} />
-            </div>
-
-            {/* Section 3: Smart Quick Actions / Time Tools */}
-            <div id="quick-tools-section" className="scroll-mt-24">
-              <QuickActions
-                preferences={preferences}
-                holidays={holidays}
-                activeTab={activeToolTab || undefined}
-                onCloseTab={() => {
-                  setActiveToolTab(null);
-                  setPrefilledParams(null);
-                }}
-                prefilledParams={prefilledParams}
-                onSelectTimezone={(tz, country, cName) => {
-                  savePreferences({
-                    ...preferences,
-                    timezone: tz,
-                    country,
-                    countryName: cName
-                  });
-                }}
-                lang={currentPathRoute?.lang || "en"}
-              />
-            </div>
-
+            {/* Both legacy V1 sections (TodaySnapshot + QuickActions)
+                removed per user request. The V2 landing page above
+                already provides the equivalent value: the OnThisDay
+                pill in the hero for the today-feed, and ExploreMore
+                for the tool navigation. */}
           </>
         )}
       </main>
