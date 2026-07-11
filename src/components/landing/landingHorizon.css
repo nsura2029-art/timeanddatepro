@@ -28,7 +28,7 @@
  * 7-segment shapes (with extra segments lit when letters appear), giving a
  * chunkier, more pixelated look than DSEG7-Classic. Same SIL OFL license.
  * Self-hosted at /public/fonts/ because the jsdelivr gh-source mirror
- * doesn't expose the .woff2 binaries (they live in the v0.46 release zip
+ * does not expose the .woff2 binaries (they live in the v0.46 release zip
  * only, not in the source tree).
  */
 @font-face {
@@ -389,7 +389,7 @@
 
 @media (max-width: 640px) {
   .tdp-status-pills {
-    /* On narrow screens, allow wrap since the 3 pills won't all fit on one line */
+    /* On narrow screens, allow wrap since the 3 pills will not all fit on one line */
     flex-wrap: wrap;
     gap: 6px;
     margin: 16px auto 4px;
@@ -720,7 +720,7 @@
 
 /* Favorite star indicator — top-right corner of every city card.
  * Hollow in TopPopularCities = click to add. Filled in FiveCitiesFavorites
- * + TopPopularCities' favorite rows = click to remove. Same star, two
+ * + TopPopularCities favorite rows = click to remove. Same star, two
  * states — no second icon needed.
  */
 .tdp-city-card .fav-star {
@@ -774,7 +774,7 @@
  */
 .tdp-city-card--default {
   cursor: default;
-  /* Faint dotted outline so it's distinguishable from added cards at a
+  /* Faint dotted outline so it is distinguishable from added cards at a
    * glance, but still in the same family. */
   box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
 }
@@ -1870,7 +1870,7 @@
  * BUTTON TOKEN — single source of truth for every CTA in the landing.
  * Variants: primary (emerald), accent (indigo/purple), secondary (outlined)
  * Sizes:    sm (32px), md (40px), lg (48px)
- * Visual contract matches the 'Find a meeting time' reference button.
+ * Visual contract matches the Find a meeting time reference button.
  * ──────────────────────────────────────────────────────────────────── */
 .tdp-btn {
   display: inline-flex;
@@ -1907,7 +1907,7 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(5, 150, 105, 0.25);
 }
 
-/* Accent — solid indigo/purple (the 'Find a meeting time' / 'Explore all zones' style) */
+/* Accent — solid indigo/purple (the Find a meeting time / Explore all zones style) */
 .tdp-btn--accent {
   background: #6366f1;
   color: #ffffff;
@@ -2570,7 +2570,7 @@
 
 /* ============================================================================
  * City Picker Welcome Widget — first-visit popup
- * Modal that appears 2.5s after the hero renders, on the user's first
+ * Modal that appears 2.5s after the hero renders, on the user first
  * visit. Surfaces the city picker to users who might miss the small
  * "Change city" button in the top-right.
  * ============================================================================ */
@@ -2768,7 +2768,7 @@
 
 /* ===========================================================================
    NEW: HeroAddCitySearch — compact "add another city" search in the
-   hero's top-right action bar. Same API as the panel's old add search
+   hero top-right action bar. Same API as the panel old add search
    (GET /api/v1/cities/search) but styled to sit alongside the city
    picker trigger + 12h/24h toggle.
    =========================================================================== */
@@ -2981,10 +2981,10 @@
 
 
    - The YourCitiesPanel used to be a side panel in a 2-col hero grid.
-     Now it's a full-width section below the hero, centered to the
+     Now it is a full-width section below the hero, centered to the
      same max-width as the hero so the layout stays balanced.
    - Responsive: full width on all viewports, padding adjusts for
-     mobile so the panel doesn't bleed to the edge.
+     mobile so the panel does not bleed to the edge.
    =========================================================================== */
 
 .tdp-home-cities {
