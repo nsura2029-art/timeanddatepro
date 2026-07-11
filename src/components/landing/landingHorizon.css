@@ -2992,11 +2992,12 @@
    - Desktop (≥1024px): hero main (1fr) | YourCitiesPanel (420px)
    - Tablet (768-1023px): single column, panel stacks below
    - Mobile (<768px): single column, panel stacks below
+   - force-refresh: 2026-07-11
    =========================================================================== */
 
 .tdp-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 420px !important;
   gap: 22px;
   max-width: 1460px;
   margin: 0 auto;

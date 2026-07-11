@@ -189,8 +189,21 @@ export function LandingHeroHorizon({
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
       {/* 2-column grid: hero main (1fr) + YourCitiesPanel (420px) on desktop.
-          Stacks to 1 column on tablet/mobile. */}
-      <div className="tdp-hero-grid">
+          Stacks to 1 column on tablet/mobile. Inline styles force the grid
+          display because the CSS rule was being overridden by Tailwind's
+          preflight (display: block on div). The className still applies
+          for the responsive media query. */}
+      <div
+        className="tdp-hero-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 420px",
+          gap: 22,
+          maxWidth: 1460,
+          margin: "0 auto",
+          alignItems: "start",
+        }}
+      >
         {/* Column 1: existing hero content */}
         <div className="tdp-hero-main">
         {/* Centered chrome (eyebrow + greeting + date + status pills + toggles) */}
