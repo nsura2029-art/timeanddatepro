@@ -19,6 +19,8 @@ import { HeroDateBlock } from "./HeroDateBlock";
 import { useHomeData } from "../../hooks/useHomeData";
 import { useTrackedCities } from "../../hooks/useTrackedCities";
 import { CityPickerOverlay } from "./CityPickerOverlay";
+import { CityPickerWelcome } from "./CityPickerWelcome";
+import { DEFAULT_CITIES } from "../../data/defaultCities";
 import { formatLongDateShared } from "../../utils/landingFormatters";
 import "./landingHorizon.css";
 
@@ -65,6 +67,9 @@ export function LandingHeroHorizon({
     setActive,
     addCity,
     removeCity,
+    canAddMore,
+    count: trackedCount,
+    max: trackedMax,
   } = useTrackedCities();
 
   // Always call the hook — React rules require hooks in the same order
@@ -224,6 +229,22 @@ export function LandingHeroHorizon({
         onPick={handlePick}
         onAdd={handleAdd}
         onRemove={removeCity}
+        count={trackedCount}
+        max={trackedMax}
+        canAddMore={canAddMore}
+      />
+
+      {/* First-visit welcome widget — surfaces the city picker to users
+          who might miss the small button in the top-right. Only shows
+          once per browser (controlled by tdp_cities_welcomed_v1 flag). */}
+      <CityPickerWelcome
+        activeCity={activeCity}
+        defaultCities={DEFAULT_CITIES}
+        onOpenPicker={() => setPickerOpen(true)}
+        onConfirmActive={() => {
+          // User confirmed the active city is correct — no-op beyond dismissal.
+          // The active city is already what the hero shows.
+        }}
       />
     </section>
   );

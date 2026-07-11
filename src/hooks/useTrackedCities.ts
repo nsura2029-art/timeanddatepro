@@ -22,6 +22,15 @@ import { CITY_BY_CODE } from "../data/cities";
 const STORAGE_KEY_CITIES = "tdp_tracked_cities";
 const STORAGE_KEY_ACTIVE = "tdp_active_city";
 
+/**
+ * Hard cap on the number of cities a user can track. Picked so the
+ * overlay can render all of them on a single screen (phone) without
+ * scrolling, and so the dataset stays small enough for a one-time
+ * fetch. Bumping past 10 requires a deliberate UI affordance (e.g.
+ * a separate "favorites" view in a future phase).
+ */
+export const MAX_FAVORITES = 10;
+
 function loadFromStorage(): { cities: TrackedCity[]; activeCode: string } {
   if (typeof window === "undefined") {
     return { cities: DEFAULT_CITIES, activeCode: DEFAULT_CITIES[0].code };
@@ -56,9 +65,21 @@ export interface UseTrackedCities {
   activeCity: TrackedCity;
   activeCode: string;
   setActive: (code: string) => void;
-  addCity: (city: Omit<TrackedCity, "isHome">) => void;
+  /**
+   * Add a city to the tracked list and make it active.
+   * Returns `true` if added, `false` if the MAX_FAVORITES cap was hit.
+   * Duplicate adds (city already in list) are silently no-ops; the
+   * city is just made active in that case.
+   */
+  addCity: (city: Omit<TrackedCity, "isHome">) => boolean;
   removeCity: (code: string) => void;
   reset: () => void;
+  /** True if the user can still add more cities (count < MAX_FAVORITES) */
+  canAddMore: boolean;
+  /** Current number of tracked cities */
+  count: number;
+  /** Hard cap (10) — exposed so the UI can render the "X / MAX" counter */
+  max: number;
 }
 
 export function useTrackedCities(): UseTrackedCities {
@@ -94,17 +115,29 @@ export function useTrackedCities(): UseTrackedCities {
     setActiveCode(code);
   }, []);
 
-  const addCity = useCallback((city: Omit<TrackedCity, "isHome">) => {
-    setCities((prev) => {
-      // Don't add duplicates; just re-set as active
-      if (prev.some((c) => c.code === city.code)) {
+  const addCity = useCallback(
+    (city: Omit<TrackedCity, "isHome">): boolean => {
+      // Use a functional setState read to know the current count.
+      let added = false;
+      setCities((prev) => {
+        // Don't add duplicates; just re-set as active
+        if (prev.some((c) => c.code === city.code)) {
+          setActiveCode(city.code);
+          return prev;
+        }
+        // Cap at MAX_FAVORITES — block silently. UI should prevent the
+        // call in the first place by reading `canAddMore`.
+        if (prev.length >= MAX_FAVORITES) {
+          return prev;
+        }
         setActiveCode(city.code);
-        return prev;
-      }
-      setActiveCode(city.code);
-      return [...prev, { ...city, isHome: false }];
-    });
-  }, []);
+        added = true;
+        return [...prev, { ...city, isHome: false }];
+      });
+      return added;
+    },
+    []
+  );
 
   const removeCity = useCallback(
     (code: string) => {
@@ -137,5 +170,8 @@ export function useTrackedCities(): UseTrackedCities {
     addCity,
     removeCity,
     reset,
+    canAddMore: cities.length < MAX_FAVORITES,
+    count: cities.length,
+    max: MAX_FAVORITES,
   };
 }

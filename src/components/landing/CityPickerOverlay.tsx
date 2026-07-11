@@ -33,6 +33,12 @@ interface CityPickerOverlayProps {
   onAdd: (city: CityEntry) => void;
   /** Remove a tracked city (not the home city) */
   onRemove: (code: string) => void;
+  /** Current number of tracked cities */
+  count: number;
+  /** Hard cap on tracked cities */
+  max: number;
+  /** True if more cities can still be added */
+  canAddMore: boolean;
 }
 
 /**
@@ -91,6 +97,9 @@ export function CityPickerOverlay({
   onPick,
   onAdd,
   onRemove,
+  count,
+  max,
+  canAddMore,
 }: CityPickerOverlayProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -157,6 +166,9 @@ export function CityPickerOverlay({
           <h2 className="tdp-city-picker-title">
             <MapPin size={18} aria-hidden />
             Pick a city
+            <span className="tdp-city-picker-counter" aria-label={`${count} of ${max} cities tracked`}>
+              {count} / {max}
+            </span>
           </h2>
           <button
             type="button"
@@ -259,6 +271,11 @@ export function CityPickerOverlay({
           {/* When there's a query, show search results */}
           {debouncedQuery.trim() && (
             <section className="tdp-city-picker-section">
+              {!canAddMore && (
+                <div className="tdp-city-picker-limit-notice" role="status">
+                  You&apos;re tracking the maximum {max} cities. Remove one to add a different city.
+                </div>
+              )}
               <h3 className="tdp-city-picker-section-title">
                 {searchResults.length === 0
                   ? "No matches"
@@ -278,9 +295,11 @@ export function CityPickerOverlay({
                         type="button"
                         className="tdp-city-picker-row-btn"
                         onClick={() => {
+                          if (!canAddMore) return;
                           onAdd(city);
                           onClose();
                         }}
+                        disabled={!canAddMore}
                       >
                         <span className="tdp-city-picker-flag" aria-hidden>
                           {flagEmoji(city.countryCode)}

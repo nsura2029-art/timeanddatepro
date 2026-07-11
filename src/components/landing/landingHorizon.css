@@ -2517,3 +2517,244 @@
   .tdp-city-picker-trigger-label { display: none; }
   .tdp-hour-toggle .tdp-hour-toggle-label { display: none; }
 }
+
+/* ============================================================================
+ * City Picker — count badge in the overlay header
+ * Shows "5 / 10" so the user knows how close they are to the cap.
+ * ============================================================================ */
+.tdp-city-picker-counter {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--hero-fg-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--hero-text-muted, #475569);
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  line-height: 1.4;
+}
+
+.tdp-city-picker-limit-notice {
+  margin: 4px 4px 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #78350f;
+  font-family: var(--hero-fg-font);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* Ghost button variant — used for the "Maybe later" CTA in the welcome */
+.tdp-btn--ghost {
+  background: transparent;
+  color: var(--hero-text-muted, #475569);
+  border-color: transparent;
+}
+.tdp-btn--ghost:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--hero-text, #0f172a);
+}
+
+/* ============================================================================
+ * City Picker Welcome Widget — first-visit popup
+ * Modal that appears 2.5s after the hero renders, on the user's first
+ * visit. Surfaces the city picker to users who might miss the small
+ * "Change city" button in the top-right.
+ * ============================================================================ */
+.tdp-city-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  pointer-events: auto;
+}
+
+.tdp-city-welcome-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: tdp-welcome-fade 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tdp-city-welcome-card {
+  position: relative;
+  width: min(480px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.30), 0 0 0 1px rgba(99, 102, 241, 0.05);
+  padding: 32px 28px 24px;
+  text-align: center;
+  animation: tdp-welcome-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tdp-welcome-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tdp-welcome-pop {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tdp-city-welcome-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hero-text-muted, #475569);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.tdp-city-welcome-close:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--hero-text, #0f172a);
+}
+
+.tdp-city-welcome-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+  color: #059669;
+  margin: 0 auto 16px;
+}
+
+.tdp-city-welcome-title {
+  font-family: var(--hero-fg-font);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--hero-text, #0f172a);
+  margin: 0 0 8px;
+}
+.tdp-city-welcome-title strong {
+  color: #059669;
+  font-weight: 800;
+}
+
+.tdp-city-welcome-subtitle {
+  font-family: var(--hero-fg-font);
+  font-size: 14px;
+  color: var(--hero-text-muted, #475569);
+  margin: 0 0 20px;
+  line-height: 1.4;
+}
+
+.tdp-city-welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.tdp-city-welcome-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hero-rule, rgba(15, 23, 42, 0.10));
+  background: #ffffff;
+  font-family: var(--hero-fg-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hero-text, #0f172a);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.tdp-city-welcome-chip:hover {
+  background: rgba(5, 150, 105, 0.06);
+  border-color: rgba(5, 150, 105, 0.30);
+  transform: translateY(-1px);
+}
+.tdp-city-welcome-chip--active {
+  background: rgba(5, 150, 105, 0.10);
+  border-color: rgba(5, 150, 105, 0.45);
+  color: #064e3b;
+}
+
+.tdp-city-welcome-chip-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tdp-city-welcome-chip-name {
+  font-weight: 600;
+}
+
+.tdp-city-welcome-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #059669;
+  background: rgba(5, 150, 105, 0.15);
+  border: 1px solid rgba(5, 150, 105, 0.30);
+  padding: 1px 6px;
+  border-radius: 999px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.tdp-city-welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.tdp-city-welcome-foot {
+  font-family: var(--hero-fg-font);
+  font-size: 11px;
+  color: var(--hero-text-muted, #475569);
+  margin: 0;
+  line-height: 1.4;
+}
+.tdp-city-welcome-foot kbd {
+  font-family: var(--hero-mono-font);
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  color: var(--hero-text, #0f172a);
+}
+
+@media (max-width: 540px) {
+  .tdp-city-welcome-card { padding: 24px 18px 18px; }
+  .tdp-city-welcome-title { font-size: 19px; }
+  .tdp-city-welcome-chip { font-size: 12px; padding: 7px 10px; }
+  .tdp-city-welcome-actions { flex-direction: column; align-items: stretch; }
+  .tdp-city-welcome-actions .tdp-btn { width: 100%; }
+}
