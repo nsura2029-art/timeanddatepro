@@ -1,15 +1,19 @@
 // src/components/landing/HeroClock.tsx
-// DSEG14-Classic-Bold numeric clock with 2-digit sub-second + sync drift +
-// accuracy status. Renders HH:MM:SS big + :cc (centiseconds, smaller).
+// Bold-sans-serif (Inter 800-900) responsive clock with HH:MM:SS + sub-seconds.
 //
-// Above the clock itself, an h1 "Current time in {City}, {Region}, {Country}"
-// primes what the user is about to see and updates as they change city.
-// Default values are now dynamic — LandingHeroHorizon passes the live city
-// info up from CITY_DATA, so "London, England, United Kingdom" renders for
-// a London visitor without any code change.
+// Format: HH:MM:SS.cc (e.g. 05:30:31.17)
+// - HH:MM:SS — hours, minutes, seconds — all huge, in the same row
+// - .cc       — 2-digit centiseconds — same row, smaller, lower opacity
+// - AM/PM     — only in 12h mode — sits ABOVE the time as a small chip,
+//               not inline. Toggling 12h ↔ 24h does NOT change the time
+//               format — it only appears/disappears the AM/PM chip.
+//
+// Sub-seconds update at 60Hz via the parent's RAF ticker (liveDate prop),
+// so the digits never feel static. SSR-safe — first paint shows "--"
+// placeholders, real values come in after mount.
 
 import { useEffect, useRef, useState } from "react";
-import { Sunrise, Sunset, Clock3, MapPin } from "lucide-react";
+import { Sunrise, Sunset, Clock3, MapPin, Check, Briefcase, Sun } from "lucide-react";
 import type { BrowseHome } from "../../utils/homeApi";
 
 interface HeroClockProps {
@@ -25,10 +29,12 @@ interface HeroClockProps {
   cityRegion?: string;
   /** Country name shown after the city in the headline + footer line */
   countryName?: string;
-  /** Optional sun pills rendered ABOVE the clock */
+  /** Optional sun pills rendered ABOVE the clock (legacy — kept for backward compat) */
   sun?: BrowseHome["sun"];
   /** 12-hour vs 24-hour display. Persisted at the App level. */
   hour12?: boolean;
+  /** 3 status pills from the API (sync / business / sun) — replaces the legacy sun-above pills */
+  statusPills?: BrowseHome["statusPills"];
 }
 
 function pad(n: number, len = 2) {
@@ -67,16 +73,6 @@ function fmtClock(d: Date, tz: string, hour12: boolean): FormattedClock {
   };
 }
 
-function fmtSyncLine(driftMs: number, locale: "en" | "fr" | "zh" | "ja" = "en") {
-  const absMs = Math.abs(driftMs);
-  const ahead = driftMs > 0;
-  const tenths = (absMs / 1000).toFixed(1);
-  if (locale === "fr") return `Votre horloge a ${tenths} secondes de ${ahead ? "retard" : "avance"}.`;
-  if (locale === "zh") return `您的系统时钟${ahead ? "慢了" : "快了"} ${tenths} 秒。`;
-  if (locale === "ja") return `お使いの時計は${tenths}秒${ahead ? "遅れています" : "進んでいます"}。`;
-  return `Your clock is ${tenths} seconds ${ahead ? "behind" : "ahead"}.`;
-}
-
 /**
  * Build "City, Region, Country" handling missing region gracefully.
  * - "Wesley Chapel, Florida, United States"
@@ -101,6 +97,7 @@ export function HeroClock({
   countryName = "United States",
   sun,
   hour12 = false,
+  statusPills,
 }: HeroClockProps) {
   const [mounted, setMounted] = useState(false);
   const rafRef = useRef<number | null>(null);
@@ -142,10 +139,9 @@ export function HeroClock({
           <span>--</span>
           <span className="tdp-colon">:</span>
           <span>--</span>
-          <span className="tdp-subsec-sep">:</span>
           <span className="tdp-subsec">--</span>
         </div>
-        <div className="tdp-subsec-label">HH : MM : SS : CENTISECONDS</div>
+        <div className="tdp-subsec-label">HH : MM : SS . CENTISECONDS</div>
       </div>
     );
   }
@@ -161,8 +157,8 @@ export function HeroClock({
         <span>Current time in <strong>{cityName}</strong>{cityRegion ? <span>, <span className="tdp-hero-clock-region">{cityRegion}</span></span> : null}{countryName ? <span>, {countryName}</span> : null}</span>
       </h1>
 
-      {/* Sun pills above the clock */}
-      {sun && (
+      {/* Sun pills above the clock — legacy path; prefer statusPills from API */}
+      {sun && !statusPills && (
         <div className="tdp-sun-above">
           {sun.sunrise && (
             <div className="tdp-sun-pill">
@@ -185,21 +181,26 @@ export function HeroClock({
         </div>
       )}
 
+      {/* AM/PM chip — only in 12h mode, positioned ABOVE the time.
+          The time format below stays identical in both modes; only
+          this chip appears/disappears on toggle. */}
+      {hour12 && clock.ampm && (
+        <div className="tdp-ampm-above" aria-label={clock.ampm}>
+          <span className="tdp-ampm-above-text">{clock.ampm}</span>
+        </div>
+      )}
+
       <div className="tdp-seven" aria-label={`Time ${timeForAria} in ${timezone}`}>
         <span>{clock.hh}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.mm}</span>
         <span className="tdp-colon">:</span>
         <span>{clock.ss}</span>
-        {/* AM/PM chip — only renders in 12h mode */}
-        {hour12 && clock.ampm && (
-          <span className="tdp-ampm">{clock.ampm}</span>
-        )}
-        <span className="tdp-subsec-sep">:</span>
+        <span className="tdp-subsec-sep">.</span>
         <span className="tdp-subsec">{clock.cs}</span>
       </div>
       <div className="tdp-subsec-label">
-        {hour12 ? "HH : MM : SS AM/PM : CENTISECONDS" : "HH : MM : SS : CENTISECONDS"}
+        HH : MM : SS . CENTISECONDS{hour12 ? " (12-HOUR)" : " (24-HOUR)"}
       </div>
 
       {sync && (
@@ -228,4 +229,37 @@ export function HeroClock({
   );
 }
 
-export { fmtSyncLine, formatLocationString };
+/**
+ * Render the 3 status pills (sync / business / sun) as colored chips.
+ * Lives in HeroClock so the API consumer has a single import path,
+ * but the pills themselves are rendered by the parent (LandingHeroHorizon)
+ * to control layout. Exported as a separate component below.
+ */
+export function HeroStatusPills({ pills }: { pills?: BrowseHome["statusPills"] }) {
+  if (!pills || pills.length === 0) return null;
+  return (
+    <div className="tdp-status-pills" role="list" aria-label="Current status">
+      {pills.map((pill) => {
+        const Icon = pill.icon === "check" ? Check : pill.icon === "briefcase" ? Briefcase : Sun;
+        return (
+          <div
+            key={pill.id}
+            role="listitem"
+            className={`tdp-status-pill tdp-status-pill--${pill.variant}`}
+            data-testid={`status-pill-${pill.id}`}
+          >
+            <Icon size={14} aria-hidden className="tdp-status-pill-icon" />
+            <span className="tdp-status-pill-text">
+              <span className="tdp-status-pill-message">{pill.message}</span>
+              {pill.subtext && (
+                <span className="tdp-status-pill-subtext"> · {pill.subtext}</span>
+              )}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export { formatLocationString };

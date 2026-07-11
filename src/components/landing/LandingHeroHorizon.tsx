@@ -14,7 +14,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
-import { HeroClock } from "./HeroClock";
+import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { useHomeData } from "../../hooks/useHomeData";
 import { formatLongDateShared } from "../../utils/landingFormatters";
@@ -80,7 +80,7 @@ export function LandingHeroHorizon({
 
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
-      {/* Centered chrome (eyebrow + date + sun + sync + toggle) capped at 1120px */}
+      {/* Centered chrome (eyebrow + greeting + date + status pills + toggle) capped at 1120px */}
       <div className="tdp-hero-inner">
         <HeroDateBlock
           liveDate={liveDate}
@@ -91,8 +91,13 @@ export function LandingHeroHorizon({
               ? { country: data.holiday.international.country, name: data.holiday.international.name }
               : null
           }
+          greeting={data?.greeting?.message}
           lang={lang}
         />
+
+        {/* 3 colored status pills (sync / business / sun) — sits between
+            the date and the clock. Always 3, in fixed order. */}
+        <HeroStatusPills pills={data?.statusPills} />
 
         {/* 12h/24h toggle — sits at the top-right of the hero so it's
             visible without scrolling. Toggling re-renders the clock

@@ -183,19 +183,27 @@
 .tdp-seven {
   flex-wrap: wrap;
   row-gap: 0.1em;
-  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
-  font-weight: bold;
+  /* polish-5: Switched from DSEG14 seven-segment to Inter 800/900 bold
+     sans-serif to match the design reference. DSEG gave a "retro alarm
+     clock" feel; the user wants the cleaner, more modern look of a
+     heavy sans-serif. Tabular numerals keep the digits from shifting
+     width as the seconds tick. */
+  font-family: var(--hero-fg-font);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
   /* Responsive sizing across ALL devices — smoothly scales from
-     375px mobile up to 1920px ultrawide without jarring jumps. */
-  font-size: clamp(56px, 13vw, 240px);
+     375px mobile up to 1920px ultrawide without jarring jumps.
+     Range tuned for Inter 900 (slightly smaller max than DSEG since
+     sans-serif glyphs occupy more visual weight). */
+  font-size: clamp(72px, 14vw, 200px);
   line-height: 1;
   color: var(--seven);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.05em;
   text-shadow: 0 0 60px var(--seven-glow);
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.05em;
+  gap: 0.02em;
   user-select: none;
 }
 
@@ -220,27 +228,163 @@
   50%, 100% { opacity: 0.25; }
 }
 
-/* Sub-second separator (smaller, between seconds and centiseconds) */
+/* Sub-second separator (period between SS and cc) — same Inter font, smaller */
 .tdp-subsec-sep {
-  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.55em;
+  font-family: var(--hero-fg-font);
+  font-size: 0.5em;
   color: var(--seven);
   opacity: 0.55;
-  font-weight: bold;
+  font-weight: 900;
   margin-left: 0.02em;
   margin-right: -0.02em;
   letter-spacing: 0;
   align-self: center;
 }
 
-/* 2-digit centiseconds — slightly smaller, lower opacity */
+/* 2-digit centiseconds — same Inter font, smaller, lower opacity */
 .tdp-subsec {
-  font-family: 'DSEG14', 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.55em;
+  font-family: var(--hero-fg-font);
+  font-size: 0.5em;
   opacity: 0.62;
-  font-weight: bold;
+  font-weight: 900;
   letter-spacing: -0.02em;
   align-self: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* AM/PM chip — sits ABOVE the time, only in 12h mode.
+   The time format below stays identical in both modes; only this chip
+   appears/disappears when toggling 12h ↔ 24h. Centered, emerald, heavy. */
+.tdp-ampm-above {
+  text-align: center;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.tdp-ampm-above-text {
+  display: inline-block;
+  font-family: var(--hero-fg-font);
+  font-weight: 900;
+  font-size: clamp(20px, 3.2vw, 36px);
+  letter-spacing: 0.18em;
+  color: var(--accent-primary-deep);
+  background: rgba(5, 150, 105, 0.10);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  padding: 4px 18px;
+  border-radius: 999px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+ * Greeting (above the H1) — small purple/indigo text, italic feel
+ * ============================================================================ */
+.tdp-hero-greeting {
+  font-family: var(--hero-fg-font);
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  color: var(--accent-tertiary);
+  margin-top: 18px;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  font-style: italic;
+}
+
+/* ============================================================================
+ * Status pills row (3 pills: sync / business / sun) — sits between the
+ * date H1 and the clock. Each pill has a colored background matching its
+ * semantic variant (green/indigo/amber).
+ * ============================================================================ */
+.tdp-status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 22px auto 8px;
+  max-width: 880px;
+  padding: 0 16px;
+}
+
+.tdp-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: var(--hero-fg-font);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  border: 1px solid transparent;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.tdp-status-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+}
+
+.tdp-status-pill-icon {
+  flex-shrink: 0;
+}
+
+.tdp-status-pill-text {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.tdp-status-pill-message {
+  font-weight: 700;
+}
+
+.tdp-status-pill-subtext {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* success variant — green (sync) */
+.tdp-status-pill--success {
+  background: rgba(209, 250, 229, 0.7);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #064e3b;
+}
+.tdp-status-pill--success .tdp-status-pill-icon {
+  color: #059669;
+}
+
+/* info variant — indigo (business) */
+.tdp-status-pill--info {
+  background: rgba(224, 231, 255, 0.7);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #312e81;
+}
+.tdp-status-pill--info .tdp-status-pill-icon {
+  color: #4f46e5;
+}
+
+/* warning variant — amber (sun) */
+.tdp-status-pill--warning {
+  background: rgba(254, 243, 199, 0.7);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #78350f;
+}
+.tdp-status-pill--warning .tdp-status-pill-icon {
+  color: #d97706;
+}
+
+@media (max-width: 640px) {
+  .tdp-status-pills {
+    gap: 6px;
+    margin: 16px auto 4px;
+  }
+  .tdp-status-pill {
+    font-size: 11.5px;
+    padding: 5px 10px;
+  }
 }
 
 .tdp-subsec-label {

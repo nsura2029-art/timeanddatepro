@@ -17,6 +17,8 @@ interface HeroDateBlockProps {
   internationalHoliday?: { country: string; name: string } | null;
   /** Optional override for the live pill label */
   liveLabel?: string;
+  /** Time-of-day greeting (e.g. "Good morning"). No name — we don't know who the user is. */
+  greeting?: string | null;
   /** Translation locale */
   lang?: "en" | "fr" | "zh" | "ja";
 }
@@ -60,6 +62,7 @@ export function HeroDateBlock({
   todayHoliday,
   internationalHoliday,
   liveLabel = "Live",
+  greeting,
   lang = "en",
 }: HeroDateBlockProps) {
   const dateText = fmtLongDate(liveDate, timezone, lang);
@@ -77,6 +80,13 @@ export function HeroDateBlock({
         <span className="tdp-eyebrow-date">{dateText}</span>
         <span className="tdp-tz">· {offset}</span>
       </div>
+
+      {/* Time-of-day greeting (no name). Sits between the eyebrow and the H1. */}
+      {greeting && (
+        <div className="tdp-hero-greeting" aria-label="Greeting">
+          {greeting}
+        </div>
+      )}
 
       {/* The H1 itself is part of the hero — keep it sibling so flex layout works */}
       <h1 className="tdp-hero-date">{dateText}</h1>

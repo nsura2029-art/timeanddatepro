@@ -109,6 +109,37 @@ export interface BrowseHome {
     lat: number;
     lng: number;
   };
+  /**
+   * Time-of-day greeting rendered above the date H1.
+   * No name — we don't know who the user is. Just the salutation.
+   * Bucket boundaries (local hour in home.timezone):
+   *   05-12 → "Good morning"
+   *   12-17 → "Good afternoon"
+   *   17-22 → "Good evening"
+   *   22-05 → "Good night"
+   */
+  greeting: {
+    message: "Good morning" | "Good afternoon" | "Good evening" | "Good night";
+    bucket: "morning" | "afternoon" | "evening" | "night";
+    /** Local hour (0-23) in home.timezone — for analytics + future personalization */
+    localHour: number;
+  };
+  /**
+   * Color-coded status pills rendered as a row between the date and the clock.
+   * Always exactly 3, in this fixed order:
+   *   1. sync      (green)   "Your clock is synchronized"
+   *   2. business  (indigo)  Dynamic based on local time + weekday
+   *   3. sun       (amber)   "Sunrise HH:MM · Sunset HH:MM"
+   * The React side maps each entry to a colored pill via the `variant` field.
+   */
+  statusPills: Array<{
+    id: string;
+    type: "sync" | "business" | "sun";
+    icon: "check" | "briefcase" | "sun";
+    message: string;
+    subtext?: string;
+    variant: "success" | "info" | "warning";
+  }>;
   currentTime: {
     iso: string;
     unix: number;
@@ -250,9 +281,109 @@ export async function buildBrowseHome(opts: {
     nextTransition: info.nextTransition,
   }));
 
+  // === GREETING (time-of-day salutation, no name) ===
+  // We don't know who the user is — so the message is a bare salutation
+  // with no trailing name. Bucket boundaries align with common UX rules
+  // (5am, noon, 5pm, 10pm) so the wording changes at natural day parts.
+  const localHour = parseInt(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: home.timezone,
+      hour: "numeric",
+      hour12: false,
+    }).format(now),
+    10
+  );
+  const greeting: BrowseHome["greeting"] =
+    localHour >= 5 && localHour < 12
+      ? { message: "Good morning", bucket: "morning", localHour }
+      : localHour >= 12 && localHour < 17
+      ? { message: "Good afternoon", bucket: "afternoon", localHour }
+      : localHour >= 17 && localHour < 22
+      ? { message: "Good evening", bucket: "evening", localHour }
+      : { message: "Good night", bucket: "night", localHour };
+
+  // === STATUS PILLS (3 colored pills: sync / business / sun) ===
+  // Pill 1: sync (green) — always "Your clock is synchronized" since the
+  //   hero is fed by the live RAF ticker. Kept as a pill so the user has
+  //   a visual cue that the time is real, not cached.
+  // Pill 2: business (indigo) — dynamic based on local time + weekday.
+  //   - Weekend → "Off hours · Offices reopen Monday 9:00 AM"
+  //   - Weekday 09-16 → "Business day · Offices open until 5:00 PM"
+  //   - Weekday 16-17 → "Business day · Offices closing soon at 5:00 PM"
+  //   - Other    → "Business day · Offices open at 9:00 AM"
+  // Pill 3: sun (amber) — "Sunrise HH:MM · Sunset HH:MM" from sun data.
+  const localWeekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: home.timezone,
+    weekday: "short",
+  }).format(now); // "Sat", "Sun", "Mon", ...
+  const isWeekend = localWeekday === "Sat" || localWeekday === "Sun";
+
+  const businessPill: BrowseHome["statusPills"][number] = (() => {
+    if (isWeekend) {
+      return {
+        id: "business",
+        type: "business",
+        icon: "briefcase",
+        message: "Off hours",
+        subtext: "Offices reopen Monday 9:00 AM",
+        variant: "info",
+      };
+    }
+    if (localHour >= 9 && localHour < 16) {
+      return {
+        id: "business",
+        type: "business",
+        icon: "briefcase",
+        message: "Business day",
+        subtext: "Offices open until 5:00 PM",
+        variant: "info",
+      };
+    }
+    if (localHour >= 16 && localHour < 17) {
+      return {
+        id: "business",
+        type: "business",
+        icon: "briefcase",
+        message: "Business day",
+        subtext: "Offices closing soon at 5:00 PM",
+        variant: "info",
+      };
+    }
+    // Pre-business hours on a weekday (00-09 or 17-24)
+    return {
+      id: "business",
+      type: "business",
+      icon: "briefcase",
+      message: "Business day",
+      subtext: "Offices open at 9:00 AM",
+      variant: "info",
+    };
+  })();
+
+  const statusPills: BrowseHome["statusPills"] = [
+    {
+      id: "sync",
+      type: "sync",
+      icon: "check",
+      message: "Your clock is synchronized",
+      variant: "success",
+    },
+    businessPill,
+    {
+      id: "sun",
+      type: "sun",
+      icon: "sun",
+      message: "Sunrise",
+      subtext: `${sun.sunrise ?? "--:--"} · Sunset ${sun.sunset ?? "--:--"}`,
+      variant: "warning",
+    },
+  ];
+
   return {
     fetchedAt: now.toISOString(),
     home,
+    greeting,
+    statusPills,
     currentTime,
     sync,
     sun,
