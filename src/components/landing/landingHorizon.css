@@ -2767,7 +2767,219 @@
 }
 
 /* ===========================================================================
-   NEW: Home cities section (full-width wrapper below the hero)
+   NEW: HeroAddCitySearch — compact "add another city" search in the
+   hero's top-right action bar. Same API as the panel's old add search
+   (GET /api/v1/cities/search) but styled to sit alongside the city
+   picker trigger + 12h/24h toggle.
+   =========================================================================== */
+
+.tdp-hero-add-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tdp-hero-add-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tdp-hero-add-input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted, #74778a);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tdp-hero-add-input {
+  width: 240px;
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium, 500);
+  padding: 7px 32px 7px 32px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--color-border, #e1dcf1);
+  background: var(--color-brand-50, #f6f3ff);
+  color: var(--color-ink, #202438);
+  outline: none;
+  transition: border-color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              box-shadow var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              background var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+  min-width: 0;
+}
+
+.tdp-hero-add-input::placeholder {
+  color: var(--color-muted, #74778a);
+  font-weight: var(--font-weight-regular, 400);
+}
+
+.tdp-hero-add-input:focus {
+  border-color: var(--color-brand-500, #7257d5);
+  background: var(--color-surface, #fff);
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(114,87,213,0.25));
+}
+
+.tdp-hero-add-input:disabled {
+  opacity: 0.5;
+  background: var(--color-brand-50, #f6f3ff);
+  cursor: not-allowed;
+}
+
+.tdp-hero-add-input-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--color-muted, #74778a);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background var(--motion-duration-fast, 150ms) var(--motion-ease-out, ease),
+              color var(--motion-duration-fast, 150ms) var(--motion-ease-out, ease);
+}
+
+.tdp-hero-add-input-clear:hover {
+  background: var(--color-border, #e1dcf1);
+  color: var(--color-ink, #202438);
+}
+
+.tdp-hero-add-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted, #74778a);
+  pointer-events: none;
+}
+
+.tdp-spin {
+  animation: tdp-hero-add-spin 0.9s linear infinite;
+}
+
+@keyframes tdp-hero-add-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tdp-hero-add-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e1dcf1);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: var(--shadow-md, 0 16px 36px rgba(74,52,142,0.09));
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border, #e1dcf1) transparent;
+}
+
+.tdp-hero-add-result {
+  display: grid;
+  grid-template-columns: 22px 1fr auto 18px;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  color: var(--color-ink, #202438);
+  transition: background var(--motion-duration-fast, 150ms) var(--motion-ease-out, ease);
+}
+
+.tdp-hero-add-result:hover,
+.tdp-hero-add-result[aria-selected="true"] {
+  background: var(--color-brand-50, #f6f3ff);
+}
+
+.tdp-hero-add-flag {
+  width: 22px;
+  height: 16px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.tdp-hero-add-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.tdp-hero-add-name {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold, 650);
+  color: var(--color-ink, #202438);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-hero-add-meta {
+  font-size: 11px;
+  color: var(--color-muted, #74778a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-hero-add-tz {
+  font-size: 10px;
+  color: var(--color-muted, #74778a);
+  font-weight: var(--font-weight-medium, 500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tdp-hero-add-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-brand-500, #7257d5);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  /* On narrower viewports the full cluster (search + city picker + toggle)
+     gets too wide. Stack the search below the other actions. */
+  .tdp-hero-add-input {
+    width: 200px;
+  }
+  .tdp-hero-add-dropdown {
+    width: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tdp-hero-add-input {
+    width: 180px;
+  }
+  .tdp-hero-add-dropdown {
+    width: 260px;
+  }
+}
+
+
    - The YourCitiesPanel used to be a side panel in a 2-col hero grid.
      Now it's a full-width section below the hero, centered to the
      same max-width as the hero so the layout stays balanced.

@@ -105,7 +105,6 @@ export function LandingPage({
           activeCode={activeCode}
           onPick={setActive}
           onRemove={removeCity}
-          onAdd={addCity}
           count={trackedCount}
           max={trackedMax}
           canAddMore={canAddMore}

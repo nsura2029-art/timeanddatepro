@@ -28,6 +28,7 @@ import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { HeroExploreCards } from "./HeroExploreCards";
+import { HeroAddCitySearch } from "./HeroAddCitySearch";
 import { useHomeData } from "../../hooks/useHomeData";
 import { CityPickerOverlay } from "./CityPickerOverlay";
 import { CityPickerWelcome } from "./CityPickerWelcome";
@@ -204,8 +205,18 @@ export function LandingHeroHorizon({
                 the date and the clock. Always 3, in fixed order. */}
             <HeroStatusPills pills={data?.statusPills} />
 
-            {/* Top-right action cluster: city picker trigger + 12H/24H toggle */}
+            {/* Top-right action cluster: add city search + city picker + 12H/24H toggle */}
             <div className="tdp-hero-actions">
+              {/* Compact "add another city" search — calls the same
+                  /api/v1/cities/search endpoint the panel uses, but
+                  sits in the hero's top-right so the add action is
+                  always one click away without scrolling. */}
+              <HeroAddCitySearch
+                excludeCodes={trackedCities.map((c) => c.code)}
+                onAdd={onAddCity}
+                disabled={!canAddMore}
+              />
+
               {/* City picker trigger — opens the overlay */}
               <button
                 type="button"
