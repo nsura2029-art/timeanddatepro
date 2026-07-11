@@ -2,10 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Globe,
   Search,
-  HelpCircle,
   Clock,
   Calendar,
-  Check,
   ChevronRight,
   ChevronDown,
   Menu,
@@ -24,18 +22,14 @@ import {
   Coins,
   ShieldCheck
 } from "lucide-react";
-import { CountryCode, CountryPreferences, Holiday, AIQueryResult } from "./types";
+import { CountryCode, CountryPreferences, Holiday } from "./types";
 import {
   DEFAULT_PREFERENCES,
   COUNTRY_HOLIDAYS,
   CITY_DATA,
-  detectCountryFromTimezone,
-  formatLocalDate,
-  formatLocalTime,
-  getTimezoneOffsetAndAbbr
+  detectCountryFromTimezone
 } from "./data/countries";
-import { getTheme, THEME_CONFIGS, ThemeType } from "./utils/theme";
-import AnalogClock from "./components/AnalogClock";
+import { getTheme } from "./utils/theme";
 import TodaySnapshot from "./components/TodaySnapshot";
 import QuickActions from "./components/QuickActions";
 import { TRANSLATIONS } from "./utils/translations";
@@ -348,23 +342,10 @@ export default function App() {
 
   // Real-time states
   const [liveDate, setLiveDate] = useState(new Date());
-  const [syncData, setSyncData] = useState<{
-    offsetSeconds: number;
-    accuracySeconds: number;
-    resolvedLocation: string;
-  } | null>({
-    offsetSeconds: 0.4,
-    accuracySeconds: 0.089,
-    resolvedLocation: "Wesley Chapel, Florida, United States"
-  });
 
-  // AI Command Bar states
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<AIQueryResult | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-
-  // Direct tab redirection state for quick actions
+  // Direct tab redirection state for quick actions (consumed by the
+  // V1 QuickActions section we keep at the bottom of the landing page;
+  // V2's LandingPage composes its own tools via ExploreMore nav cards).
   const [activeToolTab, setActiveToolTab] = useState<string | null>(null);
   const [prefilledParams, setPrefilledParams] = useState<any>(null);
 
@@ -380,9 +361,9 @@ export default function App() {
   // Scroll visibility refs
   const headerRef = useRef<HTMLDivElement | null>(null);
 
-  // T4: home data for the v2 landing (hero + 5 sections). Hooks must be
-  // called unconditionally, but the hook itself does no work unless
-  // VITE_LANDING_V2 is on.
+  // T4: home data for the landing (hero + 5 sections). Hooks must be
+  // called unconditionally. The hook does an in-flight fetch guard
+  // (cancelled ref) so StrictMode double-invocation is safe.
   const homeData = useHomeData(preferences.countryCode, "WLC");
 
   // T4+: User-added cities — driven by FiveCitiesFavorites (row 2+) +
@@ -716,50 +697,10 @@ export default function App() {
   }, []);
 
   // --- REAL-TIME HIGH ACCURACY NTP / GEOLOCATION SYNC ---
-  useEffect(() => {
-    const fetchSyncData = async () => {
-      try {
-        // Try to fetch precise location details using ipapi.co
-        const ipapiRes = await fetch("https://ipapi.co/json/");
-        if (ipapiRes.ok) {
-          const ipData = await ipapiRes.json();
-          if (ipData.city && ipData.region && ipData.country_name) {
-            setSyncData({
-              offsetSeconds: 0.4,
-              accuracySeconds: 0.089,
-              resolvedLocation: `${ipData.city}, ${ipData.region}, ${ipData.country_name}`
-            });
-            return;
-          }
-        }
-      } catch (e) {
-        // network blocks / CORS fall through gracefully
-      }
-
-      // Default high fidelity location name mapped beautifully from active preference timezone
-      const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      const currentActiveTz = preferences.timezone;
-
-      // If the active timezone matches standard East Coast/Florida, default beautifully to Wesley Chapel
-      if (currentActiveTz === "America/New_York" || browserTz === "America/New_York") {
-        setSyncData({
-          offsetSeconds: 0.4,
-          accuracySeconds: 0.089,
-          resolvedLocation: "Wesley Chapel, Florida, United States"
-        });
-      } else {
-        const activeCity = CITY_DATA[currentActiveTz]?.name || "Local Region";
-        const activeCountry = CITY_DATA[currentActiveTz]?.country || "United States";
-        setSyncData({
-          offsetSeconds: 0.4,
-          accuracySeconds: 0.089,
-          resolvedLocation: `${activeCity}, ${preferences.countryName || activeCountry}`
-        });
-      }
-    };
-
-    fetchSyncData();
-  }, [preferences.timezone, preferences.countryName]);
+  // Removed in landing-v2 cutover: the V2 LandingPage composes its own
+  // sync line ("Your clock is X seconds behind") via the HeroClock
+  // component, fed by the /api/v1/time/sync endpoint. V1's manual
+  // ipapi.co fetch was a fallback that no longer has a consumer.
 
   // --- STICKY NAV: now always-on, no scroll detector needed ---
   // Kept as a placeholder for any future scroll-aware behaviors.
@@ -819,149 +760,18 @@ export default function App() {
     setShowMobileMenu(false);
   };
 
-  const handleLaunchTool = (toolId: string) => {
-    setActiveToolTab(toolId);
-    setTimeout(() => {
-      handleScrollToSection("quick-tools-section");
-    }, 100);
-    setShowToolsDropdown(false);
-    setShowMobileMenu(false);
-  };
+  // V1-only functions removed in landing-v2 cutover:
+  //   - handleLaunchTool (V1 nav dropdown — V2 has no equivalent; V2 nav
+  //     routes directly to /<lang>/<tool>)
+  //   - handleTrendingSearchClick (V1 AI bar)
+  //   - executeAIQuery + triggerOfflineFallback (V1 AI bar)
+  //   - getGreeting (V1 hero "Good Night, New York" — V2 doesn't greet)
+  //   - offsetData (V1 hero's "EDT - UTC Offset: -04:00" line; V2 hero
+  //     formats its own offset via the LandingHeroHorizon pipeline)
+  // The V1 sections we keep (TodaySnapshot + QuickActions) below are
+  // driven by `activeToolTab` + `prefilledParams`, which are set by the
+  // nav dropdowns calling `setActiveToolTab` directly.
 
-  // Triggered by "Top searched" list clicks
-  const handleTrendingSearchClick = (queryText: string) => {
-    setAiQuery(queryText);
-    executeAIQuery(queryText);
-  };
-
-  // --- SECURE SERVER-SIDE GEMINI QUERY CALL ---
-  const executeAIQuery = async (queryText: string) => {
-    if (!queryText.trim()) return;
-    setAiLoading(true);
-    setAiError(null);
-    setAiResult(null);
-
-    // Format current localized time for contextual anchor
-    const offsetStr = getTimezoneOffsetAndAbbr(preferences.timezone, liveDate).offsetStr;
-    const currentLocTime = formatLocalTime(liveDate, preferences.timeFormat, preferences.timezone) + " " + offsetStr;
-
-    try {
-      const res = await fetch("/api/timezone/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          query: queryText,
-          userContext: {
-            country: preferences.countryName,
-            timezone: preferences.timezone,
-            locale: preferences.locale,
-            currentTime: currentLocTime
-          }
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error("Server responded with error processing query");
-      }
-
-      const data = await res.json() as AIQueryResult;
-      setAiResult(data);
-
-      // Perform auto-routing to the target expanded tool
-      if (data.suggestedAction && data.suggestedAction !== "general") {
-        const mappedToolIds: Record<string, string> = {
-          "open_converter": "converter",
-          "open_meeting_planner": "planner",
-          "open_days_calculator": "business",
-          "open_holiday_calendar": "diff", // Can map appropriately
-        };
-
-        const targetToolId = mappedToolIds[data.suggestedAction];
-        if (targetToolId) {
-          setActiveToolTab(targetToolId);
-          setPrefilledParams(data.detectedParameters);
-
-          // Smooth scroll to Quick Actions section
-          setTimeout(() => {
-            const element = document.getElementById("quick-tools-section");
-            element?.scrollIntoView({ behavior: "smooth" });
-          }, 400);
-        }
-      }
-
-    } catch (err: any) {
-      console.error(err);
-      setAiError("Unable to reach AI services right now. Using offline parser.");
-      // Offline regex parsing fallback to make sure user still gets routed!
-      triggerOfflineFallback(queryText);
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  // Client-side offline regex backup parser to keep application ultra-robust
-  const triggerOfflineFallback = (query: string) => {
-    const q = query.toLowerCase();
-    let action = "general";
-    let answer = "Searching our time index for matching results...";
-    let tool = "";
-
-    if (q.includes("convert") || q.includes("time in") || q.includes("pm") || q.includes("am")) {
-      action = "open_converter";
-      tool = "converter";
-      answer = "Opening Time Zone Converter prefilled with your query.";
-    } else if (q.includes("meeting") || q.includes("schedule") || q.includes("overlap")) {
-      action = "open_meeting_planner";
-      tool = "planner";
-      answer = "Opening Overlap Meeting Planner to align coordinates.";
-    } else if (q.includes("business days") || q.includes("working days") || q.includes("exclude")) {
-      action = "open_days_calculator";
-      tool = "business";
-      answer = "Opening Business Days calculator with holiday filtering.";
-    } else if (q.includes("holiday") || q.includes("calendar")) {
-      action = "open_holiday_calendar";
-      tool = "diff";
-      answer = "Loading public holidays checklist.";
-    }
-
-    setAiResult({
-      intent: action,
-      answer,
-      suggestedAction: action,
-    });
-
-    if (tool) {
-      setActiveToolTab(tool);
-      setTimeout(() => {
-        const element = document.getElementById("quick-tools-section");
-        element?.scrollIntoView({ behavior: "smooth" });
-      }, 400);
-    }
-  };
-
-  const getGreeting = () => {
-    const hourFormatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: preferences.timezone,
-      hour: 'numeric',
-      hour12: false
-    });
-    const hour = parseInt(hourFormatter.format(liveDate));
-
-    // Resolve greeting
-    let greetingWord = "Welcome";
-    if (hour >= 5 && hour < 12) greetingWord = "Good Morning";
-    else if (hour >= 12 && hour < 17) greetingWord = "Good Afternoon";
-    else if (hour >= 17 && hour < 22) greetingWord = "Good Evening";
-    else greetingWord = "Good Night";
-
-    // City name
-    const activeCity = CITY_DATA[preferences.timezone]?.name || "Workspace";
-    return `${greetingWord}, ${activeCity}`;
-  };
-
-  const offsetData = getTimezoneOffsetAndAbbr(preferences.timezone, liveDate);
   const t = getTheme(preferences.theme);
 
   // ---- /docs/* early return - DocLayout renders its own header, no marketing chrome. ----
@@ -1430,25 +1240,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* AI Command Search Input - always visible (md+) */}
-          <div className="hidden md:flex items-center max-w-xs xl:max-w-md w-full bg-[#fafafa] border border-[#e0e0e0] rounded-lg py-1 px-2.5 focus-within:border-[#3f51b5] transition">
-              <Search size={14} className="text-slate-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Ask AI: Convert 3 PM NY to India..."
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && executeAIQuery(aiQuery)}
-                className={`w-full bg-transparent text-xs ${t.text === "text-slate-900" ? "text-slate-800" : "text-slate-200"} outline-none border-none py-1 placeholder-slate-400`}
-              />
-              <button
-                onClick={() => executeAIQuery(aiQuery)}
-                className={`px-2 py-0.5 ${t.btnPrimary} rounded text-[10px] font-bold font-mono transition`}
-              >
-                ASK
-              </button>
-          </div>
-
           {/* Mobile menu toggle (visible below lg) */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -1567,8 +1358,7 @@ export default function App() {
       {/* 3. HERO CONTAINER SECTION */}
       {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.isFeedback && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
-      {import.meta.env?.VITE_LANDING_V2 === "true" && (
-        <LandingPage
+      <LandingPage
           liveDate={liveDate}
           timezone={preferences.timezone}
           country={preferences.countryCode}
@@ -1579,329 +1369,7 @@ export default function App() {
           homeData={homeData.status === "ok" ? homeData.data : null}
           favoriteCodes={userFavoriteCodes}
         />
-      )}
-      {import.meta.env?.VITE_LANDING_V2 !== "true" && (
-      <header className={`relative w-full overflow-hidden border-b ${t.border} bg-gradient-to-b ${t.ambientGradient} pb-16 pt-6`}>
-
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start relative z-10">
-
-          {/* Left Column: Greeting, live clock, details, search */}
-          <div className="lg:col-span-6 space-y-6">
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${t.badgeClass} text-[10px] font-mono font-semibold uppercase tracking-wider`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${t.previewColors[2]} animate-pulse`}></span>
-              {currentPathRoute ? activeTranslation.activeCityBadge : `Workspace Synced: ${preferences.countryName}`}
-            </span>
-
-            <div>
-              <h1 className={`text-4xl sm:text-5xl font-display font-bold tracking-tight ${t.text} leading-tight`}>
-                {currentPathRoute ? activeTranslation.heroHeadline : getGreeting()}
-              </h1>
-              <p className={`text-sm md:text-md ${t.textMuted} mt-2.5 max-w-xl leading-relaxed font-sans`}>
-                {currentPathRoute ? activeTranslation.heroDescription : "Plan your day, meetings, holidays, and global time zones in one smart workspace. No timezone math required."}
-              </p>
-            </div>
-
-            {/* High fidelity Live Clock */}
-            <div className={`${t.cardBg} border ${t.border} p-8 md:p-10 rounded-2xl max-w-xl w-full min-h-[260px] shadow-2xl relative overflow-hidden backdrop-blur-sm flex flex-col justify-center`}>
-              <div className="absolute top-0 right-0 p-3 opacity-5 text-slate-500">
-                <Clock size={110} />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                {/* Clock synchronization status message */}
-                {syncData && (
-                  <div className="text-[11px] sm:text-xs font-medium text-slate-500 mb-2.5 leading-relaxed font-sans flex flex-col gap-1 border-b border-dashed border-slate-200/80 pb-2 mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                      <span>
-                        {currentPathRoute?.lang === "fr" && "Votre horloge a 0,4 secondes de retard."}
-                        {currentPathRoute?.lang === "zh" && "您的系统时钟慢了 0.4 秒。"}
-                        {currentPathRoute?.lang === "ja" && "お使いの時計は 0.4 秒遅れています。"}
-                        {(!currentPathRoute || currentPathRoute?.lang === "en") && "Your clock is 0.4 seconds behind."}
-                      </span>
-                    </div>
-                    <div>
-                      {currentPathRoute?.lang === "fr" && "La précision de la synchronisation était de ±0,089 secondes."}
-                      {currentPathRoute?.lang === "zh" && "时间同步精度达 ±0.089 秒。"}
-                      {currentPathRoute?.lang === "ja" && "同期精度は ±0.089 秒でした。"}
-                      {(!currentPathRoute || currentPathRoute?.lang === "en") && "Accuracy of synchronization was ±0,089 seconds."}
-                    </div>
-                    <div className="text-[11.5px] font-semibold text-slate-700 mt-0.5">
-                      {currentPathRoute?.lang === "fr" && <>Heure à <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>Paris, France</span> actuellement :</>}
-                      {currentPathRoute?.lang === "zh" && <>当前 <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>中国北京</span> 的时间:</>}
-                      {currentPathRoute?.lang === "ja" && <>現在の <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>東京、日本</span> の時刻:</>}
-                      {(!currentPathRoute || currentPathRoute?.lang === "en") && (
-                        <>
-                          Time in <span className={`underline decoration-emerald-500 decoration-2 underline-offset-2 ${t.accentText}`}>{currentPathRoute ? (currentPathRoute.lang === "en" ? "London, United Kingdom" : "Wesley Chapel, Florida, United States") : "Wesley Chapel, Florida, United States"}</span> now:
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Time Display with Sub-seconds */}
-                <div className={`text-4xl sm:text-5xl md:text-6xl font-mono font-bold tracking-tight ${t.text} leading-none py-2 select-none`}>
-                  {(() => {
-                    const baseTime = formatLocalTime(liveDate, preferences.timeFormat, preferences.timezone);
-                    const hundredths = Math.floor(liveDate.getMilliseconds() / 10).toString().padStart(2, '0');
-                    if (baseTime.includes(" AM")) {
-                      const parts = baseTime.split(" AM");
-                      return (
-                        <span className="flex items-baseline gap-0.5">
-                          <span>{parts[0]}</span>
-                          <span className="text-2xl sm:text-3xl md:text-4xl opacity-50 font-normal">.{hundredths}</span>
-                          <span className="text-lg sm:text-xl md:text-2xl ml-2 font-display font-bold opacity-80 uppercase tracking-wide">AM</span>
-                        </span>
-                      );
-                    } else if (baseTime.includes(" PM")) {
-                      const parts = baseTime.split(" PM");
-                      return (
-                        <span className="flex items-baseline gap-0.5">
-                          <span>{parts[0]}</span>
-                          <span className="text-2xl sm:text-3xl md:text-4xl opacity-50 font-normal">.{hundredths}</span>
-                          <span className="text-lg sm:text-xl md:text-2xl ml-2 font-display font-bold opacity-80 uppercase tracking-wide">PM</span>
-                        </span>
-                      );
-                    }
-                    return (
-                      <span className="flex items-baseline gap-0.5">
-                        <span>{baseTime}</span>
-                        <span className="text-2xl sm:text-3xl md:text-4xl opacity-50 font-normal">.{hundredths}</span>
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                {/* Date Display */}
-                <span className={`text-sm font-semibold ${t.textMuted} mt-2 flex items-center gap-2`}>
-                  <Calendar size={14} className={t.accentText} />
-                  {formatLocalDate(liveDate, preferences.dateFormat, preferences.locale, preferences.timezone)}
-                </span>
-
-                {/* Tz abbrev & offset details */}
-                <span className={`text-xs ${t.textMuted} opacity-80 mt-1.5 font-mono`}>
-                  {offsetData.abbr} - Coordinated Universal Time Offset: <strong className={t.accentText}>{offsetData.offsetStr}</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* HERO LEVEL AI COMMAND BAR */}
-            <div className="max-w-xl">
-              <div className={`relative flex items-center bg-slate-50/85 border-2 ${t.border} rounded-xl py-1.5 px-3 shadow-md focus-within:ring-1 focus-within:ring-offset-0 focus-within:ring-slate-300 transition`}>
-                <Search className="text-slate-400 mr-2.5" size={18} />
-                <input
-                  type="text"
-                  placeholder="Ask anything: Convert 3 PM NY to Singapore, schedule a meeting..."
-                  value={aiQuery}
-                  onChange={(e) => setAiQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && executeAIQuery(aiQuery)}
-                  className={`w-full bg-transparent text-sm ${t.text === "text-slate-900" ? "text-slate-800" : "text-slate-200"} outline-none border-none py-1 placeholder-slate-400`}
-                />
-                <button
-                  onClick={() => executeAIQuery(aiQuery)}
-                  className={`px-4 py-1.5 ${t.btnPrimary} font-bold text-xs rounded-lg transition shrink-0 cursor-pointer`}
-                >
-                  Query AI
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-2 font-mono">
-                <span>Try:</span>
-                <button onClick={() => handleTrendingSearchClick("Is today a holiday in Germany?")} className="hover:text-slate-700 transition underline">Holidays check</button>
-                <span>•</span>
-                <button onClick={() => handleTrendingSearchClick("Convert 3 PM New York to Singapore")} className="hover:text-slate-700 transition underline">Convert time</button>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right Column: Real-time Analog Clock synced with active timezone */}
-          <div className="lg:col-span-6 h-full flex flex-col items-center justify-start space-y-10 lg:pt-4">
-            <div className="flex flex-col items-center w-full">
-              <AnalogClock date={liveDate} preferences={preferences} />
-            </div>
-
-            {/* Companion Hub Clocks Section */}
-            <div className={`w-full bg-white/5 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-slate-200/10 dark:border-slate-800/60 p-5 shadow-lg animate-fade-in`}>
-              <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center justify-between">
-                <span>🌐 Companion Hub Clocks (Click to Teleport)</span>
-                {currentPathRoute && (
-                  <span className="text-emerald-500 font-semibold animate-pulse flex items-center gap-1 text-[10px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    {currentPathRoute.city === "london" ? "London Active (US Clock Loaded)" : `${currentPathRoute.city.toUpperCase()} Active`}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-4 gap-4 sm:gap-5 items-stretch p-1">
-                {[
-                  { city: "london", name: "London", timezone: "Europe/London", country: "GB" },
-                  { city: "paris", name: "Paris", timezone: "Europe/Paris", country: "FR" },
-                  { city: "beijing", name: "Beijing", timezone: "Asia/Shanghai", country: "CN" },
-                  { city: "tokyo", name: "Tokyo", timezone: "Asia/Tokyo", country: "JP" }
-                ].map(clock => {
-                  const activeCity = currentPathRoute?.city || null;
-                  const displayClock = activeCity && clock.city === activeCity
-                    ? { city: "usa", name: "New York", timezone: "America/New_York", country: "US" }
-                    : clock;
-
-                  const handleClockClick = () => {
-                    if (displayClock.city === "usa") {
-                      navigateToRoutePath("default");
-                    } else {
-                      const langMap: Record<string, string> = {
-                        london: "en",
-                        paris: "fr",
-                        beijing: "zh",
-                        tokyo: "ja"
-                      };
-                      navigateToRoutePath(langMap[displayClock.city] || "default");
-                    }
-                  };
-
-                  const companionTimeStr = formatLocalTime(liveDate, preferences.timeFormat, displayClock.timezone);
-                  const diffStr = getFriendlyTimeDifference(displayClock.timezone, preferences.timezone, liveDate);
-
-                  return (
-                    <button
-                      key={clock.city}
-                      onClick={handleClockClick}
-                      title={displayClock.city === "usa" ? "Click to reset to default workspace" : `Switch workspace to ${displayClock.name}`}
-                      className="flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-500/5 dark:bg-slate-950/40 border border-slate-200/10 dark:border-slate-800 shadow-sm transition-all hover:scale-105 active:scale-95 duration-200 cursor-pointer hover:border-indigo-500/40 hover:bg-indigo-500/5 dark:hover:bg-indigo-950/20 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500/50 min-h-[160px]"
-                    >
-                      {/* Flag and Name */}
-                      <div className="flex items-center justify-center gap-1 mb-2 text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 w-full">
-                        <span>{displayClock.country === "US" ? "🇺🇸" : displayClock.country === "GB" ? "🇬🇧" : displayClock.country === "FR" ? "🇫🇷" : displayClock.country === "CN" ? "🇨🇳" : "🇯🇵"}</span>
-                        <span className="truncate max-w-[55px] sm:max-w-[65px]">{displayClock.name}</span>
-                      </div>
-
-                      {/* Small Analog Clock */}
-                      <div className="my-2 flex justify-center items-center">
-                        <AnalogClock
-                          date={liveDate}
-                          timezone={displayClock.timezone}
-                          country={displayClock.country}
-                          countryName={displayClock.name}
-                          theme={preferences.theme}
-                          size="sm"
-                          hideLabel={true}
-                        />
-                      </div>
-
-                      {/* Dynamic Local Time & Friendly Offset message */}
-                      <div className="text-center space-y-0.5 mt-2 w-full border-t border-slate-100/10 dark:border-slate-800/40 pt-2">
-                        <div className="text-[10px] sm:text-[11px] font-mono font-bold text-indigo-500 dark:text-indigo-400">
-                          {companionTimeStr.replace(/:\d+\s/, " ")}
-                        </div>
-                        <div className="text-[9px] font-mono font-semibold text-slate-400 dark:text-slate-500 leading-tight">
-                          {diffStr}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Dynamic friendly comparison summary message */}
-              {(() => {
-                const activeCityName = CITY_DATA[preferences.timezone]?.name || "Wesley Chapel";
-                let adviceStr = "";
-
-                if (preferences.timezone.includes("London")) {
-                  adviceStr = "Your London workspace is perfectly positioned between Asia and North America. Paris is 1 hour ahead (very close collaboration), Beijing is 7 hours ahead, and New York is 5 hours behind. Ideal window for joint syncs is 1:00 PM - 5:00 PM BST.";
-                } else if (preferences.timezone.includes("Paris") || preferences.timezone.includes("Berlin")) {
-                  adviceStr = "Your Paris/Berlin workspace is highly synchronous with Europe and Africa. London is 1 hour behind, Beijing is 6 hours ahead, and New York is 6 hours behind. Best overlap with US teams starts from 3:00 PM CET.";
-                } else if (preferences.timezone.includes("Shanghai") || preferences.timezone.includes("Beijing")) {
-                  adviceStr = "Your Beijing/Shanghai workspace connects Asia-Pacific teams seamlessly. Tokyo is 1 hour ahead, London is 7 hours behind, and Paris is 6 hours behind. New York is exactly Day/Night reversed (12 hours behind). Check in with US teams early morning or late evening.";
-                } else if (preferences.timezone.includes("Tokyo")) {
-                  adviceStr = "Your Tokyo workspace is 1 hour ahead of Beijing, 8 hours ahead of Paris, and 13 hours ahead of New York. The optimal handover window is during Tokyo's morning (previous day evening in NY) or early evening (London start of day).";
-                } else {
-                  const nyDiff = getFriendlyTimeDifference("America/New_York", preferences.timezone, liveDate);
-                  const lonDiff = getFriendlyTimeDifference("Europe/London", preferences.timezone, liveDate);
-                  const tokDiff = getFriendlyTimeDifference("Asia/Tokyo", preferences.timezone, liveDate);
-                  adviceStr = `From your ${activeCityName} workspace, London is ${lonDiff}, Tokyo is ${tokDiff}, and New York is ${nyDiff}. Click any clock to instantly shift your entire workspace and sync holidays, calendars, and meeting planners to that region.`;
-                }
-
-                return (
-                  <div className="mt-4 p-3 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/30 border border-indigo-500/20 text-xs flex items-start gap-2.5 animate-fade-in">
-                    <span className="text-sm select-none">💡</span>
-                    <div className="space-y-1">
-                      <p className="font-semibold text-indigo-600 dark:text-indigo-400 text-[11px]">Workspace Overlap Advice</p>
-                      <p className="text-[10px] leading-normal text-slate-500 dark:text-slate-300">{adviceStr}</p>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-
-        </div>
-      </header>
-      )}
       </>
-      )}
-
-      {/* 4. AI RESULTS CARD (Visible when AI query yields output) */}
-      {aiLoading && (
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
-          <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-6 animate-pulse space-y-3">
-            <div className="h-4 bg-slate-800 rounded w-1/4"></div>
-            <div className="h-6 bg-slate-800 rounded w-3/4"></div>
-            <div className="h-4 bg-slate-800 rounded w-1/2"></div>
-          </div>
-        </div>
-      )}
-
-      {aiResult && !aiLoading && (
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full animate-fade-in">
-          <div className="rounded-xl border border-blue-500/20 bg-slate-900 p-6 shadow-xl relative">
-            <button
-              onClick={() => setAiResult(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition"
-            >
-              <X size={16} />
-            </button>
-
-            <div className="flex items-center gap-2 text-xs font-mono text-blue-400 uppercase font-semibold">
-              <Globe size={13} />
-              <span>AI Workspace Parsing result</span>
-            </div>
-
-            <p className="text-md text-slate-100 font-medium mt-3 leading-relaxed">
-              {aiResult.answer}
-            </p>
-
-            {aiResult.suggestedAction && aiResult.suggestedAction !== "general" && (
-              <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                <span className="text-[10px] text-slate-500 font-mono">
-                  Intent detected: <strong>{aiResult.intent}</strong> • Autoloaded params prefilled
-                </span>
-                <button
-                  onClick={() => {
-                    const mappedToolIds: Record<string, string> = {
-                      "open_converter": "converter",
-                      "open_meeting_planner": "planner",
-                      "open_days_calculator": "business",
-                    };
-                    const tid = mappedToolIds[aiResult.suggestedAction];
-                    if (tid) {
-                      setActiveToolTab(tid);
-                      const element = document.getElementById("quick-tools-section");
-                      element?.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-slate-950 font-bold text-xs transition flex items-center gap-1.5"
-                >
-                  <span>Focus Workspace Tool</span>
-                  <ChevronRight size={13} />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
       )}
 
       {/* 5. PERSONALIZED SECTIONS CONTENT GRID */}
@@ -1950,12 +1418,11 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* T4: When VITE_LANDING_V2 is on, LandingPage composes its
-                own hero + 5 sections (FiveCitiesFavorites, CityDetailCard,
-                ExploreMore, TopPopularCities, QuoteBlock) and we skip the
-                legacy inline sections entirely. */}
-            {import.meta.env?.VITE_LANDING_V2 === "true" ? null : (
-              <>
+            {/* V1's TodaySnapshot + QuickActions kept below the V2
+                LandingPage. V2's ExploreMore is nav cards (not inline
+                tool UIs), and the inline Today holiday/events feed has
+                no V2 equivalent yet. Both can be removed in a follow-up
+                if/when V2 grows equivalents. */}
             {/* Section 1: Today in Your Country */}
             <div id="today-section" className="scroll-mt-24">
               <TodaySnapshot preferences={preferences} holidays={holidays} />
@@ -1983,8 +1450,6 @@ export default function App() {
                 lang={currentPathRoute?.lang || "en"}
               />
             </div>
-              </>
-            )}
 
           </>
         )}

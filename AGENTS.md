@@ -56,12 +56,12 @@
 - `src/pages/docs/README.md` — documentation site contracts (route table, content authoring).
 - `sdk/node/README.md` — Node.js SDK reference (also published as the npm package README).
 
-## Landing Page — Horizon v4b (Phase 3+)
+## Landing Page — Horizon v4b (Phase 3+, shipped)
 - **Design source**: `/workspace/landing-designs/03-horizon.html` (selected over 01-editorial-daybreak + 02-mono-mast).
 - **Palette**: emerald-led (`--accent-primary: #059669`, `--accent-secondary: #0d9488`, `--accent-tertiary: #6366f1`, `--accent-warm: #fbbf24`, `--accent-primary-soft: #d1fae5`). Inspired by Meeting Finder (emerald/teal hero) + NotebookLM (warm amber accents).
 - **Typography**: Inter 800-900 + tracking -0.04em for headings (time.is style), DSEG7-Classic numeric clock (jsdelivr CDN, fallback JetBrains Mono). Font CSS lives in `src/components/landing/landingHorizon.css`.
 - **Motion**: family.co-ish — `tdp-ping` 2.4s for live dot, `tdp-blink` 1s steps(2) for colons. No jank.
-- **Implementation**: opt-in via `VITE_LANDING_V2=true` flag. New components live in `src/components/landing/`. The bundle is built but hidden behind the flag — toggle by setting `VITE_LANDING_V2=true` in `.env.local`.
+- **Implementation**: hard cutover landed in `feature/landing-v2-cutover` — V2 (Horizon) is the **only** landing path; V1 (analog clock + "Good Night, {City}" + AI bar) was deleted along with the `VITE_LANDING_V2` flag. `src/components/landing/LandingPage.tsx` is the single hero entry point wired in `App.tsx`.
 
 ### Landing routes
 - **Hero row** (Phase 3, shipped): `<LandingHeroHorizon>` composes `<HeroDateBlock>` + `<HeroClock>`. `useHomeData(country)` reads `/api/v1/browse/home` and falls back to local `buildBrowseHome()` if the API is unreachable (so dev previews always render).
@@ -70,8 +70,8 @@
 - **ExploreMore** (T4.3): 4 tool hooks (top 4: Converter, Meeting Finder, World Clock, Holidays + "See all 12 tools →").
 - **TopPopularCities** (T4.4): 4×5 grid from `/api/v1/popular/cities?limit=20`.
 - **QuoteBlock** (T4.5): from `/api/v1/quotes/random?country=<user>`.
-- **LandingPage** (T4.6): composes all of the above. Replaces the inline hero + sections in `App.tsx`.
-- **Wire into App.tsx routing** (T4.7): once user signs off on hero.
+- **LandingPage** (T4.6, shipped): composes all of the above. Replaced the inline hero + sections in `App.tsx` via the `feature/landing-v2-cutover` PR.
+- **App.tsx routing wire** (T4.7, shipped): LandingPage is mounted unconditionally in `App.tsx` inside the route gate that excludes tool/pair/legal pages.
 
 ### Landing page gates (keep in App.tsx)
 Hero never renders on:
