@@ -1,0 +1,14 @@
+# ads.txt for TimeAndDatePro
+# Authoritative source: https://iabtechlab.com/ads-txt/
+# Required by Google AdSense for seller authorization.
+#
+# After AdSense approval:
+#   1. Log into https://www.google.com/adsense/
+#   2. Copy your actual Publisher ID (ca-pub-XXXXXXXXXXXXXXXX)
+#   3. Replace the placeholder below
+#   4. Re-deploy this file to your production root (https://timeanddatepro.com/ads.txt)
+#
+# The certification authority ID (f08c47fec0942fa0) is the official Google
+# AdSense ID issued by IAB Tech Lab.
+
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

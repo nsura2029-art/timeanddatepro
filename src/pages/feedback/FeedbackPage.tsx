@@ -37,7 +37,15 @@ import "./FeedbackPage.css";
 
 const STORAGE_KEY = "tdp_feedback";
 const VOTED_KEY = "tdp_feedback_voted";
-const API_BASE = "/api/v1/feedback";
+// VITE_API_BASE: absolute origin of the feedback API (set at build time).
+// - undefined in local dev (Vite) → falls back to relative /api/v1/feedback
+//   (proxied to localhost:3000 by the Vite dev server).
+// - "https://dev.api.dateandtime.live" in the dev Pages build.
+// - "https://api.dateandtime.live" in the prod Pages build.
+const RAW_API_BASE = (import.meta as any).env?.VITE_API_BASE as string | undefined;
+const API_BASE = RAW_API_BASE
+  ? `${RAW_API_BASE.replace(/\/+$/, "")}/v1/feedback`
+  : "/api/v1/feedback";
 
 const SUPPORT_EMAIL = "support@timeanddatepro.com";
 const SITE_NAME = "TimeAndDatePro";

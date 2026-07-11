@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // Robust shield to prevent third-party extensions/environments from throwing "Cannot set property fetch" errors
+      (function() {
+        // 1. Shadow window.fetch with a getter/setter to allow write/override operations safely
+        try {
+          var originalFetch = window.fetch;
+          var fetchValue = originalFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return fetchValue;
+            },
+            set: function(val) {
+              fetchValue = val;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn("[System] Safe-fetch override shim not applicable or blocked:", e);
+        }
+
+        // 2. Suppress unhandled runtime exceptions from third-party scripts overriding fetch
+        window.addEventListener('error', function(event) {
+          var msg = event.message || "";
+          if (
+            msg.indexOf('property fetch') !== -1 || 
+            msg.indexOf('only a getter') !== -1 ||
+            msg.indexOf('Cannot set property \'fetch\'') !== -1
+          ) {
+            try {
+              event.preventDefault();
+              event.stopPropagation();
+            } catch (err) {}
+            return true;
+          }
+        }, true);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Time & Date Workspace</title>
+    <script type="module" crossorigin src="/assets/index-CJWZ6cvq.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BQK4RM34.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
