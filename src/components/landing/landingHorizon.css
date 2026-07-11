@@ -3017,9 +3017,11 @@
 }
 
 @media (max-width: 1023px) {
+  /* !important to override the inline style on the grid div
+     (inline styles have higher specificity than class selectors) */
   .tdp-hero-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 32px !important;
   }
   .tdp-hero-aside {
     position: static;
