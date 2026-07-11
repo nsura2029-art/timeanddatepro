@@ -1,6 +1,6 @@
 // src/components/landing/LandingPage.tsx
 // Composes Hero (with inline YourCitiesPanel in the right column) +
-// HeroExploreMore + TopPopularCities into the full landing page.
+// TopPopularCities into the full landing page.
 // The tracked-cities state lives here (lifted from the hero) so both
 // the hero (for the clock timezone) and the panel (rendered inside
 // the hero's 2-col grid) can share it without prop-drilling.
@@ -95,9 +95,6 @@ export function LandingPage({
         trackedCount={trackedCount}
         trackedMax={trackedMax}
       />
-
-      {/* Explore more (hooks) ----------------------------------- */}
-      <HeroExploreMore />
 
       {/* Top 20 most popular ------------------------------------ */}
       {topTwenty.length > 0 && (

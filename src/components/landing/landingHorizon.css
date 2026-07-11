@@ -3020,7 +3020,12 @@
 .tdp-hero-aside {
   position: sticky;
   top: 12px;
-  align-self: start;
+  /* Stretch to match the hero's natural height so the panel
+     inside fills the available vertical space. Overrides the
+     grid's align-items on this single column. */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1023px) {
@@ -3069,11 +3074,17 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* Sized to hold 10 cities worth of content by default
-     (header + subtitle + search + 10-city list + add + footer).
-     Stays consistent for users with 1, 5, or 10 tracked cities. */
-  min-height: 880px;
+  /* No min-height: the panel now stretches to match the hero's
+     natural height (see .tdp-hero-grid align-items: stretch +
+     .tdp-hero-aside align-self: stretch). When the hero grows
+     (e.g. with explore links below the clock) the panel grows
+     with it; when the hero shrinks, the panel shrinks too.
+     The list inside still has a min-height so the panel doesn't
+     look empty when the user has few cities. */
+  min-height: 0;
   position: relative;
+  /* Fill the .tdp-hero-aside (which stretches to match the hero) */
+  flex: 1;
   /* Subtle inner highlight at the top edge for a soft, tactile feel. */
   overflow: hidden;
 }
@@ -3866,6 +3877,123 @@
   }
   .tdp-explore-more-name {
     font-size: 17px;
+  }
+}
+
+/* ===========================================================================
+   NEW: HeroExploreLinks (compact 4x3 grid inside the hero, below sync)
+   - 12 tool links arranged in 4 rows x 3 columns, left-aligned
+   - Simple text links with a small icon, not the colorful gradient cards
+   - Sits as a peer of the clock, not a separate section below the fold
+   - Replaces the old <HeroExploreMore /> at the bottom of the page
+   =========================================================================== */
+
+.tdp-hero-explore-links {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(48, 39, 82, 0.08);
+  width: 100%;
+}
+
+.tdp-hero-explore-links-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tdp-hero-explore-links-eyebrow {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink, #202438);
+  margin: 0;
+}
+
+.tdp-hero-explore-links-meta {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-muted, #5b6181);
+  letter-spacing: 0.02em;
+}
+
+.tdp-hero-explore-links-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Left-align: items hug the start of each column */
+  justify-items: start;
+  /* 4 rows of links, 3 per row */
+  gap: 10px 18px;
+}
+
+.tdp-hero-explore-links-item {
+  width: 100%;
+}
+
+.tdp-hero-explore-links-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  text-decoration: none;
+  color: var(--color-ink, #202438);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: color 0.18s ease;
+  /* Left-align within the cell */
+  justify-content: flex-start;
+}
+
+.tdp-hero-explore-links-link:hover {
+  color: var(--color-brand-500, #7257d5);
+}
+
+.tdp-hero-explore-links-link:hover .tdp-hero-explore-links-icon {
+  background: var(--color-brand-100, #ece4ff);
+  color: var(--color-brand-600, #5b3fc4);
+}
+
+.tdp-hero-explore-links-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(48, 39, 82, 0.06);
+  color: var(--color-ink, #202438);
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.tdp-hero-explore-links-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1023px) {
+  /* On tablet/mobile, drop to 2 columns so links stay readable */
+  .tdp-hero-explore-links-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  /* On mobile, single column */
+  .tdp-hero-explore-links-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tdp-hero-explore-links {
+    margin-top: 24px;
+    padding-top: 18px;
   }
 }
 
