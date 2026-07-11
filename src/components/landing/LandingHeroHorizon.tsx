@@ -166,7 +166,7 @@ export function LandingHeroHorizon({
           <div className="tdp-hero-inner">
             <HeroDateBlock
               liveDate={liveDate}
-              timezone={timezone}
+              timezone={heroTimezone}
               todayHoliday={null}
               internationalHoliday={
                 data?.holiday?.international
