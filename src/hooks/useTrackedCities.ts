@@ -87,6 +87,12 @@ export function useTrackedCities(): UseTrackedCities {
   const [cities, setCities] = useState<TrackedCity[]>(DEFAULT_CITIES);
   const [activeCode, setActiveCode] = useState<string>(DEFAULT_CITIES[0].code);
   const hydrated = useRef(false);
+  // Mirror of `cities` so callbacks (addCity) can read the current list
+  // synchronously without depending on the `cities` state reference.
+  // Without this, addCity would have to read `cities` from the closure
+  // (stale) or include it in deps (re-creates the callback every render).
+  const citiesRef = useRef<TrackedCity[]>(cities);
+  citiesRef.current = cities;
 
   // Hydrate from localStorage on first client mount only
   useEffect(() => {
@@ -117,24 +123,24 @@ export function useTrackedCities(): UseTrackedCities {
 
   const addCity = useCallback(
     (city: Omit<TrackedCity, "isHome">): boolean => {
-      // Use a functional setState read to know the current count.
-      let added = false;
-      setCities((prev) => {
-        // Don't add duplicates; just re-set as active
-        if (prev.some((c) => c.code === city.code)) {
-          setActiveCode(city.code);
-          return prev;
-        }
-        // Cap at MAX_FAVORITES — block silently. UI should prevent the
-        // call in the first place by reading `canAddMore`.
-        if (prev.length >= MAX_FAVORITES) {
-          return prev;
-        }
+      // Read the current list synchronously via the ref (not the closure
+      // variable, which can be stale, and not the state setter callback,
+      // which runs async). This lets us return a correct `added` result
+      // to the caller instead of always `false`.
+      const current = citiesRef.current;
+      // Don't add duplicates; just re-set as active
+      if (current.some((c) => c.code === city.code)) {
         setActiveCode(city.code);
-        added = true;
-        return [...prev, { ...city, isHome: false }];
-      });
-      return added;
+        return false;
+      }
+      // Cap at MAX_FAVORITES — block silently. UI should prevent the
+      // call in the first place by reading `canAddMore`.
+      if (current.length >= MAX_FAVORITES) {
+        return false;
+      }
+      setCities([...current, { ...city, isHome: false }]);
+      setActiveCode(city.code);
+      return true;
     },
     []
   );

@@ -26,7 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { TrackedCity } from "../../data/defaultCities";
-import type { CityEntry } from "../../data/cities";
+import { CITIES, type CityEntry } from "../../data/cities";
 
 interface YourCitiesPanelProps {
   /** All tracked cities (already sorted with home first) */
@@ -82,6 +82,42 @@ function formatTimezoneAbbr(d: Date, tz: string): string {
   }
 }
 
+// Client-side city search. The dev API Worker's /api/v1/cities/search
+// endpoint is currently unavailable (returns 404), so the search runs
+// against the bundled CITIES dataset (~300 cities, ~33KB). Scoring:
+//   - Exact code match wins
+//   - Name prefix match gets a big boost
+//   - Substring match in name or country
+//   - Population acts as a tiebreaker
+// Excludes codes already in the tracked list.
+function searchCities(
+  query: string,
+  excludeCodes: Set<string>,
+  limit: number,
+): CityEntry[] {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const scored: { city: CityEntry; score: number }[] = [];
+  for (const city of CITIES) {
+    if (excludeCodes.has(city.code)) continue;
+    const name = city.name.toLowerCase();
+    const country = city.country.toLowerCase();
+    let score = 0;
+    if (name === q) score += 1000;
+    else if (name.startsWith(q)) score += 500;
+    else if (name.includes(q)) score += 200;
+    if (country.startsWith(q)) score += 100;
+    else if (country.includes(q)) score += 50;
+    // Population tiebreaker (0-50 points, log scale)
+    if (city.population) {
+      score += Math.min(50, Math.log10(city.population) * 5);
+    }
+    if (score > 0) scored.push({ city, score });
+  }
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit).map((s) => s.city);
+}
+
 export function YourCitiesPanel({
   cities,
   activeCode,
@@ -115,7 +151,12 @@ export function YourCitiesPanel({
   const addInputRef = useRef<HTMLInputElement>(null);
   const addDropdownRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  // Mirror of the `cities` prop. The search useEffect reads it via ref
+  // so the effect only re-runs when `addQuery` changes — not when the
+  // parent re-renders with a new `cities` array reference (which would
+  // trigger an unnecessary re-search).
+  const citiesRef = useRef<TrackedCity[]>(cities);
+  citiesRef.current = cities;
 
   // Close the dropdown when clicking outside
   useEffect(() => {
@@ -133,35 +174,28 @@ export function YourCitiesPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [addOpen]);
 
-  // Debounced search call — 200ms
+  // Debounced client-side search — 200ms
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (abortRef.current) abortRef.current.abort();
     const q = addQuery.trim();
     if (q.length < 2) {
       setAddResults([]);
+      setAddOpen(false);
       setAddLoading(false);
       return;
     }
     setAddLoading(true);
-    debounceRef.current = setTimeout(async () => {
-      const controller = new AbortController();
-      abortRef.current = controller;
+    debounceRef.current = setTimeout(() => {
+      // Client-side search: no async, no AbortController needed.
+      // The 200ms debounce still applies via setTimeout.
       try {
-        const exclude = cities.map((c) => c.code).join(",");
-        const url = `/api/v1/cities/search?q=${encodeURIComponent(q)}&limit=8&exclude=${encodeURIComponent(exclude)}`;
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        // API response shape: { success, data, meta }
-        // data = { q, count, total, cities: [...] }
-        const json = await res.json();
-        const list: CityEntry[] = json?.data?.cities ?? [];
+        const excludeCodes = new Set(citiesRef.current.map((c) => c.code));
+        const list = searchCities(q, excludeCodes, 8);
         setAddResults(list);
-        setAddOpen(true);
+        setAddOpen(list.length > 0);
       } catch (e) {
-        if ((e as Error).name !== "AbortError") {
-          setAddResults([]);
-        }
+        setAddResults([]);
+        setAddOpen(false);
       } finally {
         setAddLoading(false);
       }
@@ -169,7 +203,7 @@ export function YourCitiesPanel({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [addQuery, cities]);
+  }, [addQuery]);
 
   const handleAddPick = useCallback(
     (city: CityEntry) => {
