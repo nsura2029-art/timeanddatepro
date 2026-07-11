@@ -23,7 +23,7 @@
 // hour toggle, the AM/PM chip, the status pills, and the sync block are
 // unchanged.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
@@ -146,6 +146,31 @@ export function LandingHeroHorizon({
   const heroCityRegion = activeCity ? activeCity.state : cityRegion;
   const heroCountryName = activeCity?.country ?? countryName;
 
+  // Stabilize the OnThisDay props — without useMemo, the parent
+  // re-renders 60×/sec (liveDate ticks every frame) and constructs
+  // NEW objects for internationalHoliday + internationalPool on every
+  // render. HeroDateBlock's useEffect would see a "change" in the dep
+  // array and re-run, calling setRandomFact() and causing the OnThisDay
+  // pill to flicker every sub-second. Memoizing the references ensures
+  // the effect only re-runs when the actual data changes (city switch).
+  const internationalHolidayProp = useMemo(
+    () =>
+      data?.holiday?.international
+        ? {
+            source: data.holiday.international.source,
+            text: data.holiday.international.text,
+            year: data.holiday.international.year,
+            category: data.holiday.international.category,
+            country: data.holiday.international.country,
+          }
+        : null,
+    [data?.holiday?.international]
+  );
+  const internationalPoolProp = useMemo(
+    () => data?.holiday?.internationalPool ?? [],
+    [data?.holiday?.internationalPool]
+  );
+
   const handlePick = useCallback(
     (code: string) => {
       onPickCity(code);
@@ -169,18 +194,8 @@ export function LandingHeroHorizon({
               liveDate={liveDate}
               timezone={heroTimezone}
               todayHoliday={null}
-              internationalHoliday={
-                data?.holiday?.international
-                  ? {
-                      source: data.holiday.international.source,
-                      text: data.holiday.international.text,
-                      year: data.holiday.international.year,
-                      category: data.holiday.international.category,
-                      country: data.holiday.international.country,
-                    }
-                  : null
-              }
-              internationalPool={data?.holiday?.internationalPool ?? []}
+              internationalHoliday={internationalHolidayProp}
+              internationalPool={internationalPoolProp}
               greeting={data?.greeting?.message}
               lang={lang}
             />

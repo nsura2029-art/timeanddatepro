@@ -46,11 +46,6 @@ interface HeroDateBlockProps {
   lang?: "en" | "fr" | "zh" | "ja";
 }
 
-/** How often the OnThisDay pill rotates. 8 minutes is long enough that
-    users won't see flicker during a normal page visit, short enough to
-    keep the section feeling alive if someone lingers. */
-const ROTATE_MS = 8 * 60 * 1000;
-
 /**
  * Format a Date as e.g. "Thursday, July 9, 2026" in the given timezone.
  */
@@ -97,10 +92,13 @@ export function HeroDateBlock({
   const dateText = fmtLongDate(liveDate, timezone, lang);
   const offset = fmtOffset(liveDate, timezone);
 
-  // Randomized fact picker — when a pool is provided, the pill cycles
-  // through holidays / on-this-day / event facts instead of showing the
-  // same stable pick all day. Picks a new one on mount, on every city
-  // switch (pool reference changes), and every 8 minutes while you linger.
+  // Randomized fact picker — picks ONE fact on mount and re-picks when
+  // the active city changes (the internationalPool reference changes
+  // because useHomeData re-fires for the new country). No auto-rotation:
+  // the same fact stays for the entire page visit. This prevents the
+  // sub-second flicker that happened when the effect re-ran on every
+  // render because the parent constructed a new internationalHoliday
+  // object on every liveDate tick.
   const [randomFact, setRandomFact] = useState<InternationalHoliday | null>(
     internationalHoliday ?? null
   );
@@ -109,13 +107,12 @@ export function HeroDateBlock({
       setRandomFact(internationalHoliday ?? null);
       return;
     }
-    const pickRandom = () => {
-      const idx = Math.floor(Math.random() * internationalPool.length);
-      setRandomFact(internationalPool[idx]);
-    };
-    pickRandom();
-    const interval = setInterval(pickRandom, ROTATE_MS);
-    return () => clearInterval(interval);
+    // Pick ONE random fact from the pool. The pool reference is now
+    // stable (memoized in LandingHeroHorizon), so this effect only
+    // re-runs when the city actually changes (add/delete a city) or
+    // on a hard page refresh.
+    const idx = Math.floor(Math.random() * internationalPool.length);
+    setRandomFact(internationalPool[idx]);
   }, [internationalPool, internationalHoliday]);
 
   // Final fact shown: todayHoliday wins (user's country), then the
