@@ -14,6 +14,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { ArrowLeft, Search, ArrowRight } from "lucide-react";
+import { FeedbackPrompt } from "../../components/feedback/FeedbackPrompt";
 import "./timezone-map.css";
 import { formatLocalTime, getTimezoneOffsetAndAbbr } from "../../data/countries";
 
@@ -407,6 +408,7 @@ export function TimezoneMapPage() {
           })}
         </div>
       </section>
+      <FeedbackPrompt tool="timezone-map" toolLabel="Timezone Map" />
     </div>
   );
 }

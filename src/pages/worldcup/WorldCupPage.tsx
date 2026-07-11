@@ -14,6 +14,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Trophy, ArrowLeft, MapPin, Mail, Check, Sparkles } from "lucide-react";
+import { FeedbackPrompt } from "../../components/feedback/FeedbackPrompt";
 import {
   HOST_CITIES,
   MATCHES,
@@ -122,6 +123,7 @@ export function WorldCupPage() {
         Team placeholders reflect FIFA's seeding convention — actual teams confirmed
         after the late-2025 draw.
       </footer>
+      <FeedbackPrompt tool="worldcup" toolLabel="World Cup 2026" />
     </div>
   );
 }

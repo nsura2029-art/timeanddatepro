@@ -65,12 +65,14 @@ import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
 import { TermsOfService } from "./pages/legal/TermsOfService";
 import { AboutPage } from "./pages/about/AboutPage";
 import { FeedbackPage } from "./pages/feedback/FeedbackPage";
+import { FeedbackPrompt } from "./components/feedback/FeedbackPrompt";
 import { CookieConsent } from "./components/common/CookieConsent";
 import { useHomeData } from "./hooks/useHomeData";
 
 import "./pages/legal/PrivacyPolicy.css";
 import "./pages/about/AboutPage.css";
 import "./pages/feedback/FeedbackPage.css";
+import "./components/feedback/FeedbackPrompt.css";
 import "./components/common/CookieConsent.css";
 
 /* ApiColumn helpers removed during nav cleanup — APIs menu is now flat
@@ -1924,10 +1926,27 @@ export default function App() {
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "currency-converter" && <CurrencyConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
+            {!currentPathRoute.pair && currentPathRoute?.tool && (
+              <FeedbackPrompt
+                tool={currentPathRoute.tool}
+                toolLabel={
+                  currentPathRoute.tool === "time-zone-converter" ? "Time Zone Converter"
+                  : currentPathRoute.tool === "currency-converter" ? "Currency Converter"
+                  : currentPathRoute.tool === "holidays" || currentPathRoute.tool === "working-hours" ? "Holiday Hours Calculator"
+                  : currentPathRoute.tool === "unix" ? "Unix Timestamp Converter"
+                  : currentPathRoute.tool === "iso8601" ? "ISO 8601 Formatter"
+                  : currentPathRoute.tool === "date-math" ? "Business Days"
+                  : currentPathRoute.tool === "date-diff" ? "Date Difference"
+                  : currentPathRoute.tool === "date-words" ? "Date to Words"
+                  : undefined
+                }
+              />
+            )}
           </div>
         ) : currentPathRoute?.isMeetingFinder ? (
           <div className="animate-fade-in">
             <MeetingFinder lang={currentPathRoute?.lang || "en"} />
+            <FeedbackPrompt tool="meeting-finder" toolLabel="Meeting Finder" />
           </div>
         ) : (
           <>

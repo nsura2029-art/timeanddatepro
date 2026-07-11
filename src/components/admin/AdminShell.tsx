@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Database, Settings2, History, ShieldCheck, LogOut,
   Activity, ArrowRightLeft, BookOpen, Clock, Globe2, Coins, Zap,
+  MessageSquare, ExternalLink,
 } from "lucide-react";
 import { AdminLogin } from "./AdminLogin";
 import { AdminDashboard } from "./AdminDashboard";
@@ -103,6 +104,16 @@ export function AdminShell() {
           <a className="admin-nav-link" href="/docs/api-reference">
             <BookOpen size={14} />
             <span>API Reference</span>
+          </a>
+          <a
+            className="admin-nav-link"
+            href="/feedback"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MessageSquare size={14} />
+            <span>Feedback queue</span>
+            <ExternalLink size={11} className="ml-auto opacity-60" />
           </a>
           <a className="admin-nav-link" href="/">
             <ArrowRightLeft size={14} />

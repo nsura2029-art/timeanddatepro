@@ -16,3 +16,4 @@ data/tdp.db-wal
 
 # Git worktree directories (avoid accidentally committing worktree contents)
 .worktrees/
+.nfs*

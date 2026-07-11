@@ -44,6 +44,7 @@ const SITE_NAME = "TimeAndDatePro";
 const SITE_URL = "https://timeanddatepro.com";
 
 type FeedbackType = "suggestion" | "bug" | "idea" | "general";
+const TYPE_SET: ReadonlySet<FeedbackType> = new Set<FeedbackType>(["suggestion", "bug", "idea", "general"]);
 
 interface FeedbackEntry {
   id: string;
@@ -195,6 +196,25 @@ export function FeedbackPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
 
+  // ── URL prefill (from ?type=&tool= on the feedback CTA links) ──
+  // If the page is reached from a tool page's bottom CTA, the URL
+  // carries the tool slug and we pre-select the "suggestion" type.
+  // The "tool" prefill shows a read-only chip above the form so the
+  // user knows which tool the feedback will be associated with.
+  const [prefillTool, setPrefillTool] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const urlType = params.get("type");
+    if (urlType && TYPE_SET.has(urlType as FeedbackType)) {
+      setFormType(urlType as FeedbackType);
+    }
+    const urlTool = params.get("tool");
+    if (urlTool) {
+      setPrefillTool(urlTool);
+    }
+  }, []);
+
   // ── API helpers (T6 backend) ─────────────────────────────────
   // The API is the source of truth for entries. localStorage is
   // only used to cache (a) the device's voted-set so the UI feels
@@ -337,7 +357,10 @@ export function FeedbackPage() {
         title: formTitle.trim().slice(0, 120),
         description: formDesc.trim().slice(0, 800),
         author: formAuthor.trim() || undefined,
-      });
+        // Spread any extra prefill metadata; the API only persists the
+        // fields it knows about, so unknown fields are safely ignored.
+        ...(prefillTool ? { tool: prefillTool } : {}),
+      } as any);
       // Prepend to the current view and mark as voted (the API
       // already auto-votes on creation).
       const next = [entry, ...entries];
@@ -507,6 +530,25 @@ export function FeedbackPage() {
             )}
 
             <form className="fb-form" onSubmit={handleSubmit}>
+              {prefillTool && (
+                <div className="fb-form__prefill" role="status">
+                  <span className="fb-form__prefill-label">Related tool</span>
+                  <code className="fb-form__prefill-value">{prefillTool}</code>
+                  <button
+                    type="button"
+                    className="fb-form__prefill-clear"
+                    onClick={() => {
+                      setPrefillTool(null);
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("tool");
+                      window.history.replaceState(null, "", url.toString());
+                    }}
+                    aria-label="Clear related tool"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
               <div className="fb-form__row">
                 <div className="fb-form__field">
                   <label className="fb-form__label fb-form__label--required" htmlFor="fb-type">
