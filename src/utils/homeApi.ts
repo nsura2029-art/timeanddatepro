@@ -335,7 +335,18 @@ export async function buildBrowseHome(opts: {
   //   - Weekday 09-16 → "Business day · Offices open until 5:00 PM"
   //   - Weekday 16-17 → "Business day · Offices closing soon at 5:00 PM"
   //   - Other    → "Business day · Offices open at 9:00 AM"
-  // Pill 3: sun (amber) — "Sunrise HH:MM · Sunset HH:MM" from sun data.
+  // Pill 3: sun (amber) — "Sunrise 6:40 AM · Sunset 8:29 PM" from sun data.
+  // sunApi returns "YYYY-MM-DD, HH:MM:SS" — we strip the date and reformat
+  // to 12-hour with AM/PM for human-readable display in the status pill.
+  const formatTimeOnly = (s: string | null): string => {
+    if (!s) return "--:--";
+    const timePart = s.includes(",") ? s.split(",")[1].trim() : s;
+    const [hStr, mStr] = timePart.split(":");
+    const hour = parseInt(hStr, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${mStr} ${ampm}`;
+  };
   const localWeekday = new Intl.DateTimeFormat("en-US", {
     timeZone: home.timezone,
     weekday: "short",
@@ -398,7 +409,7 @@ export async function buildBrowseHome(opts: {
       type: "sun",
       icon: "sun",
       message: "Sunrise",
-      subtext: `${sun.sunrise ?? "--:--"} · Sunset ${sun.sunset ?? "--:--"}`,
+      subtext: `${formatTimeOnly(sun.sunrise)} · Sunset ${formatTimeOnly(sun.sunset)}`,
       variant: "warning",
     },
   ];

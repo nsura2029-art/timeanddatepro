@@ -141,6 +141,7 @@ export function LandingHeroHorizon({
         countryName={countryName}
         sun={data?.sun}
         hour12={hour12}
+        statusPills={data?.statusPills}
       />
     </section>
   );

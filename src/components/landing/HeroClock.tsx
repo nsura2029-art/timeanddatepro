@@ -13,7 +13,7 @@
 // placeholders, real values come in after mount.
 
 import { useEffect, useRef, useState } from "react";
-import { Sunrise, Sunset, Clock3, MapPin, Check, Briefcase, Sun } from "lucide-react";
+import { MapPin, Check, Briefcase, Sun } from "lucide-react";
 import type { BrowseHome } from "../../utils/homeApi";
 
 interface HeroClockProps {
@@ -163,30 +163,6 @@ export function HeroClock({
           {countryName && countryName !== cityName ? <span>, {countryName}</span> : null}
         </span>
       </h1>
-
-      {/* Sun pills above the clock — legacy path; prefer statusPills from API */}
-      {sun && !statusPills && (
-        <div className="tdp-sun-above">
-          {sun.sunrise && (
-            <div className="tdp-sun-pill">
-              <Sunrise size={14} aria-hidden />
-              <span>↑ {sun.sunrise}</span>
-            </div>
-          )}
-          {sun.sunset && (
-            <div className="tdp-sun-pill">
-              <Sunset size={14} aria-hidden />
-              <span>↓ {sun.sunset}</span>
-            </div>
-          )}
-          <div className="tdp-sun-pill">
-            <Clock3 size={14} aria-hidden />
-            <span>
-              Day length <strong>{sun.dayLength}</strong>
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* AM/PM chip — only in 12h mode, positioned ABOVE the time.
           The time format below stays identical in both modes; only

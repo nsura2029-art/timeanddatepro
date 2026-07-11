@@ -218,15 +218,14 @@
 
 .tdp-colon {
   display: inline-block;
-  animation: tdp-blink 1s steps(2, end) infinite;
+  /* No blink — user feedback: the colon should stay solid so the time
+     feels stable. The user reads HH:MM:SS.cc as a single token, not
+     a flashing alarm clock. */
   color: var(--seven);
   opacity: 0.85;
 }
 
-@keyframes tdp-blink {
-  0%, 49% { opacity: 0.85; }
-  50%, 100% { opacity: 0.25; }
-}
+/* (Removed tdp-blink keyframes — colon no longer animates) */
 
 /* Sub-second separator (period between SS and cc) — same Inter font, smaller */
 .tdp-subsec-sep {
