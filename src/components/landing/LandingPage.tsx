@@ -7,7 +7,6 @@ import React from "react";
 import type { BrowseHome } from "../../utils/homeApi";
 import { CITY_BY_CODE, type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
-import { FiveCitiesFavorites } from "./FiveCitiesFavorites";
 import { UserCitiesExploreCards } from "./UserCitiesExploreCards";
 import { CityDetailCard, type SunSummary } from "./CityDetailCard";
 import { ExploreMore } from "./ExploreMore";
@@ -104,15 +103,6 @@ export function LandingPage({
         lang={lang}
         testData={homeData}
       />
-
-      {/* Favorite cities --------------------------------------- */}
-      {allFavorites.length > 0 && (
-        <FiveCitiesFavorites
-          liveDate={liveDate}
-          defaults={topFive}
-          userAdded={userAddedFiltered}
-        />
-      )}
 
       {/* Featured city (home) ----------------------------------- */}
       {homeCity && (
