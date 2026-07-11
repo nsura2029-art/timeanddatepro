@@ -1684,54 +1684,27 @@
   position: relative;
 }
 
+/* 12h/24h toggle — positioning only. Visual styling comes from the
+ * tdp-btn token (tdp-btn--primary = solid emerald + white text),
+ * matching the rest of the CTAs in the design system. */
 .tdp-hour-toggle {
   position: absolute;
   top: 0;
   right: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1.5px solid var(--hero-rule, rgba(15,23,42,0.12));
-  font-family: var(--hero-mono-font, 'JetBrains Mono', monospace);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--hero-text, #0f172a);
-  cursor: pointer;
-  transition: all 150ms ease;
-  backdrop-filter: blur(8px);
   z-index: 5;
-  box-shadow: 0 1px 2px rgba(15,23,42,0.06);
 }
 
-.tdp-hour-toggle:hover {
-  background: rgba(5, 150, 105, 0.1);
-  border-color: rgba(5, 150, 105, 0.4);
-  transform: translateY(-1px);
-}
-
-.tdp-hour-toggle[aria-pressed="true"] {
-  background: var(--accent-primary, #059669);
-  border-color: var(--accent-primary-deep, #047857);
-  color: white;
-}
-
-.tdp-hour-toggle[aria-pressed="true"] .tdp-hour-toggle-label {
-  color: rgba(255,255,255,0.85);
-}
-
-.tdp-hour-toggle-mode {
+/* Override: the button is always green (no aria-pressed conditional).
+ * Sublabel is white at 75% for hierarchy. */
+.tdp-hour-toggle .tdp-hour-toggle-mode {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
+  color: var(--tdp-white, #ffffff);
 }
 
-.tdp-hour-toggle-label {
-  color: var(--hero-text-muted, #64748b);
+.tdp-hour-toggle .tdp-hour-toggle-label {
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
   font-size: 9px;
   letter-spacing: 0.08em;

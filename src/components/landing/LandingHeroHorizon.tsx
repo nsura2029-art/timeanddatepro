@@ -96,16 +96,22 @@ export function LandingHeroHorizon({
 
         {/* 12h/24h toggle — sits at the top-right of the hero so it's
             visible without scrolling. Toggling re-renders the clock
-            immediately because it shares the same liveDate prop. */}
+            immediately because it shares the same liveDate prop.
+
+            Visual: solid emerald (tdp-btn--primary) with white text —
+            matches the rest of the CTAs in the design system (the
+            'Find a meeting time' / 'Explore all zones' style).
+            tdp-hour-toggle class only carries positioning (absolute,
+            top-right), not visual styling. */}
         <button
           type="button"
-          className="tdp-hour-toggle"
+          className="tdp-btn tdp-btn--primary tdp-btn--sm tdp-hour-toggle"
           onClick={() => setHour12((v) => !v)}
           aria-label={hour12 ? "Switch to 24-hour clock" : "Switch to 12-hour clock with AM/PM"}
           aria-pressed={hour12}
           data-testid="hero-hour-toggle"
         >
-          <Clock size={12} aria-hidden />
+          <Clock size={12} aria-hidden style={{ color: "rgba(255,255,255,0.95)" }} />
           <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
           <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
         </button>
