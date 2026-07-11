@@ -1,0 +1,11 @@
+{
+  "countries": 194,
+  "timezones": 312,
+  "cities": 3130,
+  "featuredCities": 3130,
+  "utcOffsets": 37,
+  "holidays": 1847,
+  "holidayCountries": 136,
+  "generatedAt": "2026-07-11T11:10:48.120Z",
+  "buildDurationMs": 3172
+}

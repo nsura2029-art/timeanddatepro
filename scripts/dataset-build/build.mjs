@@ -24,7 +24,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..", "..");
 const CACHE_DIR = resolve(__dirname, ".cache");
 const OUTPUT_DIR = resolve(__dirname, "output");
-const ATTACHMENT = resolve(ROOT, "..", "..", "attachments", "e73f1956__610ac4b5-f1a2-4276-a16b-18dc751a29d0.json");
+
+// IANA timezones are sourced from a local attachment (the system zone1970.tab
+// snapshot the user pasted into /workspace/attachments/). The path can be
+// overridden via the TDP_IANA_ATTACHMENT env var if the file moves.
+const ATTACHMENT =
+  process.env.TDP_IANA_ATTACHMENT ||
+  resolve(ROOT, "..", "..", "..", "attachments", "e73f1956__610ac4b5-f1a2-4276-a16b-18dc751a29d0.json");
 
 const ARGS = new Set(process.argv.slice(2));
 const SKIP_DOWNLOAD = ARGS.has("--skip-download");
@@ -33,7 +39,9 @@ const DRY_RUN = ARGS.has("--dry-run");
 
 const SOURCES = {
   iana: "https://example.invalid/iana-attachment", // local file, handled specially
-  restcountries: "https://restcountries.com/v3.1/all?fields=cca2,cca3,ccn3,cioc,name,capital,region,subregion,continents,languages,currencies,idd,car,timezones,latlng,demonyms,flags,independent,status,unMember,landlocked,area,population,startOfWeek,capitalInfo",
+  // restcountries.com v3.1 was deprecated 2025; v5 requires an API key.
+  // mledoze/countries is the same dataset, free on GitHub.
+  restcountries: "https://raw.githubusercontent.com/mledoze/countries/master/countries.json",
   geonamesCities5000: "https://download.geonames.org/export/dump/cities5000.zip",
   nagerHolidays: "https://date.nager.at/api/v3/PublicHolidays",
   unM49: "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.json",
@@ -134,9 +142,9 @@ async function loadIanaTimezones() {
 // ──────────────────────────────────────────────────────────────────────
 
 async function loadCountries() {
-  log("Step 2: Fetching 250 countries from restcountries.com…");
+  log("Step 2: Fetching 250 countries from mledoze/countries (the open restcountries.com dataset)…");
   const cacheFile = await maybeDownload(
-    "restcountries-v3.1.json",
+    "mledoze-countries.json",
     SOURCES.restcountries,
     true // always try cache
   );
@@ -148,7 +156,7 @@ async function loadCountries() {
   const normalized = data
     .filter((c) => c.independent !== false && c.status === "officially-assigned")
     .map((c) => {
-      // Extract language codes (restcountries returns { eng: "English", ... })
+      // Extract language codes (mledoze returns { eng: "English", ... })
       const languages = c.languages
         ? Object.keys(c.languages).map((code) => ({
             iso639_1: code,
@@ -165,7 +173,8 @@ async function loadCountries() {
           }))
         : [];
 
-      // Phone code (e.g. "+1" for US, "+44" for GB)
+      // Phone code (e.g. "+1" for US, "+44" for GB). mledoze uses
+      // idd.root ("+") and idd.suffixes (["1"]).
       const phoneCode = c.idd?.root
         ? `${c.idd.root}${c.idd.suffixes?.[0] ?? ""}`
         : null;
@@ -173,7 +182,8 @@ async function loadCountries() {
       // Driving side: "right" | "left" | null
       const drivingSide = c.car?.side ?? null;
 
-      // Continent code (restcountries uses full names; normalize to 2-letter)
+      // Continent code (mledoze uses full names in `region` + `subregion`).
+      // We use `region` which is the continent name.
       const continentMap = {
         "North America": "NA",
         "South America": "SA",
@@ -184,11 +194,15 @@ async function loadCountries() {
         Antarctica: "AN",
       };
 
-      // First listed continent (some countries span multiple)
-      const continentRaw = c.continents?.[0] ?? c.region ?? null;
+      // mledoze uses "region" for continent (e.g. "Europe") and
+      // "subregion" for UN subregion (e.g. "Western Europe"). Some
+      // datasets have a separate "continents" array — fall back if so.
+      const continentRaw =
+        c.continents?.[0] ?? c.region ?? null;
       const continentCode = continentMap[continentRaw] ?? null;
 
-      // UN subregion (use directly from restcountries)
+      // mledoze also has "unRegionalGroup" (e.g. "Western European and Others")
+      const unRegion = c.region ?? null;
       const unSubregion = c.subregion ?? null;
 
       return {
@@ -200,15 +214,15 @@ async function loadCountries() {
         officialName: c.name?.official ?? null,
         capital: c.capital?.[0] ?? null,
         continent: continentCode,
-        unRegion: c.region ?? null,
+        unRegion,
         unSubregion,
         languages,
         currencies,
         phoneCode,
         drivingSide,
-        flagEmoji: c.flag ?? null,           // emoji
-        flagSvg: c.flags?.svg ?? null,        // URL
-        flagPng: c.flags?.png ?? null,        // URL
+        flagEmoji: c.flag ?? null,
+        flagSvg: c.flags?.svg ?? null,
+        flagPng: c.flags?.png ?? null,
         lat: c.latlng?.[0] ?? null,
         lng: c.latlng?.[1] ?? null,
         area: c.area ?? null,
@@ -217,8 +231,8 @@ async function loadCountries() {
         landlocked: c.landlocked ?? false,
         independent: c.independent ?? true,
         startOfWeek: c.startOfWeek ?? "monday",
-        timezones: c.timezones ?? [],         // IANA timezones the country spans
-        demonyms: c.demonyms?.eng?.m ?? null, // "American"
+        timezones: c.timezones ?? [],
+        demonym: c.demonyms?.eng?.m ?? null,
       };
     });
 
@@ -325,7 +339,7 @@ async function loadHolidays(countryCodes) {
 // ──────────────────────────────────────────────────────────────────────
 
 async function loadUnM49() {
-  log("Step 5: Loading UN M49 subregions…");
+  log("Step 5: Loading UN M49 regions from country list…");
   const cacheFile = await maybeDownload(
     "un-m49.json",
     SOURCES.unM49,
@@ -333,16 +347,48 @@ async function loadUnM49() {
   );
   const raw = await fs.readFile(cacheFile, "utf8");
   const data = JSON.parse(raw);
-  // UN M49 regions have codes like "002" (Africa), "019" (Americas), etc.
-  // Subregions are more specific like "014" (Eastern Africa)
-  const regions = data
-    .filter((r) => r["region-code"] !== undefined)
-    .map((r) => ({
-      m49Code: r["region-code"],
-      m49Name: r["region-name"],
-      parentM49Code: r["parent-region-code"] ?? null,
-    }));
-  log(`  ✓ ${regions.length} M49 regions loaded`);
+
+  // The lukes/ISO-3166-Countries-with-Regional-Codes dataset is a list of
+  // countries, each with region-code / sub-region-code / intermediate-region-code.
+  // We extract the unique regions + subregions from this.
+  const regionMap = new Map();
+  for (const r of data) {
+    if (r["region-code"]) {
+      const code = r["region-code"];
+      if (!regionMap.has(code)) {
+        regionMap.set(code, {
+          m49Code: code,
+          m49Name: r["region"] || code,
+          parentM49Code: null,
+          regionType: "continent",
+        });
+      }
+    }
+    if (r["sub-region-code"]) {
+      const code = r["sub-region-code"];
+      if (!regionMap.has(code)) {
+        regionMap.set(code, {
+          m49Code: code,
+          m49Name: r["sub-region"] || code,
+          parentM49Code: r["region-code"] || null,
+          regionType: "subregion",
+        });
+      }
+    }
+    if (r["intermediate-region-code"]) {
+      const code = r["intermediate-region-code"];
+      if (!regionMap.has(code)) {
+        regionMap.set(code, {
+          m49Code: code,
+          m49Name: r["intermediate-region"] || code,
+          parentM49Code: r["sub-region-code"] || null,
+          regionType: "intermediate",
+        });
+      }
+    }
+  }
+  const regions = Array.from(regionMap.values());
+  log(`  ✓ ${regions.length} unique UN M49 regions (continents + sub-regions + intermediate)`);
   return regions;
 }
 
@@ -352,6 +398,7 @@ async function loadUnM49() {
 
 function joinDatasets({ timezones, countries, cities, unRegions, holidays }) {
   log("Step 6: Joining datasets…");
+  const holidayCountryCount = Object.keys(holidays).length;
 
   // Build timezone → countries index
   const tzByCountry = new Map();
@@ -384,6 +431,8 @@ function joinDatasets({ timezones, countries, cities, unRegions, holidays }) {
     countries: enrichedCountries,
     timezones,
     cities: featuredCities,
+    holidays,
+    holidayCountryCount,
     stats: {
       countries: enrichedCountries.length,
       timezones: timezones.length,
@@ -391,6 +440,7 @@ function joinDatasets({ timezones, countries, cities, unRegions, holidays }) {
       featuredCities: featuredCities.length,
       utcOffsets: [...new Set(timezones.map((t) => t.currentOffset).filter(Boolean))].length,
       holidays: Object.values(holidays).reduce((s, arr) => s + arr.length, 0),
+      holidayCountries: holidayCountryCount,
       generatedAt: new Date().toISOString(),
     },
   };
@@ -411,11 +461,12 @@ export interface UnRegion {
   m49Code: string;       // "002" (Africa), "019" (Americas), etc.
   m49Name: string;       // "Africa", "Latin America and the Caribbean"
   parentM49Code: string | null;  // for sub-regions, points to its parent region
+  regionType: "continent" | "subregion" | "intermediate";
 }
 
 export const UN_REGIONS: UnRegion[] = ${JSON.stringify(regions, null, 2)};
 `;
-  const out = resolve(ROOT, "src", "data", "regions.ts");
+  const out = resolve(ROOT, "src", "data", "regions-un-m49.ts");
   if (!DRY_RUN) await fs.writeFile(out, ts);
   log(`  ✓ ${regions.length} regions → ${out}`);
 }
@@ -425,9 +476,14 @@ async function generateCountries(joined) {
   const countries = joined.countries;
   const ts = `// AUTO-GENERATED by scripts/dataset-build/build.mjs — do not edit.
 // Generated at: ${joined.stats.generatedAt}
-// Source: restcountries.com v3.1 (https://restcountries.com/)
+// Source: mledoze/countries (https://github.com/mledoze/countries) —
+//          the open restcountries.com dataset.
+// Named "countries-global.ts" (not "countries.ts") because the existing
+// "src/data/countries.ts" is the hand-curated 8-country preferences
+// registry used by the App.tsx preferences pipeline. Keeping the new
+// dataset in its own file avoids breaking the existing app.
 
-import type { UnRegion } from "./regions";
+import type { UnRegion } from "./regions-un-m49";
 
 export interface CountryLanguage {
   iso639_1: string;   // "en"
@@ -464,8 +520,11 @@ export interface CountryEntry {
   population: number | null;
   unMember: boolean;
   landlocked: boolean;
+  independent: boolean;
   startOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
   canonicalTimezones: string[];
+  /** All IANA timezones the country officially spans (from mledoze) */
+  timezones: string[];
   holidayCount: number;
   demonym: string | null;
 }
@@ -478,7 +537,7 @@ export const COUNTRY_BY_CCA2: Record<string, CountryEntry> =
 export const COUNTRY_BY_CCA3: Record<string, CountryEntry> =
   Object.fromEntries(COUNTRIES.map((c) => [c.cca3, c]));
 `;
-  const out = resolve(ROOT, "src", "data", "countries.ts");
+  const out = resolve(ROOT, "src", "data", "countries-global.ts");
   if (!DRY_RUN) await fs.writeFile(out, ts);
   log(`  ✓ ${countries.length} countries → ${out}`);
 }
@@ -520,47 +579,52 @@ export const UTC_OFFSETS: string[] = [
 }
 
 async function generateCities(joined) {
-  log("Step 7d: Generating src/data/cities.ts…");
+  log("Step 7d: Generating src/data/cities-geonames.ts…");
   const cities = joined.cities;
+  // Note: This file is named `cities-geonames.ts` (not `cities.ts`) because
+  // the existing `src/data/cities.ts` has a different schema (curated 197
+  // cities with 3-letter IATA-style codes used by the city picker). Keeping
+  // the GeoNames-derived dataset in its own file avoids breaking the picker
+  // until we explicitly migrate. See scripts/dataset-build/README.md.
   const ts = `// AUTO-GENERATED by scripts/dataset-build/build.mjs — do not edit.
 // Generated at: ${joined.stats.generatedAt}
 // Source: GeoNames cities5000.zip (https://download.geonames.org/)
 // Filter: population >= 200,000 OR is a national capital.
 // ~${cities.length} entries.
 
-export interface CityEntry {
-  geonameId: number;     // GeoNames ID
+export interface GeonamesCityEntry {
+  geonameId: number;     // GeoNames ID (unique across all cities worldwide)
   name: string;          // "New York"
   asciiName: string;     // ASCII transliteration
-  countryCode: string;   // "US"
+  countryCode: string;   // "US" (ISO 3166-1 alpha-2)
   countryName: string;   // "United States"
-  admin1: string | null; // State/province (e.g. "New York")
-  admin2: string | null; // County/region
+  admin1: string | null; // State/province code (GeoNames admin1 code)
+  admin2: string | null; // County/region code
   latitude: number;
   longitude: number;
   timezone: string;      // IANA timezone
   population: number;
   elevation: number | null;
-  featureCode: string;   // "PPLC" (capital), "PPL" (city), etc.
+  featureCode: string;   // "PPLC" (capital), "PPLA" (admin capital), "PPL" (city)
   isCapital: boolean;
 }
 
-export const CITIES: CityEntry[] = ${JSON.stringify(cities, null, 2)};
+export const CITIES_GEONAMES: GeonamesCityEntry[] = ${JSON.stringify(cities, null, 2)};
 
-export const CITY_BY_GEONAMEID: Record<number, CityEntry> =
-  Object.fromEntries(CITIES.map((c) => [c.geonameId, c]));
+export const CITY_BY_GEONAMEID: Record<number, GeonamesCityEntry> =
+  Object.fromEntries(CITIES_GEONAMES.map((c) => [c.geonameId, c]));
 
-export const CITIES_BY_COUNTRY: Record<string, CityEntry[]> = {};
-for (const c of CITIES) {
-  (CITIES_BY_COUNTRY[c.countryCode] ||= []).push(c);
+export const CITIES_GEONAMES_BY_COUNTRY: Record<string, GeonamesCityEntry[]> = {};
+for (const c of CITIES_GEONAMES) {
+  (CITIES_GEONAMES_BY_COUNTRY[c.countryCode] ||= []).push(c);
 }
 
-export const CITIES_BY_TIMEZONE: Record<string, CityEntry[]> = {};
-for (const c of CITIES) {
-  (CITIES_BY_TIMEZONE[c.timezone] ||= []).push(c);
+export const CITIES_GEONAMES_BY_TIMEZONE: Record<string, GeonamesCityEntry[]> = {};
+for (const c of CITIES_GEONAMES) {
+  (CITIES_GEONAMES_BY_TIMEZONE[c.timezone] ||= []).push(c);
 }
 `;
-  const out = resolve(ROOT, "src", "data", "cities.ts");
+  const out = resolve(ROOT, "src", "data", "cities-geonames.ts");
   if (!DRY_RUN) await fs.writeFile(out, ts);
   log(`  ✓ ${cities.length} cities → ${out}`);
 }
@@ -738,7 +802,7 @@ async function generateStats(joined) {
   log(`  Timezones:    ${stats.timezones}`);
   log(`  UTC offsets:  ${stats.utcOffsets}`);
   log(`  Cities:       ${stats.cities} (featured ≥ 200K or capital)`);
-  log(`  Holidays:     ${stats.holidays} total across ${Object.keys({}).length} countries`);
+  log(`  Holidays:     ${stats.holidays} total across ${stats.holidayCountries} countries`);
   log(`  Duration:     ${(stats.buildDurationMs / 1000).toFixed(1)}s`);
   log("═══════════════════════════════════════════════════════════");
 }

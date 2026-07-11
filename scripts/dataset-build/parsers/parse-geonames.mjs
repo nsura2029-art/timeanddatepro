@@ -40,7 +40,7 @@ if (!inputZip || !outputJson) {
 }
 
 const COUNTRY_NAMES = await loadCountryNames();
-const TMP_TSV = inputZip + ".extracted.tsv";
+const TMP_TSV = resolve(dirname(inputZip), "cities5000.txt");
 
 console.log("  → unzipping…");
 // unzip the file using the system `unzip` tool (available on Linux/Mac/WSL)
@@ -122,7 +122,7 @@ await fs.unlink(TMP_TSV).catch(() => {});
 // Country name lookup (from restcountries, cached for 30 days)
 // ──────────────────────────────────────────────────────────────────────
 async function loadCountryNames() {
-  const cacheFile = resolve(__dirname, "..", ".cache", "restcountries-v3.1.json");
+  const cacheFile = resolve(__dirname, "..", ".cache", "mledoze-countries.json");
   try {
     const raw = await fs.readFile(cacheFile, "utf8");
     const data = JSON.parse(raw);
