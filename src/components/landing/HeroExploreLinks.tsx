@@ -1,12 +1,9 @@
 // src/components/landing/HeroExploreLinks.tsx
-// Compact 4x3 grid of tool links rendered inside the hero,
-// just below the clock sync block. Simple text links (not the
-// colorful gradient cards from the old bottom-of-page section)
-// with a small icon + name, left-aligned.
-//
-// Replaces the old <HeroExploreMore /> at the bottom of the page
-// — explore content now lives inside the hero as a peer of the
-// clock, not a separate section below the fold.
+// 4x3 grid of pastel-colored tool cards rendered inside the hero,
+// just below the clock sync block. NotebookLM-style aesthetic:
+// each card has its own soft pastel background, rounded corners,
+// subtle shadow, and a slight lift on hover. Icons sit in a
+// white-glass square overlay on top of the colored background.
 
 import {
   Globe2,
@@ -24,25 +21,28 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+type Variant = "lavender" | "mint" | "amber" | "sky";
+
 interface Tool {
   href: string;
   name: string;
   Icon: LucideIcon;
+  variant: Variant;
 }
 
 const TOOLS: Tool[] = [
-  { href: "/time-zone-converter", name: "Time Zone Converter", Icon: Globe2 },
-  { href: "/meeting-finder", name: "Meeting Finder", Icon: CalendarDays },
-  { href: "/holidays", name: "Holidays & Hours", Icon: PartyPopper },
-  { href: "/world-clock", name: "World Clock", Icon: Clock },
-  { href: "#", name: "12-Month Calendar", Icon: Calendar },
-  { href: "/api-docs", name: "API Docs", Icon: BookOpen },
-  { href: "#", name: "Countdown Timer", Icon: Hourglass },
-  { href: "#", name: "Date Difference", Icon: CalendarRange },
-  { href: "#", name: "Sunrise & Sunset", Icon: Sun },
-  { href: "#", name: "Daylight Saving", Icon: CalendarClock },
-  { href: "#", name: "Stopwatch", Icon: Timer },
-  { href: "#", name: "Unix Timestamp", Icon: Hash },
+  { href: "/time-zone-converter", name: "Time Zone Converter", Icon: Globe2,         variant: "lavender" },
+  { href: "/meeting-finder",      name: "Meeting Finder",      Icon: CalendarDays,  variant: "mint"     },
+  { href: "/holidays",            name: "Holidays & Hours",    Icon: PartyPopper,   variant: "amber"    },
+  { href: "/world-clock",         name: "World Clock",         Icon: Clock,         variant: "sky"      },
+  { href: "#",                    name: "12-Month Calendar",   Icon: Calendar,      variant: "lavender" },
+  { href: "/api-docs",            name: "API Docs",            Icon: BookOpen,      variant: "sky"      },
+  { href: "#",                    name: "Countdown Timer",     Icon: Hourglass,     variant: "mint"     },
+  { href: "#",                    name: "Date Difference",     Icon: CalendarRange, variant: "amber"    },
+  { href: "#",                    name: "Sunrise & Sunset",    Icon: Sun,           variant: "sky"      },
+  { href: "#",                    name: "Daylight Saving",     Icon: CalendarClock, variant: "lavender" },
+  { href: "#",                    name: "Stopwatch",           Icon: Timer,         variant: "mint"     },
+  { href: "#",                    name: "Unix Timestamp",      Icon: Hash,          variant: "amber"    },
 ];
 
 export function HeroExploreLinks() {
@@ -61,15 +61,19 @@ export function HeroExploreLinks() {
         className="tdp-hero-explore-links-grid"
         data-testid="hero-explore-links-grid"
       >
-        {TOOLS.map(({ href, name, Icon }) => (
-          <li key={name} className="tdp-hero-explore-links-item">
+        {TOOLS.map(({ href, name, Icon, variant }) => (
+          <li
+            key={name}
+            className="tdp-hero-explore-links-item"
+            data-testid={`hero-explore-link-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+            data-variant={variant}
+          >
             <a
               href={href}
-              className="tdp-hero-explore-links-link"
-              data-testid={`hero-explore-link-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+              className={`tdp-hero-explore-links-link tdp-hero-explore-links-link--${variant}`}
             >
               <span className="tdp-hero-explore-links-icon" aria-hidden>
-                <Icon size={15} strokeWidth={2.2} />
+                <Icon size={16} strokeWidth={2.2} />
               </span>
               <span className="tdp-hero-explore-links-text">{name}</span>
             </a>

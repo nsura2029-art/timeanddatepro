@@ -3881,10 +3881,12 @@
 }
 
 /* ===========================================================================
-   NEW: HeroExploreLinks (compact 4x3 grid inside the hero, below sync)
-   - 12 tool links arranged in 4 rows x 3 columns, left-aligned
-   - Simple text links with a small icon, not the colorful gradient cards
-   - Sits as a peer of the clock, not a separate section below the fold
+   NEW: HeroExploreLinks (4x3 grid of pastel tool cards inside the hero)
+   - 12 tools in 4 rows x 3 columns, left-aligned
+   - Each card has its own soft pastel background (lavender / mint /
+     amber / sky cycled across the 12 tools)
+   - NotebookLM-style aesthetic: rounded corners, subtle shadow,
+     white-glass icon overlay, soft lift on hover
    - Replaces the old <HeroExploreMore /> at the bottom of the page
    =========================================================================== */
 
@@ -3928,59 +3930,113 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   /* Left-align: items hug the start of each column */
   justify-items: start;
-  /* 4 rows of links, 3 per row */
-  gap: 10px 18px;
+  /* NotebookLM-style: cards breathe with a bit more gap */
+  gap: 12px 14px;
 }
 
 .tdp-hero-explore-links-item {
   width: 100%;
 }
 
+/* The card itself: each variant gets its own pastel background.
+   Soft shadow + rounded corners give it a tactile, lifted feel. */
 .tdp-hero-explore-links-link {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 0;
+  gap: 9px;
+  width: 100%;
+  padding: 12px 14px;
   text-decoration: none;
-  color: var(--color-ink, #202438);
+  border-radius: 12px;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
-  transition: color 0.18s ease;
-  /* Left-align within the cell */
-  justify-content: flex-start;
+  letter-spacing: -0.005em;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.22s var(--ease-out, ease),
+    box-shadow 0.22s var(--ease-out, ease),
+    filter 0.22s var(--ease-out, ease);
+  /* Soft diffuse shadow like a floating card */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 6px -1px rgba(48, 39, 82, 0.08);
+}
+
+.tdp-hero-explore-links-link::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .tdp-hero-explore-links-link:hover {
-  color: var(--color-brand-500, #7257d5);
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 20px -4px rgba(48, 39, 82, 0.16),
+    0 2px 6px -1px rgba(48, 39, 82, 0.08);
+  filter: saturate(1.1);
 }
 
-.tdp-hero-explore-links-link:hover .tdp-hero-explore-links-icon {
-  background: var(--color-brand-100, #ece4ff);
-  color: var(--color-brand-600, #5b3fc4);
+/* Color variants - soft pastel backgrounds with tinted text */
+.tdp-hero-explore-links-link--lavender {
+  background: linear-gradient(135deg, #ece4ff 0%, #e0d4ff 100%);
+  color: #3a2a7a;
 }
 
+.tdp-hero-explore-links-link--mint {
+  background: linear-gradient(135deg, #ddf3e4 0%, #c8ebd4 100%);
+  color: #1c5a3a;
+}
+
+.tdp-hero-explore-links-link--amber {
+  background: linear-gradient(135deg, #fdeac6 0%, #fbdd9c 100%);
+  color: #6b4912;
+}
+
+.tdp-hero-explore-links-link--sky {
+  background: linear-gradient(135deg, #d9eafc 0%, #c5ddf9 100%);
+  color: #1c3d6b;
+}
+
+/* White-glass icon overlay - sits cleanly on the colored card */
 .tdp-hero-explore-links-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(48, 39, 82, 0.06);
-  color: var(--color-ink, #202438);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.65);
+  color: inherit;
   flex-shrink: 0;
-  transition: background 0.18s ease, color 0.18s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 1px 2px rgba(48, 39, 82, 0.08);
 }
 
 .tdp-hero-explore-links-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 @media (max-width: 1023px) {
-  /* On tablet/mobile, drop to 2 columns so links stay readable */
+  /* On tablet/mobile, drop to 2 columns so cards stay readable */
   .tdp-hero-explore-links-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3994,6 +4050,9 @@
   .tdp-hero-explore-links {
     margin-top: 24px;
     padding-top: 18px;
+  }
+  .tdp-hero-explore-links-link {
+    padding: 10px 12px;
   }
 }
 
