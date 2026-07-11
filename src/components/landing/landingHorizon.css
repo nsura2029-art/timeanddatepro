@@ -3646,3 +3646,186 @@
   }
 }
 
+/* ===========================================================================
+   NEW: HeroExploreMore (full-width section at the bottom of the page)
+   - Replaces the old compact <ExploreMore /> in LandingPage
+   - 2 rows x 3 columns of colored tool cards
+   - Each card: icon, eyebrow, name, arrow (rotates 45deg on hover)
+   - Card backgrounds: lavender, mint, amber, sky
+   =========================================================================== */
+
+.tdp-explore-more {
+  max-width: 1460px;
+  margin: 56px auto 0;
+  padding: 0 24px;
+}
+
+.tdp-explore-more-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.tdp-explore-more-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink, #202438);
+  margin: 0;
+}
+
+.tdp-explore-more-meta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted, #5b6181);
+  letter-spacing: 0.02em;
+}
+
+.tdp-explore-more-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.tdp-explore-more-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 24px;
+  min-height: 120px;
+  border-radius: var(--radius-2xl, 24px);
+  text-decoration: none;
+  color: var(--ink, #202438);
+  transition: transform 0.25s var(--ease-out, ease), box-shadow 0.25s var(--ease-out, ease);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.tdp-explore-more-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  z-index: -1;
+  transition: opacity 0.25s var(--ease-out, ease);
+  opacity: 0.85;
+}
+
+.tdp-explore-more-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(48, 39, 82, 0.12);
+}
+
+.tdp-explore-more-card:hover .tdp-explore-more-arrow {
+  transform: translate(2px, -2px) rotate(45deg);
+}
+
+.tdp-explore-more-card:hover::before {
+  opacity: 1;
+}
+
+/* Color variants - soft pastel backgrounds with tinted text */
+.tdp-explore-more-card--lavender {
+  background: linear-gradient(135deg, #e9e2ff 0%, #ddd1ff 100%);
+  color: #3a2a7a;
+}
+
+.tdp-explore-more-card--mint {
+  background: linear-gradient(135deg, #d8f3e3 0%, #c2ebd1 100%);
+  color: #1c5a3a;
+}
+
+.tdp-explore-more-card--amber {
+  background: linear-gradient(135deg, #fde9c5 0%, #fbdc9a 100%);
+  color: #6b4912;
+}
+
+.tdp-explore-more-card--sky {
+  background: linear-gradient(135deg, #d6e8fb 0%, #c2dbfa 100%);
+  color: #1c3d6b;
+}
+
+.tdp-explore-more-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  color: inherit;
+  flex-shrink: 0;
+  backdrop-filter: blur(4px);
+}
+
+.tdp-explore-more-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tdp-explore-more-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.tdp-explore-more-name {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.tdp-explore-more-arrow {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  color: inherit;
+  transition: transform 0.25s var(--ease-out, ease);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 1023px) {
+  .tdp-explore-more-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tdp-explore-more-card {
+    min-height: 110px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tdp-explore-more-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tdp-explore-more-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .tdp-explore-more-title {
+    font-size: 18px;
+  }
+  .tdp-explore-more-name {
+    font-size: 17px;
+  }
+}
+

@@ -27,7 +27,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
-import { HeroExploreCards } from "./HeroExploreCards";
 import { YourCitiesPanel } from "./YourCitiesPanel";
 import { useHomeData } from "../../hooks/useHomeData";
 import { CityPickerOverlay } from "./CityPickerOverlay";
@@ -273,10 +272,6 @@ export function LandingHeroHorizon({
             statusPills={data?.statusPills}
           />
 
-          {/* Explore section: 4 cards in 2 rows of 2 — sits below the
-              clock. Per user "below the time place our explore section
-              in 2 rows". */}
-          <HeroExploreCards />
         </div>
 
         {/* Column 2: YourCitiesPanel — home + 5 popular cities by default,

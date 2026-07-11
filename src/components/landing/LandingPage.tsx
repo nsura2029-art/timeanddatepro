@@ -1,6 +1,6 @@
 // src/components/landing/LandingPage.tsx
 // Composes Hero (with inline YourCitiesPanel in the right column) +
-// ExploreMore + TopPopularCities into the full landing page.
+// HeroExploreMore + TopPopularCities into the full landing page.
 // The tracked-cities state lives here (lifted from the hero) so both
 // the hero (for the clock timezone) and the panel (rendered inside
 // the hero's 2-col grid) can share it without prop-drilling.
@@ -9,7 +9,7 @@ import React from "react";
 import type { BrowseHome } from "../../utils/homeApi";
 import { type CityEntry } from "../../data/cities";
 import { LandingHeroHorizon } from "./LandingHeroHorizon";
-import { ExploreMore } from "./ExploreMore";
+import { HeroExploreMore } from "./HeroExploreMore";
 import { TopPopularCities } from "./TopPopularCities";
 import { QuoteBlock } from "./QuoteBlock";
 import { WorldCupTeaser } from "./WorldCupTeaser";
@@ -97,7 +97,7 @@ export function LandingPage({
       />
 
       {/* Explore more (hooks) ----------------------------------- */}
-      <ExploreMore />
+      <HeroExploreMore />
 
       {/* Top 20 most popular ------------------------------------ */}
       {topTwenty.length > 0 && (
