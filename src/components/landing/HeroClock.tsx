@@ -141,7 +141,6 @@ export function HeroClock({
           <span>--</span>
           <span className="tdp-subsec">--</span>
         </div>
-        <div className="tdp-subsec-label">HH : MM : SS . CENTISECONDS</div>
       </div>
     );
   }
@@ -154,7 +153,15 @@ export function HeroClock({
       {/* Headline: "Current time in <City>, <Region>, <Country>" */}
       <h1 className="tdp-hero-clock-loc">
         <MapPin size={15} aria-hidden style={{ verticalAlign: "-2px" }} />
-        <span>Current time in <strong>{cityName}</strong>{cityRegion ? <span>, <span className="tdp-hero-clock-region">{cityRegion}</span></span> : null}{countryName ? <span>, {countryName}</span> : null}</span>
+        <span>
+          Current time in <strong>{cityName}</strong>
+          {/* Skip region if it equals the city (avoids "New York, New York").
+              Also skip if it equals the country (e.g. "Monaco, Monaco"). */}
+          {cityRegion && cityRegion !== cityName && cityRegion !== countryName ? (
+            <span>, <span className="tdp-hero-clock-region">{cityRegion}</span></span>
+          ) : null}
+          {countryName && countryName !== cityName ? <span>, {countryName}</span> : null}
+        </span>
       </h1>
 
       {/* Sun pills above the clock — legacy path; prefer statusPills from API */}
@@ -199,9 +206,6 @@ export function HeroClock({
         <span className="tdp-subsec-sep">.</span>
         <span className="tdp-subsec">{clock.cs}</span>
       </div>
-      <div className="tdp-subsec-label">
-        HH : MM : SS . CENTISECONDS{hour12 ? " (12-HOUR)" : " (24-HOUR)"}
-      </div>
 
       {sync && (
         <div className="tdp-sync">
@@ -217,6 +221,17 @@ export function HeroClock({
               Accuracy of synchronization was <strong>±{accuracySec.replace(/^0/, "")} seconds</strong>.
             </span>
           </div>
+          {/* Day length — derived from the sun payload. Shows the user how
+              long the sun is up today (e.g. "13h 48m"), a useful "fun fact"
+              for the time page. */}
+          {sun?.dayLength && (
+            <div className="tdp-sync-row">
+              <span className="tdp-marker" />
+              <span>
+                Day length <strong>{sun.dayLength}</strong>.
+              </span>
+            </div>
+          )}
           <div className="tdp-sync-row">
             <span className="tdp-marker" />
             <span>

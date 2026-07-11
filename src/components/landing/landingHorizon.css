@@ -298,13 +298,17 @@
  * ============================================================================ */
 .tdp-status-pills {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  align-items: center;
   gap: 10px;
   margin: 22px auto 8px;
-  max-width: 880px;
+  max-width: 1000px;
   padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
 }
+.tdp-status-pills::-webkit-scrollbar { display: none; } /* WebKit */
 
 .tdp-status-pill {
   display: inline-flex;
@@ -319,6 +323,7 @@
   border: 1px solid transparent;
   line-height: 1.2;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
@@ -378,6 +383,8 @@
 
 @media (max-width: 640px) {
   .tdp-status-pills {
+    /* On narrow screens, allow wrap since the 3 pills won't all fit on one line */
+    flex-wrap: wrap;
     gap: 6px;
     margin: 16px auto 4px;
   }
