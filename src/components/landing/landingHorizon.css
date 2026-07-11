@@ -61,7 +61,6 @@
   --accent-warm: #fbbf24;
   --accent-primary-soft: #d1fae5;
   --seven: #1a1a1a;
-  --seven-glow: rgba(5, 150, 105, 0.45);
   --hero-bg: #ffffff;
   --hero-text: #0f172a;
   --hero-text-muted: #475569;
@@ -208,7 +207,6 @@
   line-height: 1;
   color: var(--seven);
   letter-spacing: -0.05em;
-  text-shadow: 0 0 60px var(--seven-glow);
   display: flex;
   align-items: baseline;
   justify-content: center;
