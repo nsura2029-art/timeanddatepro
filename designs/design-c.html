@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design C · Editorial magazine — TimeAndDatePro hero v2</title>
+  <link rel="stylesheet" href="./tokens.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@4.0.1/css/dseg14-classic.min.css" />
+  <style>
+    body {
+      margin: 0; padding: 0;
+      background: #fff;
+      color: var(--tdp-ink-900);
+      font-family: var(--tdp-font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    .topnav {
+      background: #fff;
+      border-bottom: 1px solid var(--tdp-ink-100);
+      padding: 18px 0;
+    }
+    .topnav-row {
+      max-width: 1280px; margin: 0 auto; padding: 0 40px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; letter-spacing: -0.02em; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 10px; background: var(--tdp-emerald-600); color: #fff; display: grid; place-items: center; font-size: 15px; }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--tdp-indigo-100); color: var(--tdp-indigo-600); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* Editorial hero grid */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr;
+      gap: 32px;
+      align-items: start;
+      margin-top: 48px;
+    }
+    @media (max-width: 1024px) { .hero-grid { grid-template-columns: 1fr; gap: 24px; } }
+
+    /* Editorial hero card */
+    .hero-card {
+      background: linear-gradient(180deg, #fff 0%, var(--tdp-ink-50) 100%);
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-2xl);
+      padding: 48px 48px 40px;
+      box-shadow: var(--tdp-shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 40%;
+      background: radial-gradient(ellipse at top right, var(--tdp-emerald-100) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .hero-card > * { position: relative; z-index: 1; }
+
+    .identity-bar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--tdp-emerald-100);
+      color: var(--tdp-emerald-700);
+      font-size: 11px; font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tdp-emerald-600); animation: ping 2.4s ease-in-out infinite; }
+    @keyframes ping { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.5; } }
+    .identity-city { font-size: 16px; font-weight: 700; }
+    .identity-tz   { font-size: 13px; font-weight: 600; color: var(--tdp-ink-500); font-family: var(--tdp-font-mono); }
+    .identity-change {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--tdp-ink-200);
+      color: var(--tdp-ink-700);
+      font-size: 12px; font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .identity-change:hover { background: var(--tdp-ink-50); }
+
+    /* BIG clock */
+    .clock-block { text-align: center; padding: 24px 0 28px; }
+    .clock-eyebrow {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      font-size: 12px; color: var(--tdp-ink-500); font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .clock-eyebrow .sep { color: var(--tdp-ink-300); }
+    .clock-display {
+      font-family: var(--tdp-font-clock);
+      font-size: clamp(72px, 12vw, 156px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+      color: var(--tdp-ink-900);
+      display: flex; align-items: baseline; justify-content: center; gap: 0.02em;
+    }
+    .clock-display .colon { animation: blink 1s steps(2) infinite; color: var(--tdp-ink-300); }
+    @keyframes blink { 50% { opacity: 0.2; } }
+    .clock-display .cc { font-size: 0.4em; color: var(--tdp-ink-500); margin-left: 0.1em; }
+    .clock-display .ampm {
+      font-size: 0.26em; color: var(--tdp-emerald-600);
+      font-family: var(--tdp-font-sans); font-weight: 800;
+      letter-spacing: 0.05em; margin-left: 0.12em; align-self: center;
+    }
+    .clock-caption {
+      margin-top: 14px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--tdp-ink-300);
+    }
+
+    .clock-pills { display: flex; justify-content: center; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+    .clock-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+      border: 1px solid;
+    }
+    .clock-pill.summer { background: var(--tdp-as-bg); border-color: var(--tdp-as-bd); color: var(--tdp-as-fg); }
+    .clock-pill.day    { background: var(--tdp-emerald-100); border-color: #a7f3d0; color: var(--tdp-emerald-700); }
+    .clock-pill.holiday{ background: var(--tdp-sa-bg); border-color: var(--tdp-sa-bd); color: var(--tdp-sa-fg); }
+
+    /* 12h/24h toggle (using the button token) */
+    .hour-toggle-row { position: absolute; top: 48px; right: 48px; z-index: 2; }
+
+    /* Sync + action (stacked, editorial) */
+    .sync-action {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid var(--tdp-ink-100);
+    }
+    @media (max-width: 768px) { .sync-action { grid-template-columns: 1fr; } }
+
+    .sync-card {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-lg);
+      padding: 16px 18px;
+      font-size: 12px;
+      color: var(--tdp-ink-700);
+      line-height: 1.6;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .sync-card .row { display: flex; align-items: center; gap: 8px; }
+    .sync-card .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--tdp-ink-300); flex-shrink: 0; }
+    .sync-card .marker.green { background: var(--tdp-emerald-500); box-shadow: 0 0 0 3px var(--tdp-emerald-100); }
+    .sync-card strong { color: var(--tdp-ink-900); }
+    .sync-card h4 { margin: 0 0 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tdp-ink-500); }
+
+    .pulse-card { background: #fff; border: var(--tdp-border); border-radius: var(--tdp-radius-lg); padding: 16px 18px; }
+    .pulse-card h4 { margin: 0 0 10px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tdp-ink-500); }
+    .pulse-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+    .pulse-row {
+      display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 8px;
+      padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    }
+    .pulse-row:hover { background: var(--tdp-ink-50); }
+    .pulse-row .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .pulse-row .dot.open    { background: var(--tdp-open); box-shadow: 0 0 0 2px rgba(16,185,129,0.18); }
+    .pulse-row .dot.closing { background: var(--tdp-closing); }
+    .pulse-row .dot.asleep  { background: var(--tdp-asleep); }
+    .pulse-row .name { font-weight: 600; color: var(--tdp-ink-800); }
+    .pulse-row .time { font-family: var(--tdp-font-mono); font-size: 11px; font-weight: 700; color: var(--tdp-ink-700); font-variant-numeric: tabular-nums; }
+
+    .opp-card { background: #fff; border: var(--tdp-border); border-radius: var(--tdp-radius-lg); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+    .opp-card h4 { margin: 0 0 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tdp-ink-500); }
+    .opp-item { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.4; }
+    .opp-item       { background: var(--tdp-emerald-100); border: 1px solid #a7f3d0; }
+    .opp-item.purp  { background: var(--tdp-indigo-100); border: 1px solid #c7d2fe; }
+    .opp-item strong { color: var(--tdp-ink-900); }
+    .opp-item .title { font-weight: 800; display: block; margin-bottom: 2px; }
+
+    /* ── FAVORITES RAIL — editorial ── */
+    .fav-rail {
+      background: var(--tdp-ink-50);
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-2xl);
+      padding: 24px;
+      box-shadow: var(--tdp-shadow-sm);
+      display: flex; flex-direction: column;
+      gap: 16px;
+    }
+    .fav-rail-head { display: flex; align-items: center; justify-content: space-between; }
+    .fav-rail-head h3 { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tdp-ink-600); letter-spacing: 0.12em; }
+    .fav-rail-head .count {
+      font-size: 10px; font-weight: 800;
+      color: var(--tdp-emerald-700);
+      background: var(--tdp-emerald-100);
+      padding: 2px 8px; border-radius: 999px;
+    }
+
+    .search { position: relative; }
+    .search input {
+      width: 100%; height: 42px;
+      border: 1px solid var(--tdp-ink-200);
+      border-radius: 10px;
+      padding: 0 36px 0 40px;
+      font-family: var(--tdp-font-sans);
+      font-size: 14px; color: var(--tdp-ink-900);
+      background: #fff;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .search input:focus { border-color: var(--tdp-emerald-500); box-shadow: 0 0 0 3px var(--tdp-emerald-100); }
+    .search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--tdp-ink-400); }
+    .search .kbd {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      font-family: var(--tdp-font-mono); font-size: 10px; font-weight: 700;
+      color: var(--tdp-ink-500);
+      background: var(--tdp-ink-50); border: 1px solid var(--tdp-ink-200);
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .search-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      margin-top: 4px;
+      background: #fff;
+      border: 1px solid var(--tdp-ink-200);
+      border-radius: 10px;
+      box-shadow: var(--tdp-shadow-lg);
+      max-height: 240px; overflow-y: auto;
+      z-index: 20;
+      display: none;
+    }
+    .search-results.open { display: block; }
+    .search-result {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .search-result:hover, .search-result.k-active { background: var(--tdp-emerald-50); }
+    .search-result .name { font-weight: 700; }
+    .search-result .sub { font-size: 11px; color: var(--tdp-ink-500); }
+    .search-result .tz { margin-left: auto; font-family: var(--tdp-font-mono); font-size: 10px; color: var(--tdp-ink-500); text-transform: uppercase; }
+
+    .fav-list { display: flex; flex-direction: column; gap: 2px; }
+    .fav-item {
+      display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 12px;
+      padding: 10px 6px; border-radius: 8px;
+      cursor: pointer;
+    }
+    .fav-item:hover { background: #fff; }
+    .fav-item.is-home { background: #fff; box-shadow: var(--tdp-shadow-sm); }
+    .fav-flag {
+      width: 36px; height: 24px; border-radius: 4px;
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 800; color: #fff;
+      letter-spacing: 0.04em;
+    }
+    .fav-flag--na { background: #3b82f6; } .fav-flag--eu { background: #10b981; }
+    .fav-flag--as { background: #f59e0b; } .fav-flag--af { background: #ec4899; }
+    .fav-flag--oc { background: #14b8a6; } .fav-flag--sa { background: #a855f7; }
+    .fav-meta { display: flex; flex-direction: column; min-width: 0; }
+    .fav-name { font-size: 13px; font-weight: 700; color: var(--tdp-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-sub  { font-size: 11px; color: var(--tdp-ink-500); }
+    .fav-time {
+      font-family: var(--tdp-font-mono);
+      font-size: 13px; font-weight: 700;
+      color: var(--tdp-ink-800);
+      text-align: right; line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .fav-time .ms { font-size: 9px; color: var(--tdp-ink-500); display: block; }
+    .fav-time .badge {
+      display: inline-block;
+      font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+      padding: 2px 6px; border-radius: 3px; margin-top: 3px;
+    }
+    .fav-time .badge--open    { background: var(--tdp-emerald-100); color: var(--tdp-emerald-700); }
+    .fav-time .badge--closing { background: var(--tdp-amber-100);   color: #92400e; }
+    .fav-time .badge--asleep  { background: var(--tdp-ink-100);     color: var(--tdp-ink-500); }
+    .fav-remove {
+      display: none;
+      background: transparent; border: 0;
+      color: var(--tdp-ink-300); cursor: pointer;
+      font-size: 14px; padding: 0 2px;
+    }
+    .fav-item:hover .fav-remove { display: block; }
+    .fav-remove:hover { color: #ef4444; }
+
+    /* ── EXPLORE: 2x2 large cards ── */
+    .explore-section { margin-top: 80px; }
+    .explore-head {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .explore-head .headline-side { max-width: 720px; }
+
+    .explore-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) { .explore-2x2 { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-2xl);
+      padding: 32px 32px 28px;
+      min-height: 280px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      cursor: pointer;
+      transition: all 200ms;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card:hover { box-shadow: var(--tdp-shadow-lg); transform: translateY(-2px); }
+    .feature-card .label {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 999px; align-self: flex-start;
+    }
+    .feature-card .label--na { background: var(--tdp-na-bg); color: var(--tdp-na-fg); }
+    .feature-card .label--eu { background: var(--tdp-eu-bg); color: var(--tdp-eu-fg); }
+    .feature-card .label--as { background: var(--tdp-as-bg); color: var(--tdp-as-fg); }
+    .feature-card .label--oc { background: var(--tdp-oc-bg); color: var(--tdp-oc-fg); }
+    .feature-card h3 {
+      margin: 16px 0 8px;
+      font-size: 28px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05;
+      color: var(--tdp-ink-900);
+    }
+    .feature-card p { margin: 0 0 12px; font-size: 14px; color: var(--tdp-ink-600); line-height: 1.5; }
+    .feature-card .footer-row { display: flex; align-items: center; justify-content: space-between; }
+    .feature-card .count {
+      font-family: var(--tdp-font-mono); font-size: 11px; color: var(--tdp-ink-500);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .explore-cta { display: flex; justify-content: center; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="topnav-row">
+      <div class="brand"><div class="brand-mark">⏱</div><span>Global Time</span></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="padding-top: 32px;">
+      <span class="badge"><span class="badge-dot"></span> Design C · Editorial magazine</span>
+      <div class="tdp-headline" style="max-width: 800px;">
+        <span class="tdp-eyebrow tdp-eyebrow--accent">Workspace · Live</span>
+        <h1 class="tdp-display" style="font-size: clamp(36px, 5vw, 56px);">Plan your day across every timezone.</h1>
+        <p class="tdp-lede" style="font-size: 18px; line-height: 1.55;">Bigger type, more whitespace, slower rhythm. Less "dashboard," more "read me." For users who want a moment, not a metrics screen.</p>
+      </div>
+    </div>
+
+    <section class="hero-grid">
+      <!-- HERO CARD -->
+      <div class="hero-card">
+        <!-- 12h/24h toggle -->
+        <div class="hour-toggle-row">
+          <button class="tdp-btn tdp-btn--primary tdp-btn--sm" id="hourToggle" type="button">
+            <span class="tdp-hour-mode">12H</span>
+            <span style="font-size: 10px; color: rgba(255,255,255,0.75); margin-left: 2px; font-weight: 600;">AM/PM</span>
+          </button>
+        </div>
+
+        <div class="identity-bar">
+          <span class="pill"><span class="dot"></span> Live</span>
+          <span class="identity-city">Wesley Chapel, Florida, United States</span>
+          <span class="identity-tz">UTC−04:00</span>
+          <button class="identity-change" type="button">Change location</button>
+        </div>
+
+        <div class="clock-block">
+          <div class="clock-eyebrow">
+            <span>Saturday, July 11, 2026</span>
+            <span class="sep">·</span>
+            <span>EDT</span>
+            <span class="sep">·</span>
+            <span>sub-second sync</span>
+          </div>
+          <div class="clock-display">
+            <span id="hh">03</span><span class="colon">:</span><span id="mm">23</span><span class="colon">:</span><span id="ss">14</span><span class="ampm" id="ampm">AM</span><span class="cc" id="cc">.54</span>
+          </div>
+          <div class="clock-caption">HH : MM : SS AM/PM : CENTISECONDS</div>
+          <div class="clock-pills">
+            <span class="clock-pill summer">☀ Mid-summer · Northern Hemisphere</span>
+            <span class="clock-pill day">⏱ Day length 13h 48m</span>
+            <span class="clock-pill holiday">📅 1 holiday in 7 countries</span>
+          </div>
+        </div>
+
+        <!-- Sync + Action row (3 cols) -->
+        <div class="sync-action">
+          <div class="sync-card">
+            <h4>⏰ Sync</h4>
+            <div class="row"><span class="marker green"></span><span><strong>0.3s behind.</strong></span></div>
+            <div class="row"><span class="marker"></span><span>±0.149s accuracy.</span></div>
+            <div class="row"><span class="marker"></span><span>Wesley Chapel, FL.</span></div>
+          </div>
+          <div class="pulse-card">
+            <h4>🌍 Global Pulse</h4>
+            <div class="pulse-list">
+              <div class="pulse-row"><span class="dot open"></span><span class="name">London</span><span class="time">9:24</span></div>
+              <div class="pulse-row"><span class="dot open"></span><span class="name">Berlin</span><span class="time">10:24</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Mumbai</span><span class="time">14:54</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Singapore</span><span class="time">16:24</span></div>
+              <div class="pulse-row"><span class="dot asleep"></span><span class="name">São Paulo</span><span class="time">5:24</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Tokyo</span><span class="time">17:24</span></div>
+            </div>
+          </div>
+          <div class="opp-card">
+            <h4>🎯 Best window</h4>
+            <div class="opp-item"><span class="title">↗ Mumbai closes in 2h 15m</span>Last call window.</div>
+            <div class="opp-item purp"><span class="title">↗ Best 3h sync this week</span><strong>Tue 9-12 AM</strong> LON/BER/NY</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAVORITES RAIL -->
+      <aside class="fav-rail">
+        <div class="fav-rail-head">
+          <h3>★ Your cities</h3>
+          <span class="count" id="favCount">5</span>
+        </div>
+        <div class="search">
+          <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="favSearch" type="text" placeholder="Search a city to add…" autocomplete="off" />
+          <span class="kbd">⌘K</span>
+          <div class="search-results" id="favResults"></div>
+        </div>
+        <div class="fav-list" id="favList">
+          <div class="fav-item is-home" data-tz="America/New_York">
+            <div class="fav-flag fav-flag--na">US</div>
+            <div class="fav-meta"><span class="fav-name">Wesley Chapel</span><span class="fav-sub">Florida, US · Home</span></div>
+            <div class="fav-time" data-tz="America/New_York"><span class="hms"></span><span class="ms"></span><span><span class="badge badge--open">HOME</span></span></div>
+          </div>
+          <div class="fav-item" data-tz="Europe/London">
+            <div class="fav-flag fav-flag--eu">GB</div>
+            <div class="fav-meta"><span class="fav-name">London</span><span class="fav-sub">England, UK</span></div>
+            <div class="fav-time" data-tz="Europe/London"><span class="hms"></span><span class="ms"></span><span><span class="badge badge--open">OPEN</span></span></div>
+          </div>
+          <div class="fav-item" data-tz="Asia/Kolkata">
+            <div class="fav-flag fav-flag--as">IN</div>
+            <div class="fav-meta"><span class="fav-name">Mumbai</span><span class="fav-sub">Maharashtra, India</span></div>
+            <div class="fav-time" data-tz="Asia/Kolkata"><span class="hms"></span><span class="ms"></span><span><span class="badge badge--closing">CLOSING</span></span></div>
+          </div>
+          <div class="fav-item" data-tz="Asia/Singapore">
+            <div class="fav-flag fav-flag--as">SG</div>
+            <div class="fav-meta"><span class="fav-name">Singapore</span><span class="fav-sub">SG</span></div>
+            <div class="fav-time" data-tz="Asia/Singapore"><span class="hms"></span><span class="ms"></span><span><span class="badge badge--closing">CLOSING</span></span></div>
+          </div>
+          <div class="fav-item" data-tz="America/Sao_Paulo">
+            <div class="fav-flag fav-flag--sa">BR</div>
+            <div class="fav-meta"><span class="fav-name">São Paulo</span><span class="fav-sub">Brazil</span></div>
+            <div class="fav-time" data-tz="America/Sao_Paulo"><span class="hms"></span><span class="ms"></span><span><span class="badge badge--asleep">SLEEPING</span></span></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- EXPLORE 2x2 -->
+    <section class="explore-section">
+      <div class="explore-head">
+        <div class="tdp-headline headline-side">
+          <span class="tdp-eyebrow">Explore · By region</span>
+          <h2 class="tdp-display" style="font-size: clamp(28px, 4vw, 42px);">Find the right city, in the right timezone.</h2>
+          <p class="tdp-lede" style="font-size: 16px;">Two big regions at a time. Slow scroll, big type. Best for users who want a moment, not a metrics screen.</p>
+        </div>
+      </div>
+      <div class="explore-2x2">
+        <div class="feature-card">
+          <span class="label label--na">North America</span>
+          <div>
+            <h3>Americas</h3>
+            <p>From NYC to São Paulo. Working hours overlap with US East + LATAM in a tight 4-hour window. Best for transcontinental teams.</p>
+          </div>
+          <div class="footer-row">
+            <span class="count">42 cities</span>
+            <span class="tdp-btn tdp-btn--ghost tdp-btn--sm">Explore →</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="label label--as">Asia · Pacific</span>
+          <div>
+            <h3>APAC</h3>
+            <p>Tokyo, Mumbai, Singapore. The "tomorrow" half of the world. Where your morning meeting ends and someone else's day begins.</p>
+          </div>
+          <div class="footer-row">
+            <span class="count">68 cities</span>
+            <span class="tdp-btn tdp-btn--ghost tdp-btn--sm">Explore →</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="label label--eu">Europe</span>
+          <div>
+            <h3>Europe</h3>
+            <p>London to Warsaw, Dublin to Athens. Tight 1-2 hour windows between cities. The "old" world, run by the clock.</p>
+          </div>
+          <div class="footer-row">
+            <span class="count">38 cities</span>
+            <span class="tdp-btn tdp-btn--ghost tdp-btn--sm">Explore →</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="label label--oc">Oceania</span>
+          <div>
+            <h3>Pacific</h3>
+            <p>Sydney, Auckland, Melbourne. The "next day" timezones. Where hand-offs happen while you sleep.</p>
+          </div>
+          <div class="footer-row">
+            <span class="count">12 cities</span>
+            <span class="tdp-btn tdp-btn--ghost tdp-btn--sm">Explore →</span>
+          </div>
+        </div>
+      </div>
+      <div class="explore-cta">
+        <button class="tdp-btn tdp-btn--accent tdp-btn--xl">Explore all zones →</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Same logic; condensed.
+    const hh = document.getElementById('hh'), mm = document.getElementById('mm'),
+          ss = document.getElementById('ss'), cc = document.getElementById('cc'),
+          ampmEl = document.getElementById('ampm');
+    let hour12 = true;
+    function tickClock() {
+      const now = new Date();
+      const p = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12 }).formatToParts(now);
+      const m = {}; p.forEach(x => m[x.type] = x.value);
+      hh.textContent = m.hour; mm.textContent = m.minute; ss.textContent = m.second;
+      if (ampmEl) ampmEl.textContent = m.dayPeriod || '';
+      cc.textContent = '.' + Math.floor(now.getMilliseconds() / 10).toString().padStart(2, '0');
+      requestAnimationFrame(tickClock);
+    }
+    tickClock();
+    const hourToggle = document.getElementById('hourToggle');
+    hourToggle.addEventListener('click', () => {
+      hour12 = !hour12;
+      hourToggle.querySelector('.tdp-hour-mode').textContent = hour12 ? '12H' : '24H';
+      hourToggle.querySelectorAll('span')[1].textContent = hour12 ? 'AM/PM' : '24h';
+      ampmEl.style.display = hour12 ? '' : 'none';
+    });
+
+    function fmtTZ(d, tz) {
+      const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12, hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(d);
+      const m = {}; p.forEach(x => m[x.type] = x.value);
+      return { hms: `${m.hour}:${m.minute}:${m.second}` + (hour12 && m.dayPeriod ? ' ' + m.dayPeriod : ''), ms: '.' + Math.floor(d.getMilliseconds() / 10).toString().padStart(2, '0') };
+    }
+    function tickFav() {
+      const now = new Date();
+      document.querySelectorAll('.fav-time').forEach(el => {
+        const tz = el.getAttribute('data-tz'); if (!tz) return;
+        const { hms, ms } = fmtTZ(now, tz);
+        el.querySelector('.hms').textContent = hms;
+        el.querySelector('.ms').textContent = ms;
+      });
+      requestAnimationFrame(tickFav);
+    }
+    tickFav();
+
+    const ALL_CITIES = [
+      { name: 'Tokyo', tz: 'Asia/Tokyo', code: 'JP', flag: 'as' },
+      { name: 'Paris', tz: 'Europe/Paris', code: 'FR', flag: 'eu' },
+      { name: 'Dubai', tz: 'Asia/Dubai', code: 'AE', flag: 'as' },
+      { name: 'Sydney', tz: 'Australia/Sydney', code: 'AU', flag: 'oc' },
+      { name: 'Toronto', tz: 'America/Toronto', code: 'CA', flag: 'na' },
+      { name: 'Berlin', tz: 'Europe/Berlin', code: 'DE', flag: 'eu' },
+      { name: 'Bangkok', tz: 'Asia/Bangkok', code: 'TH', flag: 'as' },
+      { name: 'Cape Town', tz: 'Africa/Johannesburg', code: 'ZA', flag: 'af' },
+      { name: 'Mexico City', tz: 'America/Mexico_City', code: 'MX', flag: 'na' },
+      { name: 'Buenos Aires', tz: 'America/Argentina/Buenos_Aires', code: 'AR', flag: 'sa' },
+    ];
+    const search = document.getElementById('favSearch');
+    const results = document.getElementById('favResults');
+    const favList = document.getElementById('favList');
+    function addCity(c) {
+      if (favList.querySelector(`[data-tz="${c.tz}"]`)) return;
+      const item = document.createElement('div');
+      item.className = 'fav-item'; item.setAttribute('data-tz', c.tz);
+      const now = new Date();
+      const { hms, ms } = fmtTZ(now, c.tz);
+      const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: c.tz, hour: '2-digit', hour12: false }).format(now), 10);
+      let badge = 'badge--asleep', label = 'SLEEPING';
+      if (hour >= 9 && hour < 17) { badge = 'badge--open'; label = 'OPEN'; }
+      else if (hour >= 17 && hour < 19) { badge = 'badge--closing'; label = 'CLOSING'; }
+      item.innerHTML = `
+        <div class="fav-flag fav-flag--${c.flag}">${c.code}</div>
+        <div class="fav-meta"><span class="fav-name">${c.name}</span><span class="fav-sub">${c.code}</span></div>
+        <div class="fav-time" data-tz="${c.tz}"><span class="hms">${hms}</span><span class="ms">${ms}</span><span><span class="badge ${badge}">${label}</span></span></div>
+      `;
+      item.addEventListener('click', () => { document.querySelectorAll('.fav-item').forEach(i => i.classList.remove('is-home')); item.classList.add('is-home'); });
+      favList.appendChild(item);
+      updateCount();
+    }
+    function updateCount() { document.getElementById('favCount').textContent = favList.children.length; }
+    function renderResults(matches) {
+      if (!matches.length) { results.classList.remove('open'); return; }
+      results.innerHTML = matches.map((c, i) => `<div class="search-result ${i===0?'k-active':''}" data-tz="${c.tz}" data-name="${c.name}" data-code="${c.code}" data-flag="${c.flag}"><span class="name">${c.name}</span><span class="sub">${c.code}</span><span class="tz">${c.tz.split('/').pop().replace(/_/g,' ')}</span></div>`).join('');
+      results.classList.add('open');
+      results.querySelectorAll('.search-result').forEach(el => el.addEventListener('click', () => {
+        addCity({ name: el.dataset.name, tz: el.dataset.tz, code: el.dataset.code, flag: el.dataset.flag });
+        search.value = ''; results.classList.remove('open'); search.focus();
+      }));
+    }
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      if (!q) { results.classList.remove('open'); return; }
+      renderResults(ALL_CITIES.filter(c => c.name.toLowerCase().includes(q) || c.tz.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)).slice(0, 6));
+    });
+    search.addEventListener('focus', () => { if (search.value.trim()) search.dispatchEvent(new Event('input')); });
+    document.addEventListener('click', e => { if (!e.target.closest('.search')) results.classList.remove('open'); });
+    search.addEventListener('keydown', e => { if (e.key === 'Enter') { const first = results.querySelector('.search-result'); if (first) first.click(); } });
+  </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeAndDatePro — Hero v2 design exploration (3 variants)</title>
+  <link rel="stylesheet" href="./tokens.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@4.0.1/css/dseg14-classic.min.css" />
+  <style>
+    body {
+      margin: 0; padding: 0;
+      background: var(--tdp-ink-50);
+      color: var(--tdp-ink-900);
+      font-family: var(--tdp-font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    .page { max-width: 1280px; margin: 0 auto; padding: 48px 24px 80px; }
+    .page-head { margin-bottom: 40px; }
+    .page-head .eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tdp-ink-500); margin-bottom: 8px; display: block; }
+    .page-head h1 { font-size: 40px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.05; margin: 0 0 12px; }
+    .page-head p { font-size: 16px; color: var(--tdp-ink-600); max-width: 720px; margin: 0; }
+
+    .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+    .card {
+      background: var(--tdp-white);
+      border: 1px solid var(--tdp-ink-200);
+      border-radius: var(--tdp-radius-2xl);
+      overflow: hidden;
+      box-shadow: var(--tdp-shadow-sm);
+      transition: box-shadow 200ms, transform 200ms;
+    }
+    .card:hover { box-shadow: var(--tdp-shadow-xl); transform: translateY(-2px); }
+    .card-frame {
+      aspect-ratio: 16 / 10;
+      border-bottom: 1px solid var(--tdp-ink-200);
+      background: var(--tdp-ink-50);
+      overflow: hidden;
+      position: relative;
+    }
+    .card-frame iframe {
+      width: 200%;
+      height: 200%;
+      border: 0;
+      transform: scale(0.5);
+      transform-origin: top left;
+      pointer-events: none;
+    }
+    .card-body { padding: 20px 24px 24px; }
+    .card-tag {
+      display: inline-block;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--tdp-emerald-100); color: var(--tdp-emerald-700);
+      margin-bottom: 10px;
+    }
+    .card-tag.b { background: var(--tdp-indigo-100); color: var(--tdp-indigo-600); }
+    .card-tag.c { background: var(--tdp-amber-100); color: #92400e; }
+    .card h2 { margin: 0 0 6px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .card p  { margin: 0 0 16px; color: var(--tdp-ink-600); font-size: 14px; line-height: 1.5; }
+    .card .open-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 700;
+      color: var(--tdp-emerald-700);
+      text-decoration: none;
+    }
+    .card .open-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-head">
+      <span class="eyebrow">Hero v2 — Design exploration</span>
+      <h1>3 ways to ship the redesigned hero.</h1>
+      <p>All 3 variants use the same design tokens (button, headline+lede, search, favorites rail) — only the layout density and visual rhythm differs. Pick one to build out as <code>feature/hero-v2</code>.</p>
+    </div>
+
+    <div class="grid">
+      <a class="card" href="./design-a.html" target="_blank">
+        <div class="card-frame"><iframe src="./design-a.html" loading="lazy"></iframe></div>
+        <div class="card-body">
+          <span class="card-tag">A · Bento</span>
+          <h2>Bento dashboard</h2>
+          <p>Hero on the left, favorites rail on the right (1/4), explore as a 4-card bento grid. Most structured, most information-dense. The "this is a workspace" feel.</p>
+          <span class="open-link">Open in new tab →</span>
+        </div>
+      </a>
+
+      <a class="card" href="./design-b.html" target="_blank">
+        <div class="card-frame"><iframe src="./design-b.html" loading="lazy"></iframe></div>
+        <div class="card-body">
+          <span class="card-tag b">B · Compact</span>
+          <h2>Compact with sticky rail</h2>
+          <p>Hero on the left, favorites rail on the right (1/4) with a tighter visual rhythm. Explore as a horizontal scrollable strip — good for many destinations without vertical bloat.</p>
+          <span class="open-link">Open in new tab →</span>
+        </div>
+      </a>
+
+      <a class="card" href="./design-c.html" target="_blank">
+        <div class="card-frame"><iframe src="./design-c.html" loading="lazy"></iframe></div>
+        <div class="card-body">
+          <span class="card-tag c">C · Editorial</span>
+          <h2>Editorial magazine</h2>
+          <p>Hero on the left, favorites rail on the right (1/4) with editorial typography. Explore as 2×2 large hero-style cards with big illustrations. More whitespace, more "read me" energy.</p>
+          <span class="open-link">Open in new tab →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

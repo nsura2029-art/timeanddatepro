@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design A · Bento dashboard — TimeAndDatePro hero v2</title>
+  <link rel="stylesheet" href="./tokens.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dseg@4.0.1/css/dseg14-classic.min.css" />
+  <style>
+    body {
+      margin: 0; padding: 0;
+      background: var(--tdp-ink-50);
+      color: var(--tdp-ink-900);
+      font-family: var(--tdp-font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    .topnav {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--tdp-ink-100);
+      padding: 14px 0;
+    }
+    .topnav-row {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; }
+    .brand-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--tdp-emerald-600); color: #fff; display: grid; place-items: center; font-size: 14px; }
+
+    .container { max-width: 1440px; margin: 0 auto; padding: 0 32px; }
+
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--tdp-indigo-100); color: var(--tdp-indigo-600); font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* ── HERO GRID: 3-col-left + 1-col-right (favorites) ── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-top: 32px;
+    }
+    @media (max-width: 1024px) { .hero-grid { grid-template-columns: 1fr; } }
+
+    /* ── HERO CARD (left, clock column) ── */
+    .hero-card {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-2xl);
+      padding: 28px 32px;
+      box-shadow: var(--tdp-shadow-sm);
+      display: flex; flex-direction: column;
+      gap: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at top right, var(--tdp-emerald-50) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-card > * { position: relative; z-index: 1; }
+
+    /* Identity bar */
+    .identity-bar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--tdp-emerald-100);
+      color: var(--tdp-emerald-700);
+      font-size: 11px; font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .pill .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--tdp-emerald-600);
+      animation: ping 2.4s ease-in-out infinite;
+    }
+    @keyframes ping {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.6); opacity: 0.5; }
+    }
+    .identity-city { font-size: 14px; font-weight: 700; }
+    .identity-tz   { font-size: 12px; font-weight: 600; color: var(--tdp-ink-500); font-family: var(--tdp-font-mono); }
+    .identity-change {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--tdp-ink-200);
+      color: var(--tdp-ink-700);
+      font-size: 11px; font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .identity-change:hover { background: var(--tdp-ink-50); }
+
+    /* 12h/24h toggle (now using the button token) */
+    .hour-toggle {
+      position: absolute;
+      top: 28px; right: 32px;
+      z-index: 2;
+    }
+
+    /* Clock */
+    .clock-block { text-align: center; padding: 12px 0 8px; }
+    .clock-eyebrow {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      font-size: 11px; color: var(--tdp-ink-500); font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 12px;
+    }
+    .clock-eyebrow .sep { color: var(--tdp-ink-300); }
+    .clock-display {
+      font-family: var(--tdp-font-clock);
+      font-size: clamp(56px, 9vw, 112px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: var(--tdp-ink-900);
+      display: flex; align-items: baseline; justify-content: center; gap: 0.02em;
+    }
+    .clock-display .colon { animation: blink 1s steps(2) infinite; color: var(--tdp-ink-300); }
+    @keyframes blink { 50% { opacity: 0.2; } }
+    .clock-display .cc {
+      font-size: 0.42em;
+      color: var(--tdp-ink-500);
+      margin-left: 0.08em;
+    }
+    .clock-display .ampm {
+      font-size: 0.28em;
+      color: var(--tdp-emerald-600);
+      font-family: var(--tdp-font-sans);
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin-left: 0.12em;
+      align-self: center;
+    }
+    .clock-caption {
+      margin-top: 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--tdp-ink-300);
+    }
+    .clock-pills { display: flex; justify-content: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+    .clock-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+      border: 1px solid;
+    }
+    .clock-pill.summer { background: var(--tdp-as-bg); border-color: var(--tdp-as-bd); color: var(--tdp-as-fg); }
+    .clock-pill.day    { background: var(--tdp-emerald-100); border-color: #a7f3d0; color: var(--tdp-emerald-700); }
+    .clock-pill.holiday{ background: var(--tdp-sa-bg); border-color: var(--tdp-sa-bd); color: var(--tdp-sa-fg); }
+
+    /* Sync footer */
+    .sync-card {
+      background: var(--tdp-ink-50);
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-lg);
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--tdp-ink-700);
+      line-height: 1.6;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .sync-card .row { display: flex; align-items: center; gap: 8px; }
+    .sync-card .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--tdp-ink-300); flex-shrink: 0; }
+    .sync-card .marker.green { background: var(--tdp-emerald-500); box-shadow: 0 0 0 3px var(--tdp-emerald-100); }
+    .sync-card strong { color: var(--tdp-ink-900); }
+
+    /* Action bar (3 columns: pulse | best window | watch out) */
+    .action-bar {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    @media (max-width: 900px) { .action-bar { grid-template-columns: 1fr; } }
+    .action-col {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-lg);
+      padding: 14px 16px;
+    }
+    .action-col h3 {
+      margin: 0 0 10px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--tdp-ink-500);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pulse-list { display: flex; flex-direction: column; gap: 2px; }
+    .pulse-row {
+      display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 6px; cursor: pointer;
+      font-size: 12px;
+    }
+    .pulse-row:hover { background: var(--tdp-ink-50); }
+    .pulse-row .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .pulse-row .dot.open    { background: var(--tdp-open); box-shadow: 0 0 0 2px rgba(16,185,129,0.18); }
+    .pulse-row .dot.closing { background: var(--tdp-closing); }
+    .pulse-row .dot.asleep  { background: var(--tdp-asleep); }
+    .pulse-row .name { font-weight: 600; color: var(--tdp-ink-800); }
+    .pulse-row .time { font-family: var(--tdp-font-mono); font-size: 11px; font-weight: 700; color: var(--tdp-ink-700); font-variant-numeric: tabular-nums; }
+
+    .opp-list, .warn-list { display: flex; flex-direction: column; gap: 6px; }
+    .opp, .warn {
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .opp       { background: var(--tdp-emerald-100); border: 1px solid #a7f3d0; color: var(--tdp-ink-800); }
+    .opp.purp  { background: var(--tdp-indigo-100); border: 1px solid #c7d2fe; color: var(--tdp-ink-800); }
+    .opp.warm  { background: var(--tdp-amber-100);  border: 1px solid #fde68a; color: var(--tdp-ink-800); }
+    .warn      { background: #fef2f2; border: 1px solid #fecaca; }
+    .opp strong, .warn strong { color: var(--tdp-ink-900); }
+    .opp .title, .warn .title { font-weight: 800; display: block; margin-bottom: 2px; }
+
+    /* ── FAVORITES RAIL (right column) ── */
+    .fav-rail {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-2xl);
+      padding: 20px;
+      box-shadow: var(--tdp-shadow-sm);
+      display: flex; flex-direction: column;
+      gap: 16px;
+      min-height: 100%;
+    }
+    .fav-rail-head { display: flex; align-items: center; justify-content: space-between; }
+    .fav-rail-head h3 { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tdp-ink-600); }
+    .fav-rail-head .count {
+      font-size: 10px; font-weight: 800;
+      color: var(--tdp-emerald-700);
+      background: var(--tdp-emerald-100);
+      padding: 2px 8px; border-radius: 999px;
+    }
+
+    /* Search */
+    .search { position: relative; }
+    .search input {
+      width: 100%; height: 38px;
+      border: 1px solid var(--tdp-ink-200);
+      border-radius: 10px;
+      padding: 0 32px 0 34px;
+      font-family: var(--tdp-font-sans);
+      font-size: 13px; color: var(--tdp-ink-900);
+      background: var(--tdp-ink-50);
+      outline: none;
+      box-sizing: border-box;
+      transition: all 200ms;
+    }
+    .search input:focus {
+      border-color: var(--tdp-emerald-500);
+      background: #fff;
+      box-shadow: 0 0 0 3px var(--tdp-emerald-100);
+    }
+    .search .icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--tdp-ink-400); pointer-events: none; }
+    .search .kbd {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      font-family: var(--tdp-font-mono); font-size: 9px; font-weight: 700;
+      color: var(--tdp-ink-500);
+      background: #fff; border: 1px solid var(--tdp-ink-200);
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .search-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      margin-top: 4px;
+      background: #fff;
+      border: 1px solid var(--tdp-ink-200);
+      border-radius: 10px;
+      box-shadow: var(--tdp-shadow-lg);
+      max-height: 200px; overflow-y: auto;
+      z-index: 20;
+      display: none;
+    }
+    .search-results.open { display: block; }
+    .search-result {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .search-result:hover, .search-result.k-active { background: var(--tdp-emerald-50); }
+    .search-result .name { font-weight: 700; color: var(--tdp-ink-900); }
+    .search-result .sub  { font-size: 10px; color: var(--tdp-ink-500); margin-left: 4px; }
+    .search-result .tz   { margin-left: auto; font-family: var(--tdp-font-mono); font-size: 9px; color: var(--tdp-ink-500); text-transform: uppercase; }
+
+    /* Fav list */
+    .fav-list { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .fav-item {
+      display: grid; grid-template-columns: 32px 1fr auto auto; align-items: center; gap: 10px;
+      padding: 8px 6px; border-radius: 10px;
+      cursor: pointer;
+      transition: background 120ms;
+    }
+    .fav-item:hover { background: var(--tdp-ink-50); }
+    .fav-item.is-home { background: var(--tdp-emerald-50); }
+    .fav-flag {
+      width: 30px; height: 20px;
+      border-radius: 4px;
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 800; color: #fff;
+      letter-spacing: 0.04em;
+    }
+    .fav-flag--na { background: #3b82f6; }
+    .fav-flag--eu { background: #10b981; }
+    .fav-flag--as { background: #f59e0b; }
+    .fav-flag--af { background: #ec4899; }
+    .fav-flag--oc { background: #14b8a6; }
+    .fav-flag--sa { background: #a855f7; }
+    .fav-meta { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+    .fav-name { font-size: 12px; font-weight: 700; color: var(--tdp-ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-sub  { font-size: 10px; font-weight: 500; color: var(--tdp-ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-time {
+      font-family: var(--tdp-font-mono);
+      font-size: 11px; font-weight: 700;
+      color: var(--tdp-ink-800);
+      text-align: right;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .fav-time .ms { font-size: 9px; color: var(--tdp-ink-500); font-weight: 600; display: block; }
+    .fav-time .badge {
+      display: inline-block;
+      font-size: 8px; font-weight: 800; letter-spacing: 0.05em;
+      padding: 1px 5px; border-radius: 3px; margin-top: 2px;
+    }
+    .fav-time .badge--open    { background: var(--tdp-emerald-100); color: var(--tdp-emerald-700); }
+    .fav-time .badge--closing { background: var(--tdp-amber-100);   color: #92400e; }
+    .fav-time .badge--asleep  { background: var(--tdp-ink-100);     color: var(--tdp-ink-500); }
+    .fav-remove {
+      background: transparent; border: 0;
+      color: var(--tdp-ink-300); cursor: pointer;
+      font-size: 14px; padding: 0 2px;
+      opacity: 0; transition: opacity 120ms;
+    }
+    .fav-item:hover .fav-remove { opacity: 1; }
+    .fav-remove:hover { color: #ef4444; }
+
+    /* ── EXPLORE (bento grid) ── */
+    .explore-section {
+      margin-top: 56px;
+    }
+    .explore-head {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .explore-head .headline-side { max-width: 640px; }
+    .explore-head .actions { display: flex; gap: 8px; }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 160px;
+      gap: 12px;
+    }
+    @media (max-width: 900px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .bento-grid { grid-template-columns: 1fr; } }
+
+    .bento {
+      background: #fff;
+      border: var(--tdp-border);
+      border-radius: var(--tdp-radius-xl);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      cursor: pointer;
+      transition: all 200ms;
+      position: relative;
+      overflow: hidden;
+    }
+    .bento:hover { box-shadow: var(--tdp-shadow-lg); transform: translateY(-2px); }
+    .bento.tall { grid-row: span 2; }
+    .bento.wide { grid-column: span 2; }
+    .bento .label {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 999px;
+      align-self: flex-start;
+    }
+    .bento .label--na { background: var(--tdp-na-bg); color: var(--tdp-na-fg); }
+    .bento .label--eu { background: var(--tdp-eu-bg); color: var(--tdp-eu-fg); }
+    .bento .label--as { background: var(--tdp-as-bg); color: var(--tdp-as-fg); }
+    .bento .label--oc { background: var(--tdp-oc-bg); color: var(--tdp-oc-fg); }
+    .bento .label--sa { background: var(--tdp-sa-bg); color: var(--tdp-sa-fg); }
+    .bento .label--af { background: var(--tdp-af-bg); color: var(--tdp-af-fg); }
+
+    .bento h4 {
+      margin: 8px 0 4px;
+      font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--tdp-ink-900);
+    }
+    .bento p {
+      margin: 0; font-size: 12px; color: var(--tdp-ink-600); line-height: 1.5;
+    }
+    .bento .count {
+      font-family: var(--tdp-font-mono); font-size: 11px; font-weight: 700;
+      color: var(--tdp-ink-500);
+      margin-top: 8px;
+    }
+
+    .explore-cta {
+      display: flex; justify-content: center;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <div class="topnav-row">
+      <div class="brand">
+        <div class="brand-mark">⏱</div>
+        <span>Global Time</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <div style="padding-top: 24px;">
+      <span class="badge"><span class="badge-dot"></span> Design A · Bento dashboard</span>
+      <div class="tdp-headline">
+        <span class="tdp-eyebrow tdp-eyebrow--accent">Workspace · Live</span>
+        <h1 class="tdp-display">Plan your day across every timezone.</h1>
+        <p class="tdp-lede">Your home city, your team, and the world — all on one screen. Add cities, compare business hours, and jump into meeting planning without leaving the page.</p>
+      </div>
+    </div>
+
+    <!-- HERO GRID -->
+    <section class="hero-grid">
+
+      <!-- LEFT: hero card (clock column) -->
+      <div class="hero-card">
+
+        <!-- 12h/24h toggle (using the button token) -->
+        <button class="tdp-btn tdp-btn--primary tdp-btn--sm hour-toggle" id="hourToggle" type="button" aria-label="Toggle 12h/24h">
+          <span class="tdp-hour-mode">12H</span>
+          <span class="tdp-hour-ampm" style="font-size: 10px; color: rgba(255,255,255,0.75); font-weight: 600;">AM/PM</span>
+        </button>
+
+        <!-- Tier 1: Identity bar -->
+        <div class="identity-bar">
+          <span class="pill"><span class="dot"></span> Live</span>
+          <span class="identity-city">Wesley Chapel, Florida, US</span>
+          <span class="identity-tz">UTC−04:00</span>
+          <button class="identity-change" type="button">Change location</button>
+        </div>
+
+        <!-- Tier 2: The clock -->
+        <div class="clock-block">
+          <div class="clock-eyebrow">
+            <span>Saturday, July 11, 2026</span>
+            <span class="sep">·</span>
+            <span>EDT</span>
+            <span class="sep">·</span>
+            <span>sub-second sync</span>
+          </div>
+          <div class="clock-display" aria-label="Current time">
+            <span id="hh">03</span><span class="colon">:</span><span id="mm">23</span><span class="colon">:</span><span id="ss">14</span><span class="ampm" id="ampm">AM</span><span class="cc" id="cc">.54</span>
+          </div>
+          <div class="clock-caption">HH : MM : SS AM/PM : CENTISECONDS</div>
+          <div class="clock-pills">
+            <span class="clock-pill summer">☀ Mid-summer · Northern Hemisphere</span>
+            <span class="clock-pill day">⏱ Day length 13h 48m</span>
+            <span class="clock-pill holiday">📅 1 holiday in 7 countries</span>
+          </div>
+        </div>
+
+        <!-- Sync footer -->
+        <div class="sync-card">
+          <div class="row"><span class="marker green"></span><span><strong>Your clock is 0.3 seconds behind.</strong></span></div>
+          <div class="row"><span class="marker"></span><span>Accuracy of synchronization was <strong>±0.149 seconds</strong>.</span></div>
+          <div class="row"><span class="marker"></span><span>Time in <strong>Wesley Chapel, Florida, United States</strong> now.</span></div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="action-bar">
+          <div class="action-col">
+            <h3>🌍 Global Pulse</h3>
+            <div class="pulse-list">
+              <div class="pulse-row"><span class="dot open"></span><span class="name">London</span><span class="time">9:24 AM</span></div>
+              <div class="pulse-row"><span class="dot open"></span><span class="name">Berlin</span><span class="time">10:24 AM</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Mumbai</span><span class="time">2:54 PM</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Singapore</span><span class="time">4:24 PM</span></div>
+              <div class="pulse-row"><span class="dot asleep"></span><span class="name">São Paulo</span><span class="time">5:24 AM</span></div>
+              <div class="pulse-row"><span class="dot closing"></span><span class="name">Tokyo</span><span class="time">5:24 PM</span></div>
+              <div class="pulse-row"><span class="dot open"></span><span class="name">Sydney</span><span class="time">7:24 PM</span></div>
+            </div>
+          </div>
+          <div class="action-col">
+            <h3>🎯 Best window today</h3>
+            <div class="opp-list">
+              <div class="opp"><span class="title">↗ Mumbai closes in 2h 15m</span>Last call window. Book a 30-min slot before they sign off.</div>
+              <div class="opp purp"><span class="title">↗ Best 3h sync this week</span><strong>Tue 9-12 AM</strong> with London, Berlin, NY. Opens in 2d 4h.</div>
+              <div class="opp warm"><span class="title">↗ São Paulo comes online in 6h</span>Their <strong>10 AM BRT</strong> is your <strong>9 AM EDT</strong>. Tea-time call.</div>
+            </div>
+          </div>
+          <div class="action-col">
+            <h3>⚠️ Watch out</h3>
+            <div class="warn-list">
+              <div class="warn"><span class="title">⏰ DST in 13 days</span>Your 9am Sydney call shifts to 8am.</div>
+              <div class="warn"><span class="title">🗓 Japan public holiday today</span>Expect 1-2h delays in JP responses.</div>
+              <div class="warn"><span class="title">🌐 Europe DST forward</span>Bookend meetings shift by 1h on Oct 25.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Favorites rail (1/4 width) with search -->
+      <aside class="fav-rail">
+        <div class="fav-rail-head">
+          <h3>★ Your cities</h3>
+          <span class="count" id="favCount">5</span>
+        </div>
+
+        <!-- Search bar (with autocomplete) -->
+        <div class="search">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="favSearch" type="text" placeholder="Add a city…" autocomplete="off" />
+          <span class="kbd">⌘K</span>
+          <div class="search-results" id="favResults"></div>
+        </div>
+
+        <!-- Favorites list (live time, ms resolution) -->
+        <div class="fav-list" id="favList">
+          <div class="fav-item is-home" data-tz="America/New_York">
+            <div class="fav-flag fav-flag--na">US</div>
+            <div class="fav-meta">
+              <span class="fav-name">Wesley Chapel</span>
+              <span class="fav-sub">Florida, US · Home</span>
+            </div>
+            <div class="fav-time" data-tz="America/New_York">
+              <span class="hms"></span>
+              <span class="ms"></span>
+              <span><span class="badge badge--open">HOME</span></span>
+            </div>
+            <button class="fav-remove" aria-label="Remove">×</button>
+          </div>
+          <div class="fav-item" data-tz="Europe/London">
+            <div class="fav-flag fav-flag--eu">GB</div>
+            <div class="fav-meta">
+              <span class="fav-name">London</span>
+              <span class="fav-sub">England, UK</span>
+            </div>
+            <div class="fav-time" data-tz="Europe/London">
+              <span class="hms"></span>
+              <span class="ms"></span>
+              <span><span class="badge badge--open">OPEN</span></span>
+            </div>
+            <button class="fav-remove" aria-label="Remove">×</button>
+          </div>
+          <div class="fav-item" data-tz="Asia/Kolkata">
+            <div class="fav-flag fav-flag--as">IN</div>
+            <div class="fav-meta">
+              <span class="fav-name">Mumbai</span>
+              <span class="fav-sub">Maharashtra, IN</span>
+            </div>
+            <div class="fav-time" data-tz="Asia/Kolkata">
+              <span class="hms"></span>
+              <span class="ms"></span>
+              <span><span class="badge badge--closing">CLOSING</span></span>
+            </div>
+            <button class="fav-remove" aria-label="Remove">×</button>
+          </div>
+          <div class="fav-item" data-tz="Asia/Singapore">
+            <div class="fav-flag fav-flag--as">SG</div>
+            <div class="fav-meta">
+              <span class="fav-name">Singapore</span>
+              <span class="fav-sub">SG</span>
+            </div>
+            <div class="fav-time" data-tz="Asia/Singapore">
+              <span class="hms"></span>
+              <span class="ms"></span>
+              <span><span class="badge badge--closing">CLOSING</span></span>
+            </div>
+            <button class="fav-remove" aria-label="Remove">×</button>
+          </div>
+          <div class="fav-item" data-tz="America/Sao_Paulo">
+            <div class="fav-flag fav-flag--sa">BR</div>
+            <div class="fav-meta">
+              <span class="fav-name">São Paulo</span>
+              <span class="fav-sub">Brazil</span>
+            </div>
+            <div class="fav-time" data-tz="America/Sao_Paulo">
+              <span class="hms"></span>
+              <span class="ms"></span>
+              <span><span class="badge badge--asleep">SLEEPING</span></span>
+            </div>
+            <button class="fav-remove" aria-label="Remove">×</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- EXPLORE SECTION -->
+    <section class="explore-section">
+      <div class="explore-head">
+        <div class="tdp-headline headline-side">
+          <span class="tdp-eyebrow">Explore · By region</span>
+          <h2 class="tdp-display">Find the right city, in the right timezone.</h2>
+          <p class="tdp-lede">Browse major cities by UTC offset, compare their working hours, and jump directly into meeting planning or timezone conversion.</p>
+        </div>
+        <div class="actions">
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--md">View all 190</button>
+        </div>
+      </div>
+
+      <div class="bento-grid">
+        <div class="bento tall">
+          <span class="label label--na">North America</span>
+          <div>
+            <h4>Americas</h4>
+            <p>From NYC to São Paulo. Working hours overlap with US East + LATAM in a tight 4-hour window.</p>
+          </div>
+          <span class="count">42 cities</span>
+        </div>
+        <div class="bento">
+          <span class="label label--eu">Europe</span>
+          <div>
+            <h4>EU + UK</h4>
+            <p>London to Warsaw.</p>
+          </div>
+          <span class="count">38 cities</span>
+        </div>
+        <div class="bento">
+          <span class="label label--as">Asia</span>
+          <div>
+            <h4>APAC</h4>
+            <p>Tokyo, Mumbai, Singapore.</p>
+          </div>
+          <span class="count">56 cities</span>
+        </div>
+        <div class="bento wide">
+          <span class="label label--oc">Oceania</span>
+          <div>
+            <h4>Pacific</h4>
+            <p>Sydney, Auckland, Melbourne. The "next day" timezones — perfect for handoff meetings.</p>
+          </div>
+          <span class="count">12 cities</span>
+        </div>
+        <div class="bento">
+          <span class="label label--af">Africa</span>
+          <div>
+            <h4>Africa</h4>
+            <p>Cairo to Cape Town.</p>
+          </div>
+          <span class="count">22 cities</span>
+        </div>
+        <div class="bento">
+          <span class="label label--sa">S. America</span>
+          <div>
+            <h4>LATAM</h4>
+            <p>São Paulo to Buenos Aires.</p>
+          </div>
+          <span class="count">20 cities</span>
+        </div>
+      </div>
+
+      <div class="explore-cta">
+        <button class="tdp-btn tdp-btn--accent tdp-btn--xl">Explore all zones →</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ── LIVE CLOCK ──
+    const hh = document.getElementById('hh');
+    const mm = document.getElementById('mm');
+    const ss = document.getElementById('ss');
+    const cc = document.getElementById('cc');
+    const ampmEl = document.getElementById('ampm');
+    function tickClock() {
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+      }).formatToParts(now);
+      const m = {}; parts.forEach(p => m[p.type] = p.value);
+      hh.textContent = m.hour;
+      mm.textContent = m.minute;
+      ss.textContent = m.second;
+      if (ampmEl) ampmEl.textContent = m.dayPeriod || '';
+      const c = Math.floor(now.getMilliseconds() / 10).toString().padStart(2, '0');
+      cc.textContent = '.' + c;
+      requestAnimationFrame(tickClock);
+    }
+    tickClock();
+
+    // ── 12H/24H TOGGLE (using the button token) ──
+    let hour12 = true;
+    const hourToggle = document.getElementById('hourToggle');
+    hourToggle.addEventListener('click', () => {
+      hour12 = !hour12;
+      hourToggle.querySelector('.tdp-hour-mode').textContent = hour12 ? '12H' : '24H';
+      hourToggle.querySelector('.tdp-hour-ampm').textContent = hour12 ? 'AM/PM' : 'military';
+      ampmEl.style.display = hour12 ? '' : 'none';
+    });
+
+    // ── FAVORITES LIVE TIME (millisecond resolution) ──
+    function fmtTZ(d, tz, opts) {
+      const parts = new Intl.DateTimeFormat('en-US', Object.assign({
+        timeZone: tz, hour12: hour12, hour: '2-digit', minute: '2-digit', second: '2-digit'
+      }, opts || {})).formatToParts(d);
+      const m = {}; parts.forEach(p => m[p.type] = p.value);
+      const ms = Math.floor(d.getMilliseconds() / 10).toString().padStart(2, '0');
+      return {
+        hms: `${m.hour}:${m.minute}:${m.second}` + (hour12 && m.dayPeriod ? ' ' + m.dayPeriod : ''),
+        ms: '.' + ms,
+      };
+    }
+    function tickFav() {
+      const now = new Date();
+      document.querySelectorAll('.fav-time').forEach(el => {
+        const tz = el.getAttribute('data-tz');
+        if (!tz) return;
+        const { hms, ms } = fmtTZ(now, tz);
+        const hmsEl = el.querySelector('.hms');
+        const msEl = el.querySelector('.ms');
+        if (hmsEl) hmsEl.textContent = hms;
+        if (msEl) msEl.textContent = ms;
+      });
+      requestAnimationFrame(tickFav);
+    }
+    tickFav();
+
+    // ── FAVORITES SEARCH (autocomplete) ──
+    const ALL_CITIES = [
+      { name: 'Tokyo',        tz: 'Asia/Tokyo',         code: 'JP', flag: 'as' },
+      { name: 'Paris',        tz: 'Europe/Paris',       code: 'FR', flag: 'eu' },
+      { name: 'Dubai',        tz: 'Asia/Dubai',         code: 'AE', flag: 'as' },
+      { name: 'Sydney',       tz: 'Australia/Sydney',   code: 'AU', flag: 'oc' },
+      { name: 'Toronto',      tz: 'America/Toronto',    code: 'CA', flag: 'na' },
+      { name: 'Berlin',       tz: 'Europe/Berlin',      code: 'DE', flag: 'eu' },
+      { name: 'Bangkok',      tz: 'Asia/Bangkok',       code: 'TH', flag: 'as' },
+      { name: 'Cape Town',    tz: 'Africa/Johannesburg',code: 'ZA', flag: 'af' },
+      { name: 'Mexico City',  tz: 'America/Mexico_City',code: 'MX', flag: 'na' },
+      { name: 'Buenos Aires', tz: 'America/Argentina/Buenos_Aires', code: 'AR', flag: 'sa' },
+      { name: 'Seoul',        tz: 'Asia/Seoul',         code: 'KR', flag: 'as' },
+      { name: 'Istanbul',     tz: 'Europe/Istanbul',    code: 'TR', flag: 'eu' },
+    ];
+    const search = document.getElementById('favSearch');
+    const results = document.getElementById('favResults');
+    const favList = document.getElementById('favList');
+
+    function addCity(city) {
+      // Skip if already in the list
+      const existing = favList.querySelector(`[data-tz="${city.tz}"]`);
+      if (existing) {
+        existing.style.background = 'var(--tdp-emerald-100)';
+        setTimeout(() => existing.style.background = '', 600);
+        return;
+      }
+      const item = document.createElement('div');
+      item.className = 'fav-item';
+      item.setAttribute('data-tz', city.tz);
+      const now = new Date();
+      const { hms, ms } = fmtTZ(now, city.tz);
+      const hour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: city.tz, hour: '2-digit', hour12: false }).format(now), 10);
+      let status = 'asleep', label = 'SLEEPING', badge = 'badge--asleep';
+      if (hour >= 9 && hour < 17) { status = 'open'; label = 'OPEN'; badge = 'badge--open'; }
+      else if (hour >= 17 && hour < 19) { status = 'closing'; label = 'CLOSING'; badge = 'badge--closing'; }
+      item.innerHTML = `
+        <div class="fav-flag fav-flag--${city.flag}">${city.code}</div>
+        <div class="fav-meta">
+          <span class="fav-name">${city.name}</span>
+          <span class="fav-sub">${city.tz.split('/').pop().replace(/_/g, ' ')}</span>
+        </div>
+        <div class="fav-time" data-tz="${city.tz}">
+          <span class="hms">${hms}</span>
+          <span class="ms">${ms}</span>
+          <span><span class="badge ${badge}">${label}</span></span>
+        </div>
+        <button class="fav-remove" aria-label="Remove">×</button>
+      `;
+      // Wire remove
+      item.querySelector('.fav-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        item.remove();
+        updateCount();
+      });
+      // Wire click to swap hero
+      item.addEventListener('click', () => {
+        // In the real app this would dispatch tdp:show-city.
+        // For the mockup, just visually mark it as the new home.
+        document.querySelectorAll('.fav-item').forEach(i => i.classList.remove('is-home'));
+        item.classList.add('is-home');
+      });
+      favList.appendChild(item);
+      updateCount();
+    }
+
+    function updateCount() {
+      document.getElementById('favCount').textContent = favList.children.length;
+    }
+
+    function renderResults(matches) {
+      if (matches.length === 0) {
+        results.classList.remove('open');
+        return;
+      }
+      results.innerHTML = matches.map((c, i) => `
+        <div class="search-result ${i === 0 ? 'k-active' : ''}" data-tz="${c.tz}" data-name="${c.name}" data-code="${c.code}" data-flag="${c.flag}">
+          <span class="name">${c.name}</span>
+          <span class="sub">${c.code}</span>
+          <span class="tz">${c.tz.split('/').pop().replace(/_/g, ' ')}</span>
+        </div>
+      `).join('');
+      results.classList.add('open');
+      results.querySelectorAll('.search-result').forEach(el => {
+        el.addEventListener('click', () => {
+          addCity({ name: el.dataset.name, tz: el.dataset.tz, code: el.dataset.code, flag: el.dataset.flag });
+          search.value = '';
+          results.classList.remove('open');
+          search.focus();
+        });
+      });
+    }
+
+    search.addEventListener('input', () => {
+      const q = search.value.trim().toLowerCase();
+      if (!q) { results.classList.remove('open'); return; }
+      const matches = ALL_CITIES
+        .filter(c => c.name.toLowerCase().includes(q) || c.tz.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+        .slice(0, 6);
+      renderResults(matches);
+    });
+    search.addEventListener('focus', () => {
+      if (search.value.trim()) search.dispatchEvent(new Event('input'));
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search')) results.classList.remove('open');
+    });
+    search.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = results.querySelector('.search-result');
+        if (first) first.click();
+      }
+    });
+
+    // Wire the existing remove buttons
+    document.querySelectorAll('.fav-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        btn.closest('.fav-item').remove();
+        updateCount();
+      });
+    });
+  </script>
+</body>
+</html>

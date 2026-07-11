@@ -1,0 +1,503 @@
+/* ──────────────────────────────────────────────────────────────────────
+   TimeAndDatePro — Design Tokens (v1)
+   Extracted from the V2 hero + the 2 reference images in the brief.
+   Single source of truth for color, type, spacing, button, and the
+   "headline + lede" pattern. Every page should consume these, not
+   redefine them inline.
+
+   Usage:
+     <link rel="stylesheet" href="./tokens.css">
+     <button class="tdp-btn tdp-btn--primary tdp-btn--md">Explore</button>
+     <div class="tdp-headline">
+       <span class="tdp-eyebrow">Hero</span>
+       <h1 class="tdp-display">Find the right city, in the right timezone.</h1>
+       <p class="tdp-lede">Browse major cities by UTC offset…</p>
+     </div>
+   ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── COLOR: brand (emerald-led Horizon palette, matches V2) ── */
+  --tdp-emerald-600: #059669;
+  --tdp-emerald-500: #10b981;
+  --tdp-emerald-100: #d1fae5;
+  --tdp-emerald-50:  #ecfdf5;
+  --tdp-teal-600:    #0d9488;
+  --tdp-teal-100:    #ccfbf1;
+  --tdp-indigo-600:  #4f46e5;
+  --tdp-indigo-500:  #6366f1;       /* the "Explore all zones" purple */
+  --tdp-indigo-100:  #e0e7ff;
+  --tdp-amber-500:   #fbbf24;
+  --tdp-amber-100:   #fef3c7;
+
+  /* ── COLOR: neutrals ── */
+  --tdp-ink-900: #0f172a;
+  --tdp-ink-800: #1e293b;
+  --tdp-ink-700: #334155;
+  --tdp-ink-600: #475569;
+  --tdp-ink-500: #64748b;
+  --tdp-ink-400: #94a3b8;
+  --tdp-ink-300: #cbd5e1;
+  --tdp-ink-200: #e2e8f0;
+  --tdp-ink-100: #f1f5f9;
+  --tdp-ink-50:  #f8fafc;
+  --tdp-white:   #ffffff;
+
+  /* ── COLOR: status (matches Global Pulse states) ── */
+  --tdp-open:    #10b981;
+  --tdp-closing: #f59e0b;
+  --tdp-asleep:  #94a3b8;
+
+  /* ── COLOR: regions (LOCKED, do not change per region) ── */
+  --tdp-na-bg: #eff6ff; --tdp-na-bd: #bfdbfe; --tdp-na-fg: #1e40af;
+  --tdp-eu-bg: #f0fdf4; --tdp-eu-bd: #bbf7d0; --tdp-eu-fg: #166534;
+  --tdp-as-bg: #fef3c7; --tdp-as-bd: #fde68a; --tdp-as-fg: #92400e;
+  --tdp-af-bg: #fce7f3; --tdp-af-bd: #fbcfe8; --tdp-af-fg: #9d174d;
+  --tdp-oc-bg: #ccfbf1; --tdp-oc-bd: #99f6e4; --tdp-oc-fg: #115e59;
+  --tdp-sa-bg: #fae8ff; --tdp-sa-bd: #e9d5ff; --tdp-sa-fg: #6b21a8;
+
+  /* ── TYPE: families ── */
+  --tdp-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --tdp-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --tdp-font-clock: 'DSEG14-Classic', var(--tdp-font-mono);
+
+  /* ── TYPE: scale (modular scale, time.is inspired) ── */
+  --tdp-text-xs:    11px;     /* eyebrow, label */
+  --tdp-text-sm:    13px;     /* secondary body */
+  --tdp-text-base:  15px;     /* body */
+  --tdp-text-md:    17px;     /* lead body */
+  --tdp-text-lg:    20px;     /* small heading */
+  --tdp-text-xl:    24px;     /* heading */
+  --tdp-text-2xl:   32px;
+  --tdp-text-display: clamp(32px, 4.5vw, 48px);  /* "Find the right city" h1 */
+
+  /* ── TYPE: weights ── */
+  --tdp-wt-regular: 400;
+  --tdp-wt-medium:  500;
+  --tdp-wt-semi:    600;
+  --tdp-wt-bold:    700;
+  --tdp-wt-black:   800;
+
+  /* ── TYPE: tracking ── */
+  --tdp-track-tight:   -0.04em;   /* display headings, time.is style */
+  --tdp-track-snug:    -0.02em;
+  --tdp-track-normal:  0;
+  --tdp-track-wide:    0.04em;    /* eyebrows, labels */
+  --tdp-track-wider:   0.1em;     /* uppercase caps */
+
+  /* ── SPACE: 4px base scale ── */
+  --tdp-1: 4px;
+  --tdp-2: 8px;
+  --tdp-3: 12px;
+  --tdp-4: 16px;
+  --tdp-5: 20px;
+  --tdp-6: 24px;
+  --tdp-8: 32px;
+  --tdp-10: 40px;
+  --tdp-12: 48px;
+  --tdp-16: 64px;
+  --tdp-20: 80px;
+
+  /* ── RADIUS ── */
+  --tdp-radius-xs: 4px;
+  --tdp-radius-sm: 8px;
+  --tdp-radius-md: 12px;
+  --tdp-radius-lg: 16px;
+  --tdp-radius-xl: 20px;
+  --tdp-radius-2xl: 28px;
+  --tdp-radius-full: 999px;
+
+  /* ── SHADOW ── */
+  --tdp-shadow-sm:  0 1px 2px rgba(15, 23, 42, 0.06);
+  --tdp-shadow-md:  0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px -4px rgba(15, 23, 42, 0.05);
+  --tdp-shadow-lg:  0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(5, 150, 105, 0.15);
+  --tdp-shadow-xl:  0 1px 2px rgba(15, 23, 42, 0.04), 0 20px 48px -12px rgba(15, 23, 42, 0.12);
+
+  /* ── BORDERS ── */
+  --tdp-border: 1px solid var(--tdp-ink-100);
+  --tdp-border-strong: 1px solid var(--tdp-ink-200);
+
+  /* ── MOTION ── */
+  --tdp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --tdp-dur-fast: 120ms;
+  --tdp-dur: 200ms;
+  --tdp-dur-slow: 400ms;
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  BUTTON TOKEN                                                        */
+/*  The "Explore all zones" pill from the brief. Applied via .tdp-btn   */
+/*  + variant + size modifiers. Reused for the 12h/24h toggle too.     */
+/*                                                                       */
+/*  Variants:                                                            */
+/*    .tdp-btn--primary   — solid emerald (or per-variant color)        */
+/*    .tdp-btn--secondary — outlined                                   */
+/*    .tdp-btn--ghost     — text-only with hover bg                     */
+/*    .tdp-btn--accent    — purple/indigo (the "Explore all zones")     */
+/*                                                                       */
+/*  Sizes:                                                               */
+/*    .tdp-btn--sm        — compact (32px)                               */
+/*    .tdp-btn--md        — default (40px)                              */
+/*    .tdp-btn--lg        — large (48px, the "Explore all zones")       */
+/*    .tdp-btn--xl        — hero CTA (56px)                             */
+/* ─────────────────────────────────────────────────────────────────── */
+
+.tdp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tdp-2);
+  font-family: var(--tdp-font-sans);
+  font-weight: var(--tdp-wt-semi);
+  letter-spacing: var(--tdp-track-snug);
+  border: 1px solid transparent;
+  border-radius: var(--tdp-radius-full);
+  cursor: pointer;
+  transition: background var(--tdp-dur) var(--tdp-ease),
+              transform var(--tdp-dur-fast) var(--tdp-ease),
+              box-shadow var(--tdp-dur) var(--tdp-ease);
+  user-select: none;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.tdp-btn:focus-visible {
+  outline: 2px solid var(--tdp-emerald-500);
+  outline-offset: 2px;
+}
+.tdp-btn:active { transform: scale(0.98); }
+
+/* Variants */
+.tdp-btn--primary {
+  background: var(--tdp-emerald-600);
+  color: var(--tdp-white);
+  box-shadow: var(--tdp-shadow-md);
+}
+.tdp-btn--primary:hover { background: #047857; box-shadow: var(--tdp-shadow-lg); }
+
+.tdp-btn--accent {
+  background: var(--tdp-indigo-500);
+  color: var(--tdp-white);
+  box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4);
+}
+.tdp-btn--accent:hover {
+  background: var(--tdp-indigo-600);
+  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.5);
+}
+
+.tdp-btn--secondary {
+  background: var(--tdp-white);
+  color: var(--tdp-ink-800);
+  border-color: var(--tdp-ink-200);
+}
+.tdp-btn--secondary:hover { background: var(--tdp-ink-50); border-color: var(--tdp-ink-300); }
+
+.tdp-btn--ghost {
+  background: transparent;
+  color: var(--tdp-ink-700);
+}
+.tdp-btn--ghost:hover { background: var(--tdp-ink-100); }
+
+/* Sizes */
+.tdp-btn--sm { height: 32px; padding: 0 var(--tdp-3); font-size: var(--tdp-text-sm); }
+.tdp-btn--md { height: 40px; padding: 0 var(--tdp-4); font-size: var(--tdp-text-sm); }
+.tdp-btn--lg {
+  height: 48px;
+  padding: 0 var(--tdp-6);
+  font-size: var(--tdp-text-base);
+}
+.tdp-btn--xl {
+  height: 56px;
+  padding: 0 var(--tdp-8);
+  font-size: var(--tdp-text-md);
+  letter-spacing: var(--tdp-track-tight);
+}
+
+/* Icon-only (square) variants */
+.tdp-btn--icon-sm { width: 32px; padding: 0; }
+.tdp-btn--icon-md { width: 40px; padding: 0; }
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  HEADLINE + LEDE TOKEN                                                */
+/*  The "Find the right city, in the right timezone." pattern from      */
+/*  the brief. Used at the top of every section that introduces a new   */
+/*  concept. Reusable across landing, /explore, /tools, etc.             */
+/*                                                                       */
+/*  Anatomy:                                                             */
+/*    .tdp-headline                                                       */
+/*      <span class="tdp-eyebrow">Optional eyebrow</span>                */
+/*      <h2 class="tdp-display">The big idea</h2>                        */
+/*      <p class="tdp-lede">Supporting copy 1-2 sentences.</p>            */
+/*      <div class="tdp-context-chips">...</div>  (optional)            */
+/* ─────────────────────────────────────────────────────────────────── */
+
+.tdp-headline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdp-3);
+  max-width: 720px;
+}
+
+.tdp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tdp-2);
+  font-size: var(--tdp-text-xs);
+  font-weight: var(--tdp-wt-bold);
+  letter-spacing: var(--tdp-track-wider);
+  text-transform: uppercase;
+  color: var(--tdp-ink-500);
+  font-family: var(--tdp-font-sans);
+}
+.tdp-eyebrow--accent { color: var(--tdp-emerald-600); }
+
+.tdp-display {
+  font-family: var(--tdp-font-sans);
+  font-size: var(--tdp-text-display);
+  font-weight: var(--tdp-wt-black);
+  letter-spacing: var(--tdp-track-tight);
+  line-height: 1.05;
+  color: var(--tdp-ink-900);
+  margin: 0;
+}
+
+.tdp-lede {
+  font-family: var(--tdp-font-sans);
+  font-size: var(--tdp-text-md);
+  font-weight: var(--tdp-wt-medium);
+  line-height: 1.5;
+  color: var(--tdp-ink-600);
+  margin: 0;
+  max-width: 640px;
+}
+
+.tdp-context-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tdp-2);
+  margin-top: var(--tdp-2);
+}
+.tdp-context-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tdp-1);
+  font-size: var(--tdp-text-xs);
+  font-weight: var(--tdp-wt-semi);
+  padding: var(--tdp-1) var(--tdp-3);
+  border-radius: var(--tdp-radius-full);
+  background: var(--tdp-ink-50);
+  color: var(--tdp-ink-700);
+  border: 1px solid var(--tdp-ink-100);
+}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/*  SHARED: 1/4-COLUMN FAVORITES RAIL                                    */
+/*                                                                       */
+/*  Used in designs A/B/C with consistent markup but flexible visual.   */
+/*  The favorites list + search bar share the same data model.          */
+/* ─────────────────────────────────────────────────────────────────── */
+
+.tdp-fav-rail {
+  background: var(--tdp-white);
+  border: var(--tdp-border);
+  border-radius: var(--tdp-radius-2xl);
+  padding: var(--tdp-5);
+  box-shadow: var(--tdp-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdp-4);
+  min-width: 0;
+}
+
+.tdp-fav-rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tdp-2);
+}
+.tdp-fav-rail-head h3 {
+  margin: 0;
+  font-size: var(--tdp-text-xs);
+  font-weight: var(--tdp-wt-bold);
+  letter-spacing: var(--tdp-track-wider);
+  text-transform: uppercase;
+  color: var(--tdp-ink-600);
+}
+.tdp-fav-rail-head .count {
+  font-size: var(--tdp-text-xs);
+  font-weight: var(--tdp-wt-bold);
+  color: var(--tdp-emerald-700);
+  background: var(--tdp-emerald-100);
+  padding: 2px 8px;
+  border-radius: var(--tdp-radius-full);
+}
+
+/* Search input */
+.tdp-search {
+  position: relative;
+}
+.tdp-search-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--tdp-ink-200);
+  border-radius: var(--tdp-radius-md);
+  padding: 0 var(--tdp-3) 0 36px;
+  font-family: var(--tdp-font-sans);
+  font-size: var(--tdp-text-sm);
+  color: var(--tdp-ink-900);
+  background: var(--tdp-ink-50);
+  outline: none;
+  transition: border-color var(--tdp-dur) var(--tdp-ease),
+              background var(--tdp-dur) var(--tdp-ease);
+}
+.tdp-search-input::placeholder { color: var(--tdp-ink-400); }
+.tdp-search-input:focus {
+  border-color: var(--tdp-emerald-500);
+  background: var(--tdp-white);
+  box-shadow: 0 0 0 3px var(--tdp-emerald-100);
+}
+.tdp-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--tdp-ink-400);
+  pointer-events: none;
+}
+.tdp-search-kbd {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--tdp-font-mono);
+  font-size: 10px;
+  font-weight: var(--tdp-wt-bold);
+  color: var(--tdp-ink-500);
+  background: var(--tdp-white);
+  border: 1px solid var(--tdp-ink-200);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* Autocomplete dropdown */
+.tdp-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0; right: 0;
+  margin-top: var(--tdp-2);
+  background: var(--tdp-white);
+  border: 1px solid var(--tdp-ink-200);
+  border-radius: var(--tdp-radius-md);
+  box-shadow: var(--tdp-shadow-lg);
+  z-index: 10;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+.tdp-search-results.open { display: block; }
+.tdp-search-result {
+  display: flex;
+  align-items: center;
+  gap: var(--tdp-3);
+  padding: var(--tdp-2) var(--tdp-3);
+  cursor: pointer;
+  font-size: var(--tdp-text-sm);
+  color: var(--tdp-ink-800);
+}
+.tdp-search-result:hover,
+.tdp-search-result.active {
+  background: var(--tdp-emerald-50);
+  color: var(--tdp-emerald-700);
+}
+.tdp-search-result .result-tz {
+  margin-left: auto;
+  font-family: var(--tdp-font-mono);
+  font-size: 10px;
+  color: var(--tdp-ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Favorite item */
+.tdp-fav-item {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: var(--tdp-3);
+  padding: var(--tdp-2);
+  border-radius: var(--tdp-radius-md);
+  cursor: pointer;
+  transition: background var(--tdp-dur-fast) var(--tdp-ease);
+}
+.tdp-fav-item:hover { background: var(--tdp-ink-50); }
+.tdp-fav-item.is-home { background: var(--tdp-emerald-50); }
+
+.tdp-fav-flag {
+  width: 32px; height: 22px;
+  border-radius: var(--tdp-radius-xs);
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: var(--tdp-wt-black);
+  color: var(--tdp-white);
+  letter-spacing: 0.04em;
+}
+.tdp-fav-flag--na { background: #3b82f6; }
+.tdp-fav-flag--eu { background: #10b981; }
+.tdp-fav-flag--as { background: #f59e0b; }
+.tdp-fav-flag--af { background: #ec4899; }
+.tdp-fav-flag--oc { background: #14b8a6; }
+.tdp-fav-flag--sa { background: #a855f7; }
+
+.tdp-fav-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tdp-fav-name {
+  font-size: var(--tdp-text-sm);
+  font-weight: var(--tdp-wt-bold);
+  color: var(--tdp-ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tdp-fav-sub {
+  font-size: var(--tdp-text-xs);
+  font-weight: var(--tdp-wt-medium);
+  color: var(--tdp-ink-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tdp-fav-time {
+  font-family: var(--tdp-font-mono);
+  font-size: var(--tdp-text-sm);
+  font-weight: var(--tdp-wt-bold);
+  color: var(--tdp-ink-800);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.tdp-fav-time .ms {
+  font-size: 9px;
+  color: var(--tdp-ink-500);
+  font-weight: var(--tdp-wt-semi);
+  display: block;
+}
+.tdp-fav-time .badge {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: var(--tdp-wt-black);
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+.tdp-fav-time .badge--open    { background: var(--tdp-emerald-100); color: var(--tdp-emerald-700); }
+.tdp-fav-time .badge--closing { background: var(--tdp-amber-100);   color: #92400e; }
+.tdp-fav-time .badge--asleep  { background: var(--tdp-ink-100);     color: var(--tdp-ink-500); }
+
+.tdp-fav-remove {
+  background: transparent;
+  border: 0;
+  color: var(--tdp-ink-400);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 var(--tdp-1);
+  margin-left: -4px;
+}
+.tdp-fav-remove:hover { color: #ef4444; }
