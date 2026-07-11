@@ -1,22 +1,24 @@
 // src/components/landing/LandingHeroHorizon.tsx
-// Composes HeroDateBlock + HeroClock, fed by useHomeData + the liveDate ticker.
-// Single source of truth for the hero — replaces the inline hero markup in
-// App.tsx (gated by VITE_LANDING_V2 flag, off by default for now).
+// Composes HeroDateBlock + HeroClock + CityPickerTrigger + CityPickerOverlay,
+// fed by useHomeData + the liveDate ticker + useTrackedCities state.
 //
-// polish-4 layout split:
-//   - .tdp-hero-inner (max-width 1120px) wraps the centered chrome:
-//     eyebrow row, date block, sun pills, sync footer, and the 12h/24h
-//     toggle button. These stay focused and centered.
-//   - .tdp-hero-clock (max-width 1600px / 95vw) lives OUTSIDE the inner
-//     so the digits can span full viewport width on ultrawide displays.
-//     The clock itself is still text-aligned center, but the larger
-//     available width lets it scale up to 240px DSEG font on 1920px+.
+// City picker behavior:
+//   - The user can switch the active city via the trigger button (top-right
+//     of the hero, next to the 12H/24H toggle) or via Cmd/Ctrl+K
+//   - The 5 default cities ship pre-loaded (Wesley Chapel, London, Dubai,
+//     Tokyo, Sydney). The home city (Wesley Chapel) is always first and not
+//     removable. Other cities can be removed via an X button in the overlay.
+//   - Switching cities re-fires useHomeData with the new country/homeCode,
+//     which cascades through the whole hero: clock timezone, sun data,
+//     business hours, greeting, day length, sync drift, onThisDay, etc.
 
-import { useState, useEffect } from "react";
-import { Clock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
 import { useHomeData } from "../../hooks/useHomeData";
+import { useTrackedCities } from "../../hooks/useTrackedCities";
+import { CityPickerOverlay } from "./CityPickerOverlay";
 import { formatLongDateShared } from "../../utils/landingFormatters";
 import "./landingHorizon.css";
 
@@ -54,12 +56,44 @@ export function LandingHeroHorizon({
   lang = "en",
   testData,
 }: LandingHeroHorizonProps) {
+  // City picker state (manages tracked cities + active city, persists to localStorage)
+  // Declared FIRST because useHomeData below needs activeCity for its params.
+  const {
+    cities: trackedCities,
+    activeCity,
+    activeCode,
+    setActive,
+    addCity,
+    removeCity,
+  } = useTrackedCities();
+
   // Always call the hook — React rules require hooks in the same order
   // every render. We override the result with testData below.
-  const homeDataResult = useHomeData(country, "WLC");
+  // Key the fetch off the ACTIVE CITY (from the picker), not the legacy
+  // `country` prop, so switching cities re-fires the API for the new
+  // country/code and the hero data cascades (sun, business, greeting,
+  // day length, sync drift, onThisDay, etc.).
+  const fetchCountry = activeCity?.countryCode ?? country;
+  const fetchHomeCode = activeCity?.code ?? "WLC";
+  const homeDataResult = useHomeData(fetchCountry, fetchHomeCode);
   const fetched = testData
     ? ({ status: "ok" as const, data: testData, source: "local" as const })
     : homeDataResult;
+
+  // City picker UI state (overlay open/closed)
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Cmd/Ctrl+K opens the overlay
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPickerOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   // 12h/24h toggle — App-level concern (persists across page changes),
   // but rendered inside the hero so it lives next to the clock it
@@ -78,9 +112,34 @@ export function LandingHeroHorizon({
       ? fetched.data
       : null;
 
+  // Hero's display values come from the active city (from the picker), so
+  // switching the city re-renders the entire hero against the new timezone.
+  // We DO NOT fall back to the legacy prop values (cityRegion, etc.) for
+  // the region — doing so causes "Paris, Florida, France" when switching
+  // from Wesley Chapel (state=Florida) to Paris (no state). The prop
+  // values are only used if activeCity is completely missing.
+  const heroTimezone = activeCity?.timezone ?? timezone;
+  const heroCityName = activeCity?.name ?? cityName;
+  const heroCityRegion = activeCity ? activeCity.state : cityRegion;
+  const heroCountryName = activeCity?.country ?? countryName;
+
+  const handlePick = useCallback(
+    (code: string) => {
+      setActive(code);
+    },
+    [setActive]
+  );
+
+  const handleAdd = useCallback(
+    (city: import("../../data/cities").CityEntry) => {
+      addCity(city);
+    },
+    [addCity]
+  );
+
   return (
     <section className="tdp-hero" aria-label="Current time and date for your city">
-      {/* Centered chrome (eyebrow + greeting + date + status pills + toggle) capped at 1120px */}
+      {/* Centered chrome (eyebrow + greeting + date + status pills + toggles) */}
       <div className="tdp-hero-inner">
         <HeroDateBlock
           liveDate={liveDate}
@@ -105,43 +164,66 @@ export function LandingHeroHorizon({
             the date and the clock. Always 3, in fixed order. */}
         <HeroStatusPills pills={data?.statusPills} />
 
-        {/* 12h/24h toggle — sits at the top-right of the hero so it's
-            visible without scrolling. Toggling re-renders the clock
-            immediately because it shares the same liveDate prop.
+        {/* Top-right action cluster: city picker trigger + 12H/24H toggle */}
+        <div className="tdp-hero-actions">
+          {/* City picker trigger — opens the overlay */}
+          <button
+            type="button"
+            className="tdp-btn tdp-btn--secondary tdp-btn--sm tdp-city-picker-trigger"
+            onClick={() => setPickerOpen(true)}
+            aria-label="Change city"
+            aria-haspopup="dialog"
+            data-testid="hero-city-picker-trigger"
+            title={`Current: ${heroCityName} (click to change)`}
+          >
+            <Globe size={12} aria-hidden style={{ opacity: 0.85 }} />
+            <span className="tdp-city-picker-trigger-label">
+              {heroCityName}
+            </span>
+            <kbd className="tdp-city-picker-kbd" aria-hidden>⌘K</kbd>
+          </button>
 
-            Visual: solid emerald (tdp-btn--primary) with white text —
-            matches the rest of the CTAs in the design system (the
-            'Find a meeting time' / 'Explore all zones' style).
-            tdp-hour-toggle class only carries positioning (absolute,
-            top-right), not visual styling. */}
-        <button
-          type="button"
-          className="tdp-btn tdp-btn--primary tdp-btn--sm tdp-hour-toggle"
-          onClick={() => setHour12((v) => !v)}
-          aria-label={hour12 ? "Switch to 24-hour clock" : "Switch to 12-hour clock with AM/PM"}
-          aria-pressed={hour12}
-          data-testid="hero-hour-toggle"
-        >
-          <Clock size={12} aria-hidden style={{ color: "rgba(255,255,255,0.95)" }} />
-          <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
-          <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
-        </button>
+          {/* 12h/24h toggle — sits at the top-right of the hero so it's
+              visible without scrolling. */}
+          <button
+            type="button"
+            className="tdp-btn tdp-btn--primary tdp-btn--sm tdp-hour-toggle"
+            onClick={() => setHour12((v) => !v)}
+            aria-label={hour12 ? "Switch to 24-hour clock" : "Switch to 12-hour clock with AM/PM"}
+            aria-pressed={hour12}
+            data-testid="hero-hour-toggle"
+          >
+            <Clock size={12} aria-hidden style={{ color: "rgba(255,255,255,0.95)" }} />
+            <span className="tdp-hour-toggle-mode">{hour12 ? "12h" : "24h"}</span>
+            <span className="tdp-hour-toggle-label">{hour12 ? "AM/PM" : "military"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Full-width clock — lives outside .tdp-hero-inner so it can span
-          up to min(1600px, 95vw) on ultrawide displays. Still text-align
-          center inside its own wrapper so the digits stay centered.
-          The sync footer block is rendered internally by HeroClock. */}
+          up to min(1600px, 95vw) on ultrawide displays. Uses the active
+          city's timezone (from the picker) for the visible time format. */}
       <HeroClock
         liveDate={liveDate}
-        timezone={timezone}
+        timezone={heroTimezone}
         sync={data?.sync}
-        cityName={cityName}
-        cityRegion={cityRegion}
-        countryName={countryName}
+        cityName={heroCityName}
+        cityRegion={heroCityRegion}
+        countryName={heroCountryName}
         sun={data?.sun}
         hour12={hour12}
         statusPills={data?.statusPills}
+      />
+
+      {/* City picker overlay — only mounted when open */}
+      <CityPickerOverlay
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        trackedCities={trackedCities}
+        activeCode={activeCode}
+        onPick={handlePick}
+        onAdd={handleAdd}
+        onRemove={removeCity}
       />
     </section>
   );

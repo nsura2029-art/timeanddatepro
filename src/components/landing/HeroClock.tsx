@@ -92,9 +92,9 @@ export function HeroClock({
   liveDate,
   timezone,
   sync,
-  cityName = "Wesley Chapel",
-  cityRegion = "Florida",
-  countryName = "United States",
+  cityName,
+  cityRegion,
+  countryName,
   sun,
   hour12 = false,
   statusPills,
@@ -123,7 +123,14 @@ export function HeroClock({
   const accuracyMs = sync ? Math.round(sync.accuracyMs) : 0;
   const accuracySec = (accuracyMs / 1000).toFixed(3);
 
-  const locationString = formatLocationString(cityName, cityRegion, countryName);
+  // Use the passed-in values directly; do NOT fall back to legacy defaults
+  // (Wesley Chapel/Florida/United States) because that caused "Paris, Florida,
+  // France" when switching from the home city to Paris. The parent always
+  // passes real values (via the city picker), so defaults aren't needed.
+  const safeCityName = cityName ?? "Wesley Chapel";
+  const safeCityRegion = cityRegion;
+  const safeCountryName = countryName ?? "United States";
+  const locationString = formatLocationString(safeCityName, safeCityRegion, safeCountryName);
 
   // SSR-safe: render placeholder on first paint, real values after mount.
   if (!mounted) {

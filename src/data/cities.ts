@@ -43,6 +43,7 @@ const US: CityEntry[] = [
   // Florida
   { code: "MIA", name: "Miami",            country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population: 442241 },
   { code: "TPA", name: "Tampa",            country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population: 399451 },
+  { code: "WLC", name: "Wesley Chapel",    country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population:  69335 },
   { code: "MCO", name: "Orlando",          country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population: 309154 },
   { code: "JAX", name: "Jacksonville",     country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population: 949611 },
   { code: "FLL", name: "Fort Lauderdale",  country: "United States", countryCode: "US", timezone: "America/New_York",    state: "Florida",          population: 182437 },
