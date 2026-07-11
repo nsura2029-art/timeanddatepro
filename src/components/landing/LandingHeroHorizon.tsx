@@ -88,7 +88,13 @@ export function LandingHeroHorizon({
           todayHoliday={null}
           internationalHoliday={
             data?.holiday?.international
-              ? { country: data.holiday.international.country, name: data.holiday.international.name }
+              ? {
+                  source: data.holiday.international.source,
+                  text: data.holiday.international.text,
+                  year: data.holiday.international.year,
+                  category: data.holiday.international.category,
+                  country: data.holiday.international.country,
+                }
               : null
           }
           greeting={data?.greeting?.message}

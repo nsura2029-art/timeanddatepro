@@ -4,7 +4,7 @@
 // the user's UTC offset, and any holiday observed today (domestic or international).
 // Styling matches the 03-horizon.html hero-eyebrow / hero-date / hero-holiday.
 
-import { CalendarHeart } from "lucide-react";
+import { CalendarHeart, Sparkles, Trophy } from "lucide-react";
 
 interface HeroDateBlockProps {
   /** Live ticker — used for the date string */
@@ -13,8 +13,20 @@ interface HeroDateBlockProps {
   timezone: string;
   /** Holiday in user's country today, if any (BrowseHome.holiday.today) */
   todayHoliday?: { name_en: string; country?: string } | null;
-  /** Holiday in some other country today, if any (BrowseHome.holiday.international) */
-  internationalHoliday?: { country: string; name: string } | null;
+  /**
+   * "What's happening today" pill — shown below the date.
+   * Source can be:
+   *   - "holiday"   : CalendarHeart icon, "Good Friday" (or name) + country
+   *   - "onthisday" : Sparkles icon, "1957 — Prince Karim..." (raw fact)
+   *   - "event"     : Trophy icon, "FIFA World Cup Opening" + country
+   */
+  internationalHoliday?: {
+    source: "holiday" | "onthisday" | "event";
+    text: string;
+    year?: number;
+    category?: "event" | "birth" | "death";
+    country?: string;
+  } | null;
   /** Optional override for the live pill label */
   liveLabel?: string;
   /** Time-of-day greeting (e.g. "Good morning"). No name — we don't know who the user is. */
@@ -92,11 +104,35 @@ export function HeroDateBlock({
       <h1 className="tdp-hero-date">{dateText}</h1>
 
       {observed && (
-        <div className="tdp-hero-holiday">
-          <CalendarHeart size={14} aria-hidden className="tdp-hero-holiday-flag" />
+        <div
+          className={`tdp-hero-holiday tdp-hero-holiday--${(observed as any).source ?? "holiday"}`}
+          data-testid="hero-holiday-pill"
+        >
+          {(observed as any).source === "onthisday" ? (
+            <Sparkles size={14} aria-hidden className="tdp-hero-holiday-flag" />
+          ) : (observed as any).source === "event" ? (
+            <Trophy size={14} aria-hidden className="tdp-hero-holiday-flag" />
+          ) : (
+            <CalendarHeart size={14} aria-hidden className="tdp-hero-holiday-flag" />
+          )}
           <span>
-            <strong>{(observed as any).name_en ?? (observed as any).name}</strong>{" "}
-            observed in {(observed as any).country || "your country"} today
+            {/* Holiday: "<name> observed in <country> today" */}
+            {(observed as any).source === "onthisday" ? (
+              <>
+                <strong>On this day{(observed as any).year ? ` in ${(observed as any).year}` : ""}</strong>{" "}
+                — {(observed as any).text.replace(/^\d{4}\s*—\s*/, "")}
+              </>
+            ) : (observed as any).source === "event" ? (
+              <>
+                <strong>{(observed as any).text}</strong>{" "}
+                {(observed as any).country ? <>happening in {(observed as any).country} today</> : <>happening today</>}
+              </>
+            ) : (
+              <>
+                <strong>{(observed as any).name_en ?? (observed as any).text ?? (observed as any).name}</strong>{" "}
+                observed in {(observed as any).country || "your country"} today
+              </>
+            )}
           </span>
         </div>
       )}

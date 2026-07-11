@@ -423,6 +423,9 @@
   color: var(--accent-primary-deep);
   font-size: 13px;
   font-weight: 500;
+  max-width: 720px;
+  text-align: left;
+  line-height: 1.4;
 }
 
 .tdp-hero-holiday strong {
@@ -431,6 +434,28 @@
 
 .tdp-hero-holiday-flag {
   color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+/* OnThisDay variant — soft indigo background, Sparkles icon.
+   Sits below the date H1, above the 3 status pills. Stable per day. */
+.tdp-hero-holiday--onthisday {
+  background: rgba(224, 231, 255, 0.55);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  color: #312e81;
+}
+.tdp-hero-holiday--onthisday .tdp-hero-holiday-flag {
+  color: #6366f1;
+}
+
+/* Sports/event variant — soft amber background, Trophy icon. */
+.tdp-hero-holiday--event {
+  background: rgba(254, 243, 199, 0.55);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #78350f;
+}
+.tdp-hero-holiday--event .tdp-hero-holiday-flag {
+  color: #d97706;
 }
 
 /* Sync block ------------------------------------------------------------- */

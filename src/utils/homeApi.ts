@@ -18,14 +18,24 @@ import type { CountryCode } from "../types";
  * Pick the most interesting "what's happening globally today" item to show
  * in the international pill on the hero. Order of preference:
  *   1. Public holiday today in any of 30 curated countries (rotates by date)
- *   2. A notable event from Wikipedia OnThisDay (events/births/deaths) for today
+ *   2. ONE random OnThisDay fact (event / birth / death) — stable per day so
+ *      the same date always shows the same fact, but each day shows something
+ *      different. Replaces the old generic month-filler ("Mid-summer in
+ *      the Northern Hemisphere" was noise).
  *   3. Today's `nextEvent` if it lands today (e.g. World Cup opening day)
- *   4. A curated fallback that's date-stable so the pill is never empty
+ *   4. null (pill renders nothing if all three miss)
  */
 function pickInternationalHolidayOrFact(
   todayIso: string,
-  now: Date
-): { country: string; name: string } | null {
+  now: Date,
+  onThisDay: { events: string[]; births: string[]; deaths: string[] }
+): {
+  source: "holiday" | "onthisday" | "event";
+  text: string;
+  year?: number;
+  category?: "event" | "birth" | "death";
+  country?: string;
+} | null {
   // 1. Holiday in any country today — deterministic by date so the same
   //    day always shows the same country.
   const INTL_HOLIDAY_POOL: Array<{ date: string; country: string; name: string }> = [
@@ -59,14 +69,27 @@ function pickInternationalHolidayOrFact(
   const mmdd = todayIso.slice(5); // MM-DD
   const directHit = INTL_HOLIDAY_POOL.find((h) => h.date === mmdd);
   if (directHit) {
-    return { country: directHit.country, name: directHit.name };
+    return { source: "holiday", text: directHit.name, country: directHit.country };
   }
 
-  // 2. Wikipedia OnThisDay — synchronous lookup (already in browse/home).
-  // Falls through if unavailable. We don't await here because pickInternationalHolidayOrFact
-  // is called from a sync context in homeApi.ts. The caller already has onThisDay data.
-  // (Will pick from the onThisDay bucket in a follow-up patch; for now rely on
-  // the curated pool + nextEvent.)
+  // 2. ONE random OnThisDay fact (event / birth / death), stable per day.
+  // Combines all 3 buckets into one pool, then picks deterministically
+  // using the day-of-year as a seed. Year is extracted from the prefix
+  // (Wikipedia format: "YEAR — description").
+  const pool: Array<{ text: string; category: "event" | "birth" | "death" }> = [
+    ...onThisDay.events.map((t) => ({ text: t, category: "event" as const })),
+    ...onThisDay.births.map((t) => ({ text: t, category: "birth" as const })),
+    ...onThisDay.deaths.map((t) => ({ text: t, category: "death" as const })),
+  ];
+  if (pool.length > 0) {
+    // Day-of-year seed (1-366) so the same calendar date always shows the same fact
+    const start = new Date(now.getFullYear(), 0, 0).getTime();
+    const dayOfYear = Math.floor((now.getTime() - start) / 86400000);
+    const pick = pool[dayOfYear % pool.length];
+    const yearMatch = pick.text.match(/^(\d{4})/);
+    const year = yearMatch ? parseInt(yearMatch[1], 10) : undefined;
+    return { source: "onthisday", text: pick.text, year, category: pick.category };
+  }
 
   // 3. nextEvent — if it's today (e.g. FIFA World Cup opening day 2026-06-11).
   const ev = getNextBigEvent(now);
@@ -74,27 +97,12 @@ function pickInternationalHolidayOrFact(
     const evDate = new Date(ev.startUtc);
     const evIso = evDate.toISOString().slice(0, 10);
     if (evIso === todayIso) {
-      return { country: ev.country, name: ev.name };
+      return { source: "event", text: ev.name, country: ev.country };
     }
   }
 
-  // 4. Date-stable curated fallback by month (never empty).
-  const FALLBACK_BY_MONTH: Record<number, { country: string; name: string }> = {
-    1:  { country: "XX", name: "New Year celebrations underway" },
-    2:  { country: "CN", name: "Spring Festival (Lunar New Year)" },
-    3:  { country: "XX", name: "Daylight Saving Time begins in many regions" },
-    4:  { country: "JP", name: "Cherry blossom season (Sakura)" },
-    5:  { country: "XX", name: "International Workers' Day observed" },
-    6:  { country: "XX", name: "Summer solstice approaching" },
-    7:  { country: "XX", name: "Mid-summer in the Northern Hemisphere" },
-    8:  { country: "XX", name: "Late summer holidays across Europe" },
-    9:  { country: "XX", name: "Equinox approaching" },
-    10: { country: "DE", name: "Day of German Unity observed" },
-    11: { country: "US", name: "Thanksgiving (United States)" },
-    12: { country: "XX", name: "Holiday season across many cultures" },
-  };
-  const month = now.getMonth() + 1;
-  return FALLBACK_BY_MONTH[month] ?? { country: "XX", name: "Today is a global day" };
+  // 4. null — no generic month filler. If all 3 miss, the pill is hidden.
+  return null;
 }
 
 export interface BrowseHome {
@@ -163,8 +171,23 @@ export interface BrowseHome {
   holiday: {
     /** Holiday in user's country today */
     today: any | null;
-    /** Holiday in any country today (e.g. "Constitution Day (Australia)") */
-    international: { country: string; name: string } | null;
+    /**
+     * The "what's happening today" pill shown below the date.
+     * Source can be:
+     *   - "holiday"   : a curated public holiday in some country today
+     *   - "onthisday" : a random historical fact (event/birth/death) from
+     *                   Wikipedia's OnThisDay feed, picked stable-per-day
+     *   - "event"     : a sports/observance event happening today
+     * `country` is set for `holiday` + `event` sources.
+     * `year` + `category` are set for `onthisday` source.
+     */
+    international: {
+      source: "holiday" | "onthisday" | "event";
+      text: string;
+      year?: number;
+      category?: "event" | "birth" | "death";
+      country?: string;
+    } | null;
     next: any | null;
   };
   nextEvent: any | null;        // next sports/holiday/observance
@@ -228,20 +251,6 @@ export async function buildBrowseHome(opts: {
   const todayIso = now.toISOString().slice(0, 10);
   const usLookup = lookupHoliday("US", todayIso);
 
-  // International: dynamic lookup chain.
-  //   1. Today's public holiday in any country (curated for 30 countries)
-  //   2. A notable event from Wikipedia OnThisDay (events/births/deaths)
-  //   3. Today's `nextEvent` if it's today (e.g. World Cup opening day)
-  //   4. The user's country holiday as last resort
-  // Falls back to a sensible default if all four miss.
-  const international = pickInternationalHolidayOrFact(todayIso, now);
-
-  const holiday = {
-    today: usLookup.holiday,
-    international,
-    next: usLookup.nextHoliday,
-  };
-
   // === NEXT EVENT (sports/holiday) ===
   const nextEvent = getNextBigEvent(now);
 
@@ -252,15 +261,17 @@ export async function buildBrowseHome(opts: {
   const topTwenty = popular;
 
   // === QUOTE ===
+  // Quote is selected based on the user's country. We pass holiday=false
+  // since the international pill now uses onThisDay data, not holiday data.
   const quoteRaw = pickQuote({
     pool: QUOTES_EN,
     now,
     countryTag: `country:${userCountryCode.toLowerCase()}`,
-    isHoliday: !!holiday.today,
+    isHoliday: !!usLookup.holiday,
   });
   const quote = { id: quoteRaw.id, text: quoteRaw.text, author: quoteRaw.author };
 
-  // === ON THIS DAY ===
+  // === ON THIS DAY (fetched FIRST so the international pill can pick from it) ===
   let onThisDay = { events: [], births: [], deaths: [] };
   try {
     const feed = await fetchOnThisDay(now.getMonth() + 1, now.getDate(), 30);
@@ -274,6 +285,19 @@ export async function buildBrowseHome(opts: {
     // Wikipedia API might be unavailable — fall back to empty
     console.warn("Wikipedia OnThisDay API unavailable:", e);
   }
+
+  // International: dynamic lookup chain (uses onThisDay data as primary fallback).
+  //   1. Today's public holiday in any country (curated for 30 countries)
+  //   2. ONE random OnThisDay fact (event/birth/death) — stable per day
+  //   3. Today's `nextEvent` if it lands today (e.g. World Cup opening day)
+  //   4. null (no more generic month filler like "Mid-summer in the Northern Hemisphere")
+  const international = pickInternationalHolidayOrFact(todayIso, now, onThisDay);
+
+  const holiday = {
+    today: usLookup.holiday,
+    international,
+    next: usLookup.nextHoliday,
+  };
 
   // === DST CHANGES ===
   const dstChanges = getUpcomingDstChanges(now).map((info) => ({
