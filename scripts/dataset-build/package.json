@@ -1,0 +1,15 @@
+{
+  "name": "tdp-dataset-build",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generates the canonical timezone/country/city dataset from public sources",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:skip-download": "node build.mjs --skip-download"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "pako": "^2.1.0"
+  }
+}
