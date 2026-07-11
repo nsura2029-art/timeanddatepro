@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Brand purple rounded square background -->
+  <rect width="32" height="32" rx="7" fill="#7257d5"/>
+  <!-- White clock face -->
+  <circle cx="16" cy="16" r="9" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <!-- Hour hand (pointing to 10) -->
+  <line x1="16" y1="16" x2="11" y2="12" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <!-- Minute hand (pointing to 2) -->
+  <line x1="16" y1="16" x2="20" y2="10" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="16" cy="16" r="1.5" fill="#ffffff"/>
+</svg>

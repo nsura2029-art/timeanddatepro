@@ -82,6 +82,28 @@ function formatTimezoneAbbr(d: Date, tz: string): string {
   }
 }
 
+// Common city name aliases. Maps legacy/alternative spellings to the
+// official name in the bundled CITIES dataset. Lowercase, no diacritics.
+// When the user types an alias, the search matches the canonical name.
+const CITY_ALIASES: Record<string, string> = {
+  bangalore: "bengaluru",
+  bombay: "mumbai",
+  madras: "chennai",
+  calcutta: "kolkata",
+  peking: "beijing",
+  "sao paulo": "são paulo",
+  "rio": "rio de janeiro",
+  "istambul": "istanbul",
+  "constantinople": "istanbul",
+  "byzantium": "istanbul",
+  "new york": "new york",
+  "nyc": "new york",
+  "la": "los angeles",
+  "sf": "san francisco",
+  "dc": "washington",
+  "vegg": "vega",
+};
+
 // Client-side city search. The dev API Worker's /api/v1/cities/search
 // endpoint is currently unavailable (returns 404), so the search runs
 // against the bundled CITIES dataset (~300 cities, ~33KB). Scoring:
@@ -89,14 +111,17 @@ function formatTimezoneAbbr(d: Date, tz: string): string {
 //   - Name prefix match gets a big boost
 //   - Substring match in name or country
 //   - Population acts as a tiebreaker
+// Also supports common aliases (bangalore -> Bengaluru, etc.)
 // Excludes codes already in the tracked list.
 function searchCities(
   query: string,
   excludeCodes: Set<string>,
   limit: number,
 ): CityEntry[] {
-  const q = query.trim().toLowerCase();
-  if (q.length < 2) return [];
+  const raw = query.trim().toLowerCase();
+  if (raw.length < 2) return [];
+  // Resolve aliases: if the user typed an alias, search the canonical name
+  const q = CITY_ALIASES[raw] ?? raw;
   const scored: { city: CityEntry; score: number }[] = [];
   for (const city of CITIES) {
     if (excludeCodes.has(city.code)) continue;
