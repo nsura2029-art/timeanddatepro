@@ -179,6 +179,7 @@ export function LandingHeroHorizon({
                     }
                   : null
               }
+              internationalPool={data?.holiday?.internationalPool ?? []}
               greeting={data?.greeting?.message}
               lang={lang}
             />

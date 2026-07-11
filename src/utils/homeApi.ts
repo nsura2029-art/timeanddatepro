@@ -25,19 +25,31 @@ import type { CountryCode } from "../types";
  *   3. Today's `nextEvent` if it lands today (e.g. World Cup opening day)
  *   4. null (pill renders nothing if all three miss)
  */
-function pickInternationalHolidayOrFact(
-  todayIso: string,
-  now: Date,
-  onThisDay: { events: string[]; births: string[]; deaths: string[] }
-): {
+export type InternationalHoliday = {
   source: "holiday" | "onthisday" | "event";
   text: string;
   year?: number;
   category?: "event" | "birth" | "death";
   country?: string;
-} | null {
-  // 1. Holiday in any country today — deterministic by date so the same
-  //    day always shows the same country.
+};
+
+/**
+ * Build the full pool of "what's happening globally today" items:
+ * today's international holiday(s) + ALL OnThisDay facts (events/births/deaths)
+ * + any big event that lands today. Returned to the client so the hero
+ * can randomize the pick (instead of the old stable-per-day one) and
+ * rotate every 8 minutes.
+ */
+export function buildInternationalHolidayPool(
+  todayIso: string,
+  now: Date,
+  onThisDay: { events: string[]; births: string[]; deaths: string[] }
+): InternationalHoliday[] {
+  const pool: InternationalHoliday[] = [];
+  const mmdd = todayIso.slice(5); // MM-DD
+
+  // 1. Holidays — add every match for today (there can be multiple: e.g.
+  //    01-01 is New Year's Day globally, so we surface one per country).
   const INTL_HOLIDAY_POOL: Array<{ date: string; country: string; name: string }> = [
     { date: "01-01", country: "XX", name: "New Year's Day" },
     { date: "02-14", country: "XX", name: "Valentine's Day" },
@@ -52,11 +64,6 @@ function pickInternationalHolidayOrFact(
     { date: "07-04", country: "US", name: "Independence Day (United States)" },
     { date: "07-09", country: "AU", name: "Constitution Day (Australia)" },
     { date: "07-14", country: "FR", name: "Bastille Day (France)" },
-    { date: "07-20", country: "JP", name: "Marine Day (Japan)" },
-    { date: "08-15", country: "IN", name: "Independence Day (India)" },
-    { date: "09-07", country: "BR", name: "Independence Day (Brazil)" },
-    { date: "09-16", country: "MX", name: "Independence Day (Mexico)" },
-    { date: "09-21", country: "MX", name: "Independence Day (Mexico — observed)" },
     { date: "10-03", country: "DE", name: "Day of German Unity" },
     { date: "10-12", country: "ES", name: "National Day (Spain)" },
     { date: "10-31", country: "XX", name: "Halloween" },
@@ -66,43 +73,69 @@ function pickInternationalHolidayOrFact(
     { date: "12-25", country: "XX", name: "Christmas Day" },
     { date: "12-31", country: "XX", name: "New Year's Eve" },
   ];
-  const mmdd = todayIso.slice(5); // MM-DD
-  const directHit = INTL_HOLIDAY_POOL.find((h) => h.date === mmdd);
-  if (directHit) {
-    return { source: "holiday", text: directHit.name, country: directHit.country };
+  for (const h of INTL_HOLIDAY_POOL) {
+    if (h.date === mmdd) {
+      pool.push({ source: "holiday", text: h.name, country: h.country });
+    }
   }
 
-  // 2. ONE random OnThisDay fact (event / birth / death), stable per day.
-  // Combines all 3 buckets into one pool, then picks deterministically
-  // using the day-of-year as a seed. Year is extracted from the prefix
-  // (Wikipedia format: "YEAR — description").
-  const pool: Array<{ text: string; category: "event" | "birth" | "death" }> = [
-    ...onThisDay.events.map((t) => ({ text: t, category: "event" as const })),
-    ...onThisDay.births.map((t) => ({ text: t, category: "birth" as const })),
-    ...onThisDay.deaths.map((t) => ({ text: t, category: "death" as const })),
-  ];
-  if (pool.length > 0) {
-    // Day-of-year seed (1-366) so the same calendar date always shows the same fact
-    const start = new Date(now.getFullYear(), 0, 0).getTime();
-    const dayOfYear = Math.floor((now.getTime() - start) / 86400000);
-    const pick = pool[dayOfYear % pool.length];
-    const yearMatch = pick.text.match(/^(\d{4})/);
-    const year = yearMatch ? parseInt(yearMatch[1], 10) : undefined;
-    return { source: "onthisday", text: pick.text, year, category: pick.category };
+  // 2. OnThisDay — events / births / deaths. Extract year from the prefix
+  //    (Wikipedia format: "YEAR — description") and surface it.
+  for (const t of onThisDay.events) {
+    const yearMatch = t.match(/^(\d{4})/);
+    pool.push({
+      source: "onthisday",
+      text: t,
+      year: yearMatch ? parseInt(yearMatch[1], 10) : undefined,
+      category: "event",
+    });
+  }
+  for (const t of onThisDay.births) {
+    const yearMatch = t.match(/^(\d{4})/);
+    pool.push({
+      source: "onthisday",
+      text: t,
+      year: yearMatch ? parseInt(yearMatch[1], 10) : undefined,
+      category: "birth",
+    });
+  }
+  for (const t of onThisDay.deaths) {
+    const yearMatch = t.match(/^(\d{4})/);
+    pool.push({
+      source: "onthisday",
+      text: t,
+      year: yearMatch ? parseInt(yearMatch[1], 10) : undefined,
+      category: "death",
+    });
   }
 
-  // 3. nextEvent — if it's today (e.g. FIFA World Cup opening day 2026-06-11).
+  // 3. Big events — if it lands today (e.g. FIFA World Cup opening day 2026-06-11).
   const ev = getNextBigEvent(now);
   if (ev) {
     const evDate = new Date(ev.startUtc);
     const evIso = evDate.toISOString().slice(0, 10);
     if (evIso === todayIso) {
-      return { source: "event", text: ev.name, country: ev.country };
+      pool.push({ source: "event", text: ev.name, country: ev.country });
     }
   }
 
-  // 4. null — no generic month filler. If all 3 miss, the pill is hidden.
-  return null;
+  return pool;
+}
+
+function pickInternationalHolidayOrFact(
+  todayIso: string,
+  now: Date,
+  onThisDay: { events: string[]; births: string[]; deaths: string[] }
+): InternationalHoliday | null {
+  // Build the full pool of all eligible facts for today, then pick ONE
+  // deterministically (day-of-year seed) for the SSR-stable default.
+  // The full pool is also returned via BrowseHome.holiday.pool so the
+  // client can randomize and rotate every 8 minutes.
+  const pool = buildInternationalHolidayPool(todayIso, now, onThisDay);
+  if (pool.length === 0) return null;
+  const start = new Date(now.getFullYear(), 0, 0).getTime();
+  const dayOfYear = Math.floor((now.getTime() - start) / 86400000);
+  return pool[dayOfYear % pool.length];
 }
 
 export interface BrowseHome {
@@ -188,6 +221,14 @@ export interface BrowseHome {
       category?: "event" | "birth" | "death";
       country?: string;
     } | null;
+
+    /**
+     * Full pool of all eligible facts for today. The client (HeroDateBlock)
+     * uses this to randomize the pill — picks one at mount, rotates every
+     * 8 minutes — instead of showing the stable-per-day `international`
+     * pick above. Falls back gracefully if empty.
+     */
+    internationalPool: InternationalHoliday[];
     next: any | null;
   };
   nextEvent: any | null;        // next sports/holiday/observance
@@ -292,10 +333,15 @@ export async function buildBrowseHome(opts: {
   //   3. Today's `nextEvent` if it lands today (e.g. World Cup opening day)
   //   4. null (no more generic month filler like "Mid-summer in the Northern Hemisphere")
   const international = pickInternationalHolidayOrFact(todayIso, now, onThisDay);
+  // Full pool of all eligible facts for today — sent to the client so the
+  // hero can randomize the pick (instead of the stable-per-day default) and
+  // rotate every 8 minutes. See HeroDateBlock.
+  const internationalPool = buildInternationalHolidayPool(todayIso, now, onThisDay);
 
   const holiday = {
     today: usLookup.holiday,
     international,
+    internationalPool,
     next: usLookup.nextHoliday,
   };
 

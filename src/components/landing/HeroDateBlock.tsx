@@ -4,7 +4,16 @@
 // the user's UTC offset, and any holiday observed today (domestic or international).
 // Styling matches the 03-horizon.html hero-eyebrow / hero-date / hero-holiday.
 
+import { useState, useEffect } from "react";
 import { CalendarHeart, Sparkles, Trophy } from "lucide-react";
+
+type InternationalHoliday = {
+  source: "holiday" | "onthisday" | "event";
+  text: string;
+  year?: number;
+  category?: "event" | "birth" | "death";
+  country?: string;
+};
 
 interface HeroDateBlockProps {
   /** Live ticker — used for the date string */
@@ -19,14 +28,16 @@ interface HeroDateBlockProps {
    *   - "holiday"   : CalendarHeart icon, "Good Friday" (or name) + country
    *   - "onthisday" : Sparkles icon, "1957 — Prince Karim..." (raw fact)
    *   - "event"     : Trophy icon, "FIFA World Cup Opening" + country
+   * Used as the initial/fallback pick if `internationalPool` is empty.
    */
-  internationalHoliday?: {
-    source: "holiday" | "onthisday" | "event";
-    text: string;
-    year?: number;
-    category?: "event" | "birth" | "death";
-    country?: string;
-  } | null;
+  internationalHoliday?: InternationalHoliday | null;
+  /**
+   * Full pool of eligible facts for today. When provided, the component
+   * picks one at random on mount and rotates every 8 minutes — the pill
+   * shows different holiday / on-this-day / event facts over time instead
+   * of the stable-per-day one. Falls back to `internationalHoliday` if empty.
+   */
+  internationalPool?: InternationalHoliday[];
   /** Optional override for the live pill label */
   liveLabel?: string;
   /** Time-of-day greeting (e.g. "Good morning"). No name — we don't know who the user is. */
@@ -34,6 +45,11 @@ interface HeroDateBlockProps {
   /** Translation locale */
   lang?: "en" | "fr" | "zh" | "ja";
 }
+
+/** How often the OnThisDay pill rotates. 8 minutes is long enough that
+    users won't see flicker during a normal page visit, short enough to
+    keep the section feeling alive if someone lingers. */
+const ROTATE_MS = 8 * 60 * 1000;
 
 /**
  * Format a Date as e.g. "Thursday, July 9, 2026" in the given timezone.
@@ -73,6 +89,7 @@ export function HeroDateBlock({
   timezone,
   todayHoliday,
   internationalHoliday,
+  internationalPool = [],
   liveLabel = "Live",
   greeting,
   lang = "en",
@@ -80,7 +97,30 @@ export function HeroDateBlock({
   const dateText = fmtLongDate(liveDate, timezone, lang);
   const offset = fmtOffset(liveDate, timezone);
 
-  const observed = todayHoliday || internationalHoliday;
+  // Randomized fact picker — when a pool is provided, the pill cycles
+  // through holidays / on-this-day / event facts instead of showing the
+  // same stable pick all day. Picks a new one on mount, on every city
+  // switch (pool reference changes), and every 8 minutes while you linger.
+  const [randomFact, setRandomFact] = useState<InternationalHoliday | null>(
+    internationalHoliday ?? null
+  );
+  useEffect(() => {
+    if (!internationalPool || internationalPool.length === 0) {
+      setRandomFact(internationalHoliday ?? null);
+      return;
+    }
+    const pickRandom = () => {
+      const idx = Math.floor(Math.random() * internationalPool.length);
+      setRandomFact(internationalPool[idx]);
+    };
+    pickRandom();
+    const interval = setInterval(pickRandom, ROTATE_MS);
+    return () => clearInterval(interval);
+  }, [internationalPool, internationalHoliday]);
+
+  // Final fact shown: todayHoliday wins (user's country), then the
+  // randomized pick, then the stable fallback.
+  const observed = todayHoliday || randomFact || internationalHoliday;
 
   return (
     <div className="tdp-hero-dateblock">
