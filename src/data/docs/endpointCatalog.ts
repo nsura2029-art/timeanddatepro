@@ -982,6 +982,88 @@ result.topSlots.forEach((slot) => {
     cache: "public, max-age=86400",
     rateLimited: true,
   },
+  {
+    slug: "feedback",
+    title: "GET /feedback",
+    method: "GET",
+    summary: "List community feedback + tool suggestions, sorted by votes by default.",
+    apiPath: "/api/v1/feedback",
+    intro: [
+      "Backs the /feedback page. Query params: ?sort=votes|recent, ?type=suggestion|bug|idea|general, ?limit=1..100.",
+      "The 6 seed entries (embeddable widget, ICS download, Slack integration, DST reminders, etc.) ship on first run.",
+    ],
+    samples: [
+      { lang: "curl", label: "cURL — top voted", code: `curl "https://timeanddatepro.com/api/v1/feedback?sort=votes&limit=10"` },
+      { lang: "curl", label: "cURL — bug reports only", code: `curl "https://timeanddatepro.com/api/v1/feedback?type=bug"` },
+      { lang: "curl", label: "cURL — most recent", code: `curl "https://timeanddatepro.com/api/v1/feedback?sort=recent"` },
+    ],
+    responseExample: {
+      success: true,
+      data: {
+        entries: [
+          { id: "seed-1", type: "suggestion", title: "Embeddable world clock widget for any website", description: "A one-line iframe that any site can drop in to show a live world clock.", author: null, votes: 47, status: "planned", createdAt: "2025-06-18T12:00:00.000Z" },
+          { id: "seed-2", type: "suggestion", title: "Public holiday calendar download (ICS / Google Calendar)", description: "One-click import of any country's public holidays.", author: null, votes: 38, status: "planned", createdAt: "2025-07-01T12:00:00.000Z" },
+        ],
+        count: 2,
+      },
+    },
+    cache: "public, max-age=30",
+    rateLimited: true,
+  },
+  {
+    slug: "feedback/top",
+    title: "GET /feedback/top",
+    method: "GET",
+    summary: "Shortcut for sort=votes&limit=10. Optional ?type= filter.",
+    apiPath: "/api/v1/feedback/top",
+    intro: ["Designed for dashboards, embeddable widgets, and 'most popular suggestions' surfaces."],
+    samples: [
+      { lang: "curl", label: "cURL — top 10", code: `curl "https://timeanddatepro.com/api/v1/feedback/top"` },
+      { lang: "curl", label: "cURL — top 3 ideas", code: `curl "https://timeanddatepro.com/api/v1/feedback/top?type=idea&limit=3"` },
+    ],
+    responseExample: {
+      success: true,
+      data: {
+        entries: [
+          { id: "seed-1", type: "suggestion", title: "Embeddable world clock widget for any website", description: "A one-line iframe that any site can drop in to show a live world clock.", author: null, votes: 47, status: "planned", createdAt: "2025-06-18T12:00:00.000Z" },
+        ],
+        count: 1,
+      },
+    },
+    cache: "public, max-age=30",
+    rateLimited: true,
+  },
+  {
+    slug: "feedback/post",
+    title: "POST /feedback",
+    method: "POST",
+    summary: "Submit a new feedback entry. Auto-votes on creation.",
+    apiPath: "/api/v1/feedback",
+    intro: [
+      "Body: { type, title, description, author? }. type must be one of suggestion|bug|idea|general.",
+      "Title 3-120 chars. Description 10-800 chars. Rate-limited per IP.",
+    ],
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl -X POST "https://timeanddatepro.com/api/v1/feedback" -H "Content-Type: application/json" -d '{"type":"suggestion","title":"Light theme option","description":"Add a high-contrast light theme for daytime use."}'` },
+    ],
+    responseExample: { success: true, data: { id: "fb-l1q2m3-ab12cd", type: "suggestion", title: "Light theme option", description: "Add a high-contrast light theme for daytime use.", author: null, votes: 1, status: "open", createdAt: "2026-07-10T22:00:00.000Z" } },
+    cache: "no-store",
+    rateLimited: true,
+  },
+  {
+    slug: "feedback/vote",
+    title: "POST /feedback/:id/vote",
+    method: "POST",
+    summary: "Upvote an entry. One vote per device, identified by IP + User-Agent hash.",
+    apiPath: "/api/v1/feedback/:id/vote",
+    intro: ["Returns 409 if the device has already voted on this entry. The page UI caches the voted set in localStorage for snappy feedback."],
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl -X POST "https://timeanddatepro.com/api/v1/feedback/seed-1/vote"` },
+    ],
+    responseExample: { success: true, data: { id: "seed-1", type: "suggestion", title: "Embeddable world clock widget for any website", description: "A one-line iframe that any site can drop in to show a live world clock.", author: null, votes: 48, status: "planned", createdAt: "2025-06-18T12:00:00.000Z" } },
+    cache: "no-store",
+    rateLimited: true,
+  },
 ];
 /** Lookup by the doc-page slug (matches docRoutes.ts). */
 export function findEndpoint(slug: string): EndpointDoc | undefined {

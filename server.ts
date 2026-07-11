@@ -307,6 +307,13 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/news/feeds",
       "GET /api/v1/history/by-country",
       "GET /api/v1/history/countries",
+      // Feedback / tool suggestions (T6 — /feedback page backend)
+      "GET /api/v1/feedback",
+      "GET /api/v1/feedback/top",
+      "GET /api/v1/feedback/:id",
+      "POST /api/v1/feedback",
+      "POST /api/v1/feedback/:id/vote",
+      "DELETE /api/v1/feedback/:id",
     ],
   }, "/api/v1");
 });
@@ -314,6 +321,11 @@ app.get("/api/v1", (_req: any, res: any) => {
 app.get("/api/v1/health", (_req: any, res: any) =>
   ok(res, { status: "ok", uptime: process.uptime() }, "/api/v1/health")
 );
+
+// /api/v1/feedback — community feedback + tool suggestions (T6 backend
+// for the /feedback page). See src/api/feedback.ts for the full schema.
+import { feedbackRouter } from "./src/api/feedback";
+app.use("/api/v1/feedback", feedbackRouter);
 
 app.get("/api/v1/time/now", H("/api/v1/time/now", 0, (req: any) =>
   timeNow({ tz: req.query.tz as string | undefined, city: req.query.city as string | undefined })

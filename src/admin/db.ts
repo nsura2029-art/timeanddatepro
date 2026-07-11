@@ -109,6 +109,58 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created_at ON admin_audit(created_at 
 const v = rawDb.prepare("SELECT version FROM schema_version LIMIT 1").get() as { version: number } | undefined;
 if (!v) rawDb.prepare("INSERT INTO schema_version (version) VALUES (1)").run();
 
+// ── v2 migration: feedback / tool suggestions (polish-9 + T6) ────────
+// Two tables: one for entries, one for per-device votes. Votes are
+// anonymous — we hash the IP + UA into a voter_token, so each device
+// gets exactly one vote per entry. The page UI uses localStorage as
+// the per-device cache so votes don't feel laggy; the API is the
+// source of truth.
+rawDb.exec(`
+CREATE TABLE IF NOT EXISTS feedback_entries (
+  id          TEXT PRIMARY KEY,
+  type        TEXT NOT NULL CHECK (type IN ('suggestion','bug','idea','general')),
+  title       TEXT NOT NULL,
+  description TEXT NOT NULL,
+  author      TEXT,
+  votes       INTEGER NOT NULL DEFAULT 1,
+  status      TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','planned','shipped','closed')),
+  created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_entries_votes    ON feedback_entries(votes DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_entries_created  ON feedback_entries(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_entries_type     ON feedback_entries(type, votes DESC);
+
+CREATE TABLE IF NOT EXISTS feedback_votes (
+  entry_id     TEXT NOT NULL REFERENCES feedback_entries(id) ON DELETE CASCADE,
+  voter_token  TEXT NOT NULL,
+  created_at   INTEGER NOT NULL,
+  PRIMARY KEY (entry_id, voter_token)
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_votes_entry ON feedback_votes(entry_id);
+`);
+
+const v2 = rawDb.prepare("SELECT version FROM schema_version WHERE version = 2").get();
+if (!v2) rawDb.prepare("INSERT OR IGNORE INTO schema_version (version) VALUES (2)").run();
+
+// Seed the 6 roadmap entries if the table is empty (idempotent).
+const seedCount = rawDb.prepare("SELECT COUNT(*) AS c FROM feedback_entries").get() as { c: number };
+if (seedCount.c === 0) {
+  const seed = [
+    { id: "seed-1", type: "suggestion", title: "Embeddable world clock widget for any website", description: "A one-line iframe that any site can drop in to show a live world clock. Would help news and travel sites.", votes: 47, status: "planned", created_at: 1750279200000 },
+    { id: "seed-2", type: "suggestion", title: "Public holiday calendar download (ICS / Google Calendar)", description: "One-click import of any country's public holidays into Google Calendar, Outlook, or Apple Calendar.", votes: 38, status: "planned", created_at: 1751313600000 },
+    { id: "seed-3", type: "idea",       title: "Meeting time translator in Slack and Teams",       description: "Native integration so you can type /time 3pm in #london and it converts to every team member's local time.", votes: 29, status: "open",    created_at: 1752340800000 },
+    { id: "seed-4", type: "suggestion", title: "DST change reminder emails",                       description: "Get an email one week before a country changes its clocks, with a list of meetings that will shift.",          votes: 22, status: "open",    created_at: 1753368000000 },
+    { id: "seed-5", type: "bug",        title: "DST transition shows wrong time for one hour",     description: "On the day of a DST change, the live clock shows the new time before the actual change happens.",                votes: 18, status: "open",    created_at: 1754395200000 },
+    { id: "seed-6", type: "general",    title: "Add a dark mode",                                  description: "Many users check the time at night. A dark theme would reduce eye strain.",                                       votes: 14, status: "open",    created_at: 1755422400000 },
+  ];
+  const ins = rawDb.prepare(
+    "INSERT INTO feedback_entries (id, type, title, description, votes, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  );
+  for (const s of seed) {
+    ins.run(s.id, s.type, s.title, s.description, s.votes, s.status, s.created_at);
+  }
+}
+
 export const db = rawDb;
 export const DB_FILE = DB_PATH;
 

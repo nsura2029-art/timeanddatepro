@@ -16,7 +16,7 @@
 //
 // Feedback types: suggestion (tool/feature), bug, idea, general.
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   MessageSquare,
   Lightbulb,
@@ -37,6 +37,7 @@ import "./FeedbackPage.css";
 
 const STORAGE_KEY = "tdp_feedback";
 const VOTED_KEY = "tdp_feedback_voted";
+const API_BASE = "/api/v1/feedback";
 
 const SUPPORT_EMAIL = "support@timeanddatepro.com";
 const SITE_NAME = "TimeAndDatePro";
@@ -190,6 +191,56 @@ export function FeedbackPage() {
   const [sortBy, setSortBy] = useState<"votes" | "recent">("votes");
   const [filterType, setFilterType] = useState<FeedbackType | "all">("all");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
+
+  // ── API helpers (T6 backend) ─────────────────────────────────
+  // The API is the source of truth for entries. localStorage is
+  // only used to cache (a) the device's voted-set so the UI feels
+  // instant, and (b) the most recently seen entries so a slow /
+  // failed fetch still shows something on a refresh.
+  const fetchEntries = useCallback(async (sort: "votes" | "recent", type: FeedbackType | "all") => {
+    const params = new URLSearchParams();
+    params.set("sort", sort);
+    if (type !== "all") params.set("type", type);
+    params.set("limit", "100");
+    const r = await fetch(`${API_BASE}?${params.toString()}`);
+    if (!r.ok) throw new Error(`Failed to load suggestions: ${r.status}`);
+    return (await r.json()) as { entries: FeedbackEntry[]; count: number };
+  }, []);
+
+  const submitEntry = useCallback(async (body: Omit<FeedbackEntry, "id" | "votes" | "createdAt">) => {
+    const r = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: "Submission failed" }));
+      throw new Error(err.error || `Submission failed (${r.status})`);
+    }
+    return (await r.json()) as FeedbackEntry;
+  }, []);
+
+  const voteOnEntry = useCallback(async (id: string) => {
+    const r = await fetch(`${API_BASE}/${encodeURIComponent(id)}/vote`, { method: "POST" });
+    if (r.status === 409) return { alreadyVoted: true as const };
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: "Vote failed" }));
+      throw new Error(err.error || `Vote failed (${r.status})`);
+    }
+    return (await r.json()) as FeedbackEntry;
+  }, []);
+
+  const deleteEntry = useCallback(async (id: string) => {
+    const r = await fetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: "Delete failed" }));
+      throw new Error(err.error || `Delete failed (${r.status})`);
+    }
+    return (await r.json()) as { deleted: boolean; id: string };
+  }, []);
 
   // Form state
   const [formType, setFormType] = useState<FeedbackType>("suggestion");
@@ -197,11 +248,57 @@ export function FeedbackPage() {
   const [formDesc, setFormDesc] = useState("");
   const [formAuthor, setFormAuthor] = useState("");
 
-  // Load from localStorage on mount
+  // Load on mount: try the API, fall back to localStorage cache, then
+  // to the seed list. Read the voted set straight from localStorage
+  // (device-only cache) so the UI feels instant.
   useEffect(() => {
-    setEntries(readEntries());
-    setVoted(readVoted());
+    cancelledRef.current = false;
+    (async () => {
+      setVoted(readVoted());
+      try {
+        const data = await fetchEntries("votes", "all");
+        if (cancelledRef.current) return;
+        setEntries(data.entries);
+        setApiError(null);
+        // Cache the most recently seen list for offline / slow-refresh
+        // fallback. The API remains the source of truth.
+        writeEntries(data.entries);
+      } catch (err) {
+        if (cancelledRef.current) return;
+        const cached = readEntries();
+        if (cached.length > 0) {
+          setEntries(cached);
+          setApiError("Showing the last cached suggestions. The server is unreachable.");
+        } else {
+          setApiError("Could not reach the suggestions server. Try refreshing in a moment.");
+        }
+      } finally {
+        if (!cancelledRef.current) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelledRef.current = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch when sort/filter change (debounced via the dependencies).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchEntries(sortBy, filterType);
+        if (cancelled) return;
+        setEntries(data.entries);
+        setApiError(null);
+      } catch {
+        // Silent — keep current list
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sortBy, filterType, fetchEntries]);
 
   // IntersectionObserver for TOC active state
   useEffect(() => {
@@ -231,62 +328,87 @@ export function FeedbackPage() {
     window.dispatchEvent(new Event("tdp:navigate"));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formDesc.trim()) return;
-    const entry: FeedbackEntry = {
-      id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      type: formType,
-      title: formTitle.trim().slice(0, 120),
-      description: formDesc.trim().slice(0, 800),
-      votes: 1,
-      createdAt: new Date().toISOString(),
-      author: formAuthor.trim() || undefined,
-    };
-    const next = [entry, ...entries];
-    setEntries(next);
-    writeEntries(next);
-    // Auto-upvote your own submission
-    const nextVoted = new Set(voted);
-    nextVoted.add(entry.id);
-    setVoted(nextVoted);
-    writeVoted(nextVoted);
-    // Reset form
-    setFormTitle("");
-    setFormDesc("");
-    setFormAuthor("");
-    setSubmitted(true);
-    // Scroll to the suggestions list so the user sees their entry
-    setTimeout(() => {
-      document.getElementById("list")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
-    // Hide the success banner after a few seconds
-    setTimeout(() => setSubmitted(false), 5000);
+    try {
+      const entry = await submitEntry({
+        type: formType,
+        title: formTitle.trim().slice(0, 120),
+        description: formDesc.trim().slice(0, 800),
+        author: formAuthor.trim() || undefined,
+      });
+      // Prepend to the current view and mark as voted (the API
+      // already auto-votes on creation).
+      const next = [entry, ...entries];
+      setEntries(next);
+      writeEntries(next);
+      const nextVoted = new Set(voted);
+      nextVoted.add(entry.id);
+      setVoted(nextVoted);
+      writeVoted(nextVoted);
+      // Reset form
+      setFormTitle("");
+      setFormDesc("");
+      setFormAuthor("");
+      setSubmitted(true);
+      setApiError(null);
+      // Scroll to the suggestions list so the user sees their entry
+      setTimeout(() => {
+        document.getElementById("list")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+      // Hide the success banner after a few seconds
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Could not submit feedback.");
+    }
   };
 
-  const handleVote = (id: string) => {
-    if (voted.has(id)) return; // one vote per device
-    const nextVoted = new Set(voted);
-    nextVoted.add(id);
-    setVoted(nextVoted);
-    writeVoted(nextVoted);
-    const next = entries.map((e) => e.id === id ? { ...e, votes: e.votes + 1 } : e);
-    setEntries(next);
-    writeEntries(next);
+  const handleVote = async (id: string) => {
+    if (voted.has(id)) return; // one vote per device (per localStorage cache)
+    try {
+      const result = await voteOnEntry(id);
+      if ("alreadyVoted" in result) {
+        // Server says we already voted (different device / cleared cache).
+        // Mirror the state so the UI stays consistent.
+        const nextVoted = new Set(voted);
+        nextVoted.add(id);
+        setVoted(nextVoted);
+        writeVoted(nextVoted);
+        return;
+      }
+      const nextVoted = new Set(voted);
+      nextVoted.add(id);
+      setVoted(nextVoted);
+      writeVoted(nextVoted);
+      const next = entries.map((e) => e.id === id ? { ...e, votes: result.votes } : e);
+      setEntries(next);
+      writeEntries(next);
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Could not record your vote.");
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const next = entries.filter((e) => e.id !== id);
     setEntries(next);
     writeEntries(next);
-    // Only delete if it's NOT a seed entry (i.e., user-submitted).
-    // This protects the seed list from being wiped by a single delete.
-    if (!id.startsWith("seed-")) {
-      const nextVoted = new Set(voted);
-      nextVoted.delete(id);
-      setVoted(nextVoted);
-      writeVoted(nextVoted);
+    // Only call the API for non-seed entries (seeds cannot be deleted
+    // via the API; we just hide them locally).
+    if (id.startsWith("seed-")) return;
+    try {
+      await deleteEntry(id);
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Could not delete the entry.");
+      // Restore on failure
+      setEntries(entries);
+      writeEntries(entries);
+      return;
     }
+    const nextVoted = new Set(voted);
+    nextVoted.delete(id);
+    setVoted(nextVoted);
+    writeVoted(nextVoted);
   };
 
   // Sort + filter
@@ -366,6 +488,21 @@ export function FeedbackPage() {
                   <strong>Thanks!</strong> Your suggestion is live below.
                   We will reply if we need more details.
                 </span>
+              </div>
+            )}
+
+            {apiError && (
+              <div className="fb-form__error" role="alert">
+                <Sparkles size={16} />
+                <span>{apiError}</span>
+                <button
+                  type="button"
+                  className="fb-form__error-dismiss"
+                  onClick={() => setApiError(null)}
+                  aria-label="Dismiss"
+                >
+                  ×
+                </button>
               </div>
             )}
 
@@ -474,7 +611,13 @@ export function FeedbackPage() {
           {/* ==================== SECTION 2: TOP SUGGESTIONS ==================== */}
           <section id="list" className="lp-section">
             <div className="lp-section__num">02</div>
-            <h2>Top suggestions</h2>
+            <h2>
+              Top suggestions
+              <span className="fb-list__live" title="Live data from /api/v1/feedback">
+                <span className="fb-list__live-dot" aria-hidden="true" />
+                Live
+              </span>
+            </h2>
             <p>
               {totalCount} {totalCount === 1 ? "submission" : "submissions"} from the
               community. Vote with the up-arrow on the left of each card.
