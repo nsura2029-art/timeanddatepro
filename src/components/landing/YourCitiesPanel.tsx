@@ -5,14 +5,14 @@
 //
 // Features:
 //   - Header with title + X/10 counter
-//   - Search input (filters the visible tracked list)
-//   - Per-city row: country flag, city + region, LIVE current time, tz abbr
-//   - Click row to make that city active
-//   - X button to remove (home city not removable)
-//   - "Add another city" search at the bottom — calls
+//   - "Add another city" search at the TOP — calls
 //     GET /api/v1/cities/search?q=...&limit=8&exclude=... with 200ms debounce,
 //     shows a dropdown of results, click a result to add it (returns the
 //     full CityEntry to the parent so the flag/country/state are all known).
+//   - Per-city row: green LIVE dot, country flag, city + region,
+//     LIVE current time, tz abbr
+//   - Click row to make that city active
+//   - X button to remove (home city not removable)
 //   - Live ticker: every city's current time updates every second via
 //     a single React state (no per-city timers).
 //
@@ -20,8 +20,8 @@
 // (~600px) so the panel feels consistent for users with 1, 5, or 10
 // tracked cities. If they have >10, it scrolls.
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Search, X, Home, Plus, MapPin, ExternalLink, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { X, Home, Plus, MapPin, ExternalLink, Loader2 } from "lucide-react";
 import type { TrackedCity } from "../../data/defaultCities";
 import type { CityEntry } from "../../data/cities";
 
@@ -106,20 +106,7 @@ export function YourCitiesPanel({
     };
   }, []);
 
-  // ── Top search: filter the visible tracked list ────────────────────
-  const [topQuery, setTopQuery] = useState("");
-  const filteredCities = useMemo(() => {
-    const q = topQuery.trim().toLowerCase();
-    if (!q) return cities;
-    return cities.filter((c) =>
-      [c.name, c.country, c.state ?? "", c.timezone]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [cities, topQuery]);
-
-  // ── Bottom search: API-driven "add another city" ───────────────────
+  // ── Top search: API-driven "add another city" ───────────────────
   // Search-as-you-type against GET /api/v1/cities/search. Debounce 200ms.
   // Already-tracked cities are excluded server-side via ?exclude=A,B,C.
   const [addQuery, setAddQuery] = useState("");
@@ -217,97 +204,7 @@ export function YourCitiesPanel({
         Keep up to {max} cities beside your local clock.
       </p>
 
-      {/* Top: filter the visible tracked list */}
-      <div className="tdp-ycp-search">
-        <Search
-          size={16}
-          aria-hidden
-          className="tdp-ycp-search-icon"
-        />
-        <input
-          type="text"
-          className="tdp-ycp-search-input"
-          placeholder="Search saved cities..."
-          value={topQuery}
-          onChange={(e) => setTopQuery(e.target.value)}
-          aria-label="Search saved cities"
-          data-testid="your-cities-search"
-        />
-      </div>
-
-      {/* Middle: the list — sized to fit 10 cities by default */}
-      <ul className="tdp-ycp-list" data-testid="your-cities-list">
-        {filteredCities.map((city) => {
-          const isActive = city.code === activeCode;
-          const liveTime = formatLiveTime(now, city.timezone);
-          const tzAbbr = formatTimezoneAbbr(now, city.timezone);
-          return (
-            <li
-              key={city.code}
-              className={`tdp-ycp-row${isActive ? " tdp-ycp-row--active" : ""}`}
-              data-testid={`your-cities-row-${city.code}`}
-            >
-              <button
-                type="button"
-                className="tdp-ycp-row-btn"
-                onClick={() => onPick(city.code)}
-                aria-current={isActive ? "true" : undefined}
-              >
-                <span
-                  className="tdp-ycp-flag"
-                  style={{
-                    backgroundImage: `url(${flagUrl(city.countryCode, 40)})`,
-                  }}
-                  role="img"
-                  aria-label={`${city.country} flag`}
-                  data-cca2={city.countryCode}
-                />
-                <span className="tdp-ycp-info">
-                  <span className="tdp-ycp-name-row">
-                    <span className="tdp-ycp-name">{city.name}</span>
-                    {city.isHome && (
-                      <span className="tdp-ycp-home" aria-label="Home city">
-                        <Home size={9} aria-hidden /> HOME
-                      </span>
-                    )}
-                  </span>
-                  <span className="tdp-ycp-meta">
-                    {city.state ? `${city.state}, ` : ""}
-                    {city.country}
-                  </span>
-                </span>
-                <span className="tdp-ycp-time">
-                  <span
-                    className="tdp-ycp-time-value"
-                    data-testid={`live-time-${city.code}`}
-                  >
-                    {liveTime}
-                  </span>
-                  <span className="tdp-ycp-time-tz">{tzAbbr}</span>
-                </span>
-              </button>
-              {!city.isHome && (
-                <button
-                  type="button"
-                  className="tdp-ycp-remove"
-                  onClick={() => onRemove(city.code)}
-                  aria-label={`Remove ${city.name}`}
-                  data-testid={`ycp-remove-${city.code}`}
-                >
-                  <X size={14} aria-hidden />
-                </button>
-              )}
-            </li>
-          );
-        })}
-        {filteredCities.length === 0 && (
-          <li className="tdp-ycp-empty">
-            <span>No saved cities match “{topQuery}”.</span>
-          </li>
-        )}
-      </ul>
-
-      {/* Bottom: API-driven "add another city" search */}
+      {/* Top: API-driven "add another city" search */}
       <div className="tdp-ycp-add">
         <label className="tdp-ycp-add-label" htmlFor="tdp-ycp-add-input">
           <Plus size={12} aria-hidden />
@@ -388,6 +285,78 @@ export function YourCitiesPanel({
           </p>
         )}
       </div>
+
+      {/* Middle: the list — sized to fit 10 cities by default */}
+      <ul className="tdp-ycp-list" data-testid="your-cities-list">
+        {cities.map((city) => {
+          const isActive = city.code === activeCode;
+          const liveTime = formatLiveTime(now, city.timezone);
+          const tzAbbr = formatTimezoneAbbr(now, city.timezone);
+          return (
+            <li
+              key={city.code}
+              className={`tdp-ycp-row${isActive ? " tdp-ycp-row--active" : ""}`}
+              data-testid={`your-cities-row-${city.code}`}
+            >
+              <button
+                type="button"
+                className="tdp-ycp-row-btn"
+                onClick={() => onPick(city.code)}
+                aria-current={isActive ? "true" : undefined}
+              >
+                <span
+                  className="tdp-ycp-flag"
+                  style={{
+                    backgroundImage: `url(${flagUrl(city.countryCode, 40)})`,
+                  }}
+                  role="img"
+                  aria-label={`${city.country} flag`}
+                  data-cca2={city.countryCode}
+                />
+                <span className="tdp-ycp-info">
+                  <span className="tdp-ycp-name-row">
+                    <span className="tdp-ycp-name">{city.name}</span>
+                    {city.isHome && (
+                      <span className="tdp-ycp-home" aria-label="Home city">
+                        <Home size={9} aria-hidden /> HOME
+                      </span>
+                    )}
+                  </span>
+                  <span className="tdp-ycp-meta">
+                    {city.state ? `${city.state}, ` : ""}
+                    {city.country}
+                  </span>
+                </span>
+                <span className="tdp-ycp-time">
+                  <span
+                    className="tdp-ycp-time-value"
+                    data-testid={`live-time-${city.code}`}
+                  >
+                    {liveTime}
+                  </span>
+                  <span className="tdp-ycp-time-tz">{tzAbbr}</span>
+                </span>
+              </button>
+              {!city.isHome && (
+                <button
+                  type="button"
+                  className="tdp-ycp-remove"
+                  onClick={() => onRemove(city.code)}
+                  aria-label={`Remove ${city.name}`}
+                  data-testid={`ycp-remove-${city.code}`}
+                >
+                  <X size={14} aria-hidden />
+                </button>
+              )}
+            </li>
+          );
+        })}
+        {cities.length === 0 && (
+          <li className="tdp-ycp-empty">
+            <span>No saved cities yet. Add your first city below.</span>
+          </li>
+        )}
+      </ul>
 
       <footer className="tdp-ycp-footer">
         <span className="tdp-ycp-footer-note">
