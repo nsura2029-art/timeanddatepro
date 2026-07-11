@@ -215,6 +215,7 @@ import {
   cityPair,
   getTimeIn,
 } from "./src/utils/timeApi";
+import { CITIES, type CityEntry } from "./src/data/cities";
 
 const API_VERSION = "1.0.0";
 
@@ -276,6 +277,7 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/cities",
       "GET /api/v1/cities/:slug",
       "GET /api/v1/cities/live",
+      "GET /api/v1/cities/search",
       "GET /api/v1/countries",
       "GET /api/v1/countries/:code",
       "GET /api/v1/countries/:code/holidays",
@@ -388,18 +390,6 @@ app.get("/api/v1/time/words", H("/api/v1/time/words", 60, (req: any) =>
 
 app.get("/api/v1/cities", H("/api/v1/cities", 3600, () => listCities()));
 
-app.get("/api/v1/cities/:slug", H("/api/v1/cities/:slug", 3600, (req: any) => {
-  const slug = (req.params.slug as string).toLowerCase();
-  const all = listCities();
-  const found = all.find((c: any) =>
-    c.code.toLowerCase() === slug ||
-    c.name.toLowerCase().replace(/\s+/g, "-") === slug ||
-    c.timezone.toLowerCase() === slug
-  );
-  if (!found) throw new ApiError(404, "UNKNOWN_CITY", `No city matches "${slug}".`);
-  return { ...found, currentTime: timeNow({ tz: found.timezone }) };
-}));
-
 /**
  * GET /api/v1/cities/live?codes=WLC,LON,DXB&t=2026-07-11T12:00:00Z
  *
@@ -409,6 +399,9 @@ app.get("/api/v1/cities/:slug", H("/api/v1/cities/:slug", 3600, (req: any) => {
  * client can use either this endpoint OR the browser's Intl.DateTimeFormat.
  * Server-side is more reliable for SSR/SEO and for clients without
  * reliable timezone data.
+ *
+ * NOTE: must be registered BEFORE the /api/v1/cities/:slug wildcard
+ * route, otherwise "live" gets treated as a slug.
  *
  * Query params:
  *   - codes  (required) — comma-separated city codes
@@ -465,6 +458,85 @@ app.get(
     };
   })
 );
+
+/**
+ * GET /api/v1/cities/search?q=paris&limit=8&exclude=NYC,LON
+ *
+ * Powers the search-as-you-type "Add another city" UI in the hero
+ * YourCitiesPanel. Searches the canonical static CITIES list (197
+ * hand-curated entries) across name, country, code, timezone, and
+ * region/state — partial match, case-insensitive.
+ *
+ * Each result includes the full CityEntry shape (countryCode, state,
+ * population) so the client can render the country flag without an
+ * extra round-trip.
+ *
+ * NOTE: must be registered BEFORE the /api/v1/cities/:slug wildcard
+ * route, otherwise "search" gets treated as a slug.
+ *
+ * Query params:
+ *   - q       (required) — search string, min 2 chars
+ *   - limit   (optional) — max results, default 8, capped at 25
+ *   - exclude (optional) — comma-separated city codes to omit
+ *                          (e.g. cities already in the user's list)
+ */
+app.get(
+  "/api/v1/cities/search",
+  H("/api/v1/cities/search", 3600, (req: any) => {
+    const q = String(req.query.q ?? "").trim();
+    if (q.length < 2) {
+      throw new ApiError(400, "MISSING_QUERY", "Provide ?q= (min 2 chars).");
+    }
+    const limit = Math.max(
+      1,
+      Math.min(parseInt(String(req.query.limit ?? "8"), 10) || 8, 25)
+    );
+    const exclude = new Set(
+      String(req.query.exclude ?? "")
+        .split(",")
+        .map((s: string) => s.trim().toUpperCase())
+        .filter(Boolean)
+    );
+    const needle = q.toLowerCase();
+    const matches: Array<CityEntry & { _score: number }> = [];
+    for (const city of CITIES) {
+      if (exclude.has(city.code.toUpperCase())) continue;
+      const name = (city.name ?? "").toLowerCase();
+      const country = (city.country ?? "").toLowerCase();
+      const code = (city.code ?? "").toLowerCase();
+      const tz = (city.timezone ?? "").toLowerCase();
+      const region = (city.state ?? "").toLowerCase();
+      // Score: prefix match on name/code > substring match anywhere
+      let score = 0;
+      if (name.startsWith(needle) || code.startsWith(needle)) score = 4;
+      else if (name.includes(needle)) score = 3;
+      else if (country.startsWith(needle)) score = 2.5;
+      else if (country.includes(needle)) score = 2;
+      else if (region.includes(needle)) score = 1.5;
+      else if (code.includes(needle)) score = 1.5;
+      else if (tz.includes(needle)) score = 1;
+      else continue;
+      // Small boost for larger population (more relevant to most users)
+      if (city.population) score += Math.min(city.population / 10_000_000, 1.5);
+      matches.push({ ...city, _score: score });
+    }
+    matches.sort((a, b) => b._score - a._score);
+    const top = matches.slice(0, limit).map(({ _score, ...rest }) => rest);
+    return { q, count: top.length, total: matches.length, cities: top };
+  })
+);
+
+app.get("/api/v1/cities/:slug", H("/api/v1/cities/:slug", 3600, (req: any) => {
+  const slug = (req.params.slug as string).toLowerCase();
+  const all = listCities();
+  const found = all.find((c: any) =>
+    c.code.toLowerCase() === slug ||
+    c.name.toLowerCase().replace(/\s+/g, "-") === slug ||
+    c.timezone.toLowerCase() === slug
+  );
+  if (!found) throw new ApiError(404, "UNKNOWN_CITY", `No city matches "${slug}".`);
+  return { ...found, currentTime: timeNow({ tz: found.timezone }) };
+}));
 
 app.get("/api/v1/countries", H("/api/v1/countries", 3600, () => listCountries()));
 

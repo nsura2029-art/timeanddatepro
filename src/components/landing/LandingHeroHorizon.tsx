@@ -34,7 +34,6 @@ import { useTrackedCities } from "../../hooks/useTrackedCities";
 import { CityPickerOverlay } from "./CityPickerOverlay";
 import { CityPickerWelcome } from "./CityPickerWelcome";
 import { DEFAULT_CITIES } from "../../data/defaultCities";
-import { CITIES } from "../../data/cities";
 import { formatLongDateShared } from "../../utils/landingFormatters";
 import "./landingHorizon.css";
 
@@ -151,25 +150,7 @@ export function LandingHeroHorizon({
 
   const handleAdd = useCallback(
     (city: import("../../data/cities").CityEntry) => {
-      addCity(city);
-    },
-    [addCity]
-  );
-
-  // The YourCitiesPanel and the trigger button both need a way to add
-  // a city by code (the panel has an inline add input). The
-  // CityPickerOverlay uses onAdd with a CityEntry object. We expose a
-  // code-based add for the panel: looks up the city, calls addCity.
-  const handleAddByCode = useCallback(
-    (code: string): boolean => {
-      // The panel only receives the string the user types. Try the
-      // canonical code first, then fall back to a fuzzy name match.
-      const allCities = [...DEFAULT_CITIES, ...CITIES];
-      const match =
-        allCities.find((c) => c.code.toLowerCase() === code.toLowerCase()) ??
-        allCities.find((c) => c.name.toLowerCase() === code.toLowerCase());
-      if (!match) return false;
-      return addCity(match);
+      return addCity(city);
     },
     [addCity]
   );
@@ -271,7 +252,7 @@ export function LandingHeroHorizon({
             activeCode={activeCode}
             onPick={handlePick}
             onRemove={removeCity}
-            onAdd={handleAddByCode}
+            onAdd={handleAdd}
             count={trackedCount}
             max={trackedMax}
             canAddMore={canAddMore}
