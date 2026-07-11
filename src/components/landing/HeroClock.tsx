@@ -190,6 +190,13 @@ export function HeroClock({
         <span className="tdp-subsec">{clock.cs}</span>
       </div>
 
+      {/* Sub-label that explains the clock format. Per the new design:
+          "HOURS · MINUTES · SECONDS" — friendlier than "HH:MM:SS.CENTISECONDS".
+          The time itself (above) is unchanged; only this label is updated. */}
+      <div className="tdp-subsec-label">
+        HOURS · MINUTES · SECONDS{hour12 ? "" : " · 24-HOUR"}
+      </div>
+
       {sync && (
         <div className="tdp-sync">
           <div className="tdp-sync-row">

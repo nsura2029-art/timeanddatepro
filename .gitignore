@@ -19,3 +19,6 @@ data/tdp.db-wal
 .worktrees/
 .nfs*
 dist-prod/
+
+# Local Playwright verification scripts (not shipped)
+.worktrees-scripts/

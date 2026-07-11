@@ -213,6 +213,7 @@ import {
   workingHours,
   meetingBest,
   cityPair,
+  getTimeIn,
 } from "./src/utils/timeApi";
 
 const API_VERSION = "1.0.0";
@@ -274,6 +275,7 @@ app.get("/api/v1", (_req: any, res: any) => {
       "GET /api/v1/time/words",
       "GET /api/v1/cities",
       "GET /api/v1/cities/:slug",
+      "GET /api/v1/cities/live",
       "GET /api/v1/countries",
       "GET /api/v1/countries/:code",
       "GET /api/v1/countries/:code/holidays",
@@ -397,6 +399,72 @@ app.get("/api/v1/cities/:slug", H("/api/v1/cities/:slug", 3600, (req: any) => {
   if (!found) throw new ApiError(404, "UNKNOWN_CITY", `No city matches "${slug}".`);
   return { ...found, currentTime: timeNow({ tz: found.timezone }) };
 }));
+
+/**
+ * GET /api/v1/cities/live?codes=WLC,LON,DXB&t=2026-07-11T12:00:00Z
+ *
+ * Returns the current time in each of the requested cities, computed
+ * server-side (no client-side Intl needed). Used by the YourCitiesPanel
+ * to power the LIVE ticker for the persistent right-side widget — the
+ * client can use either this endpoint OR the browser's Intl.DateTimeFormat.
+ * Server-side is more reliable for SSR/SEO and for clients without
+ * reliable timezone data.
+ *
+ * Query params:
+ *   - codes  (required) — comma-separated city codes
+ *   - t      (optional) — ISO timestamp to compute against (defaults to now)
+ *   - hour12 (optional) — "1" for 12-hour AM/PM output (default: 1)
+ */
+app.get(
+  "/api/v1/cities/live",
+  H("/api/v1/cities/live", 0, (req: any) => {
+    const codesRaw = String(req.query.codes ?? "").trim();
+    if (!codesRaw) {
+      throw new ApiError(400, "MISSING_CODES", "Provide ?codes=WLC,LON,DXB");
+    }
+    const codes = codesRaw
+      .split(",")
+      .map((s: string) => s.trim().toUpperCase())
+      .filter(Boolean);
+    if (codes.length === 0) {
+      throw new ApiError(400, "INVALID_CODES", "No valid codes provided");
+    }
+    if (codes.length > 25) {
+      throw new ApiError(400, "TOO_MANY_CODES", "Max 25 codes per request");
+    }
+    const tParam = String(req.query.t ?? "").trim();
+    const t = tParam ? new Date(tParam) : new Date();
+    if (isNaN(t.getTime())) {
+      throw new ApiError(400, "INVALID_TIME", `Bad timestamp: ${tParam}`);
+    }
+    const all = listCities();
+    const results = codes.map((code: string) => {
+      const city = all.find((c: any) => c.code.toUpperCase() === code);
+      if (!city) {
+        return {
+          code,
+          found: false,
+          error: "UNKNOWN_CITY",
+        };
+      }
+      const ct = getTimeIn(city.timezone, t);
+      return {
+        code: city.code,
+        found: true,
+        name: city.name,
+        country: city.country,
+        timezone: city.timezone,
+        currentTime: ct,
+      };
+    });
+    return {
+      requested: codes.length,
+      matched: results.filter((r: any) => r.found).length,
+      t: t.toISOString(),
+      cities: results,
+    };
+  })
+);
 
 app.get("/api/v1/countries", H("/api/v1/countries", 3600, () => listCountries()));
 

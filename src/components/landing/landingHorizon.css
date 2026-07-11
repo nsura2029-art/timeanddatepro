@@ -2,6 +2,11 @@
  * Horizon v4b landing styles. One-component-one-purpose, but the design
  * uses shared variables defined at `:root`. Imported once by App.tsx.
  *
+ * Tokens: shared design tokens (colors, type, spacing, radius, shadows)
+ * are imported from src/styles/tokens.css. Component-specific variables
+ * (hero clock colors, sunrise pills, etc.) live below at `:root` for
+ * backwards compat.
+ *
  * Palette (Horizon — emerald-led, time.is typography, family.co motion):
  *   --accent-primary:      #059669 (emerald 600) — coral replacement
  *   --accent-primary-deep: #047857 (emerald 700)
@@ -14,6 +19,10 @@
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* Shared design tokens (colors, type, spacing, radius, shadows).
+   Imported here so any class in this file can use the tokens. */
+@import url('../../styles/tokens.css');
 
 /* DSEG14-Classic-Bold — 14-segment display font. Renders digits as classic
  * 7-segment shapes (with extra segments lit when letters appear), giving a
@@ -69,13 +78,13 @@
 .tdp-hero {
   font-family: var(--hero-fg-font);
   color: var(--hero-text);
-  background:
-    radial-gradient(at 12% 18%, rgba(99, 102, 241, 0.05) 0, transparent 45%),
-    radial-gradient(at 88% 20%, rgba(13, 148, 136, 0.05) 0, transparent 45%),
-    radial-gradient(at 70% 95%, rgba(5, 150, 105, 0.05) 0, transparent 45%),
-    var(--hero-bg);
+  /* Per user request: NO background — use browser white.
+     Removed the lavender/mint radial gradient that was here before.
+     Individual cards/panels still use the surface tokens from
+     src/styles/tokens.css. */
+  background: transparent;
   padding: 56px 24px 40px;
-  border-bottom: 1px solid var(--hero-rule);
+  border-bottom: none;
 }
 
 .tdp-hero-inner {
@@ -2758,3 +2767,500 @@
   .tdp-city-welcome-actions { flex-direction: column; align-items: stretch; }
   .tdp-city-welcome-actions .tdp-btn { width: 100%; }
 }
+
+/* ===========================================================================
+   NEW: 2-column hero grid
+   - Desktop (≥1024px): hero main | YourCitiesPanel (420px)
+   - Tablet (768-1023px): single column, panel stacks below
+   - Mobile (<768px): single column, panel stacks below
+   =========================================================================== */
+
+.tdp-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 22px;
+  max-width: 1460px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.tdp-hero-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* let the clock shrink */
+}
+
+.tdp-hero-aside {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+}
+
+@media (max-width: 1023px) {
+  .tdp-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .tdp-hero-aside {
+    position: static;
+  }
+}
+
+/* ===========================================================================
+   NEW: YourCitiesPanel (right-side persistent widget)
+   - Header: title + X/10 counter
+   - Subtitle
+   - Search input (filters the visible list)
+   - List of city rows: flag, name, HOME badge, region, LIVE time, tz, X
+   - Add form at the bottom
+   - Footer: uses sample data + Open navigator link
+   =========================================================================== */
+
+.tdp-your-cities-panel {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e1dcf1);
+  border-radius: var(--radius-2xl, 24px);
+  padding: 24px 22px 20px;
+  box-shadow: var(--shadow-sm, 0 6px 18px rgba(48,39,82,0.07));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 600px;
+  position: relative;
+}
+
+.tdp-ycp-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tdp-ycp-title {
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 22px;
+  font-weight: var(--font-weight-bold, 750);
+  color: var(--color-ink, #202438);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.tdp-ycp-counter {
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold, 650);
+  color: var(--color-muted, #74778a);
+  padding: 3px 10px;
+  background: var(--color-brand-50, #f6f3ff);
+  border-radius: var(--radius-pill, 999px);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-ycp-subtitle {
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-muted, #74778a);
+  margin: 0;
+}
+
+.tdp-ycp-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tdp-ycp-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-muted, #74778a);
+  pointer-events: none;
+}
+
+.tdp-ycp-search-input {
+  width: 100%;
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 14px;
+  padding: 9px 12px 9px 34px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--color-border, #e1dcf1);
+  background: var(--color-brand-50, #f6f3ff);
+  color: var(--color-ink, #202438);
+  outline: none;
+  transition: border-color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+}
+
+.tdp-ycp-search-input:focus {
+  border-color: var(--color-brand-500, #7257d5);
+  background: var(--color-surface, #fff);
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(114,87,213,0.25));
+}
+
+.tdp-ycp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 460px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border, #e1dcf1) transparent;
+}
+
+.tdp-ycp-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-surface, #fff);
+  border: 1px solid transparent;
+  transition: background var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              border-color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+}
+
+.tdp-ycp-row:hover {
+  background: var(--color-brand-50, #f6f3ff);
+  border-color: var(--color-brand-200, #ded7ff);
+}
+
+.tdp-ycp-row--active {
+  background: var(--color-brand-100, #eee9ff);
+  border-color: var(--color-brand-500, #7257d5);
+}
+
+.tdp-ycp-row-btn {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 8px 9px 10px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  color: var(--color-ink, #202438);
+  min-width: 0;
+}
+
+.tdp-ycp-flag {
+  width: 24px;
+  height: 18px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.tdp-ycp-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.tdp-ycp-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tdp-ycp-name {
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold, 650);
+  color: var(--color-ink, #202438);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-ycp-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: var(--font-weight-bold, 750);
+  letter-spacing: 0.08em;
+  color: var(--color-mint-ink, #216650);
+  background: var(--color-mint, #dbf4ea);
+  padding: 1px 5px;
+  border-radius: var(--radius-pill, 999px);
+  flex-shrink: 0;
+}
+
+.tdp-ycp-meta {
+  font-size: 11px;
+  color: var(--color-muted, #74778a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdp-ycp-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tdp-ycp-time-value {
+  font-size: 14px;
+  font-weight: var(--font-weight-bold, 750);
+  color: var(--color-ink, #202438);
+  letter-spacing: -0.01em;
+}
+
+.tdp-ycp-time-tz {
+  font-size: 10px;
+  color: var(--color-muted, #74778a);
+  font-weight: var(--font-weight-medium, 500);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tdp-ycp-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 0;
+  color: var(--color-muted, #74778a);
+  cursor: pointer;
+  border-radius: 0 var(--radius-md, 12px) var(--radius-md, 12px) 0;
+  transition: background var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+}
+
+.tdp-ycp-remove:hover {
+  background: var(--color-peach, #ffe8d6);
+  color: #b94f0d;
+}
+
+.tdp-ycp-empty {
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted, #74778a);
+  font-family: var(--font-family-sans, Inter, sans-serif);
+}
+
+.tdp-ycp-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border, #e1dcf1);
+  padding-top: 12px;
+}
+
+.tdp-ycp-add-input {
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--color-border, #e1dcf1);
+  background: var(--color-surface, #fff);
+  color: var(--color-ink, #202438);
+  outline: none;
+  transition: border-color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+  min-width: 0;
+}
+
+.tdp-ycp-add-input:focus {
+  border-color: var(--color-brand-500, #7257d5);
+  box-shadow: var(--shadow-focus, 0 0 0 3px rgba(114,87,213,0.25));
+}
+
+.tdp-ycp-add-input:disabled {
+  opacity: 0.5;
+  background: var(--color-brand-50, #f6f3ff);
+}
+
+.tdp-ycp-add-btn {
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  min-height: 34px;
+}
+
+.tdp-ycp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border, #e1dcf1);
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  font-size: 11px;
+  color: var(--color-muted, #74778a);
+}
+
+.tdp-ycp-footer-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tdp-ycp-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-brand-600, #6044bd);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold, 650);
+  transition: color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+}
+
+.tdp-ycp-footer-link:hover {
+  color: var(--color-brand-700, #4e3699);
+  text-decoration: underline;
+}
+
+/* ===========================================================================
+   NEW: HeroExploreCards — 4 tool cards in 2 rows of 2 below the clock
+   =========================================================================== */
+
+.tdp-hero-explore {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 28px;
+  padding: 0 4px;
+}
+
+.tdp-hero-explore-card {
+  display: grid;
+  grid-template-columns: 36px 1fr 18px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: var(--radius-xl, 18px);
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e1dcf1);
+  box-shadow: var(--shadow-sm, 0 6px 18px rgba(48,39,82,0.07));
+  text-decoration: none;
+  color: var(--color-ink, #202438);
+  font-family: var(--font-family-sans, Inter, sans-serif);
+  cursor: pointer;
+  transition: transform var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              box-shadow var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              border-color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+  min-width: 0;
+}
+
+.tdp-hero-explore-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md, 0 16px 36px rgba(74,52,142,0.09));
+  border-color: var(--color-brand-300, #c5b7f7);
+}
+
+.tdp-hero-explore-card--lavender .tdp-hero-explore-icon-wrap {
+  background: var(--color-brand-100, #eee9ff);
+  color: var(--color-brand-700, #4e3699);
+}
+
+.tdp-hero-explore-card--mint .tdp-hero-explore-icon-wrap {
+  background: var(--color-mint, #dbf4ea);
+  color: var(--color-mint-ink, #216650);
+}
+
+.tdp-hero-explore-card--amber .tdp-hero-explore-icon-wrap {
+  background: var(--color-peach, #ffe8d6);
+  color: #b94f0d;
+}
+
+.tdp-hero-explore-card--sky .tdp-hero-explore-icon-wrap {
+  background: var(--color-info, #e8efff);
+  color: var(--color-info-accent, #6467f2);
+}
+
+.tdp-hero-explore-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md, 12px);
+  flex-shrink: 0;
+}
+
+.tdp-hero-explore-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tdp-hero-explore-category {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold, 750);
+  letter-spacing: 0.16em;
+  color: var(--color-muted, #74778a);
+  text-transform: uppercase;
+}
+
+.tdp-hero-explore-title {
+  font-size: 15px;
+  font-weight: var(--font-weight-bold, 750);
+  color: var(--color-ink, #202438);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.tdp-hero-explore-desc {
+  font-size: 12px;
+  color: var(--color-ink-2, #595d70);
+  line-height: 1.4;
+}
+
+.tdp-hero-explore-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted, #74778a);
+  flex-shrink: 0;
+  transition: transform var(--motion-duration-base, 200ms) var(--motion-ease-out, ease),
+              color var(--motion-duration-base, 200ms) var(--motion-ease-out, ease);
+}
+
+.tdp-hero-explore-card:hover .tdp-hero-explore-arrow {
+  transform: translate(2px, -2px);
+  color: var(--color-brand-600, #6044bd);
+}
+
+@media (max-width: 720px) {
+  .tdp-hero-explore {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tdp-hero-explore-card {
+    grid-template-columns: 32px 1fr 16px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tdp-your-cities-panel {
+    padding: 18px 16px 16px;
+  }
+  .tdp-ycp-title {
+    font-size: 19px;
+  }
+  .tdp-ycp-search-input,
+  .tdp-ycp-add-input {
+    font-size: 13px;
+  }
+}
+
