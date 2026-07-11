@@ -210,7 +210,11 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.02em;
+  /* Consistent breathing room on BOTH sides of every separator
+     (the : between HH/MM/SS and the . between SS/cc). Single gap
+     value keeps spacing uniform across the whole clock instead of
+     each separator fighting letter-spacing + custom margins. */
+  gap: 0.12em;
   user-select: none;
 }
 
@@ -234,15 +238,15 @@
 
 /* (Removed tdp-blink keyframes — colon no longer animates) */
 
-/* Sub-second separator (period between SS and cc) — same Inter font, smaller */
+/* Sub-second separator (period between SS and cc) — same Inter font, smaller.
+   No custom margins here: the .tdp-seven gap controls spacing uniformly
+   on both sides so the period sits the same distance from SS as from cc. */
 .tdp-subsec-sep {
   font-family: var(--hero-fg-font);
   font-size: 0.5em;
   color: var(--seven);
   opacity: 0.55;
   font-weight: 900;
-  margin-left: 0.02em;
-  margin-right: -0.02em;
   letter-spacing: 0;
   align-self: center;
 }
