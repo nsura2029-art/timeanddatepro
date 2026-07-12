@@ -10,6 +10,7 @@ import { countriesRouter } from "./routes/countries";
 import { pairsRouter } from "./routes/pairs";
 import { auxRouter } from "./routes/auxiliary";
 import { feedbackRouter } from "./routes/feedback";
+import { v2SearchRouter } from "./routes/v2/search";
 import { ok, err, API_VERSION } from "./lib/responses";
 
 const app = new Hono();
@@ -107,6 +108,11 @@ app.route("/api/v1/pairs", pairsRouter);
 app.route("/api/v1/meeting", pairsRouter);
 app.route("/api/v1", auxRouter);
 app.route("/api/v1/feedback", feedbackRouter);
+
+// ── v2 — full D1-backed geographic + locale-aware search ──
+// Mounted BEFORE the v1 cities router so /api/v2/* takes priority
+// over the v1 wildcard.
+app.route("/api/v2", v2SearchRouter);
 
 // ── 404 handler ──────────────────────────────────────────
 app.notFound((c) => err(c, 404, `Route not found: ${c.req.method} ${c.req.path}`, "not_found"));

@@ -106,3 +106,11 @@ export function safeDate(value: string | undefined): Date | null {
   const d = new Date(value);
   return isNaN(d.getTime()) ? null : d;
 }
+
+/** Strict float parse. Returns number or null. */
+export function parseFloatStrict(value: string | undefined): number | null {
+  if (!value) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return n;
+}

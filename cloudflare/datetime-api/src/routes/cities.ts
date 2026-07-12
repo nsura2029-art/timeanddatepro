@@ -40,9 +40,8 @@ cities.get("/search", (c) => {
   const limitRaw = parseInt(c.req.query("limit") ?? "8", 10);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(limitRaw, 50)) : 8;
   const excludeList = parseCsv(c.req.query("exclude"), { uppercase: true, maxItems: 100 });
-  const excludeCodes = new Set(excludeList);
   const start = Date.now();
-  const results = searchCities(q, CITIES, excludeCodes, limit);
+  const results = searchCities({ q, limit, exclude: excludeList });
   const elapsed = Date.now() - start;
   return ok(c, {
     q,

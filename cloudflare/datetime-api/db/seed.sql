@@ -10254,8 +10254,12 @@ INSERT OR REPLACE INTO country_aliases (country_code, alias, type, locale) VALUE
 ('AE', 'United Arab Emirates', 'official', NULL),
 ('AE', 'Emirates', 'common', NULL);
 
--- City aliases (200 rows in 1 chunks)
+-- City aliases (206 rows in 1 chunks)
 INSERT OR REPLACE INTO city_aliases (city_id, alias, type, locale) VALUES
+(5128581, 'NYC', 'abbreviation', NULL),
+(5128581, 'New York City', 'common', NULL),
+(5128581, 'Big Apple', 'common', NULL),
+(5128581, 'Manhattan', 'common', NULL),
 (5368361, 'LA', 'abbreviation', NULL),
 (5368361, 'L.A.', 'abbreviation', NULL),
 (5368361, 'City of Angels', 'common', NULL),
@@ -10343,6 +10347,8 @@ INSERT OR REPLACE INTO city_aliases (city_id, alias, type, locale) VALUES
 (2867714, 'Monaco di Bavaria', 'alternate', NULL),
 (2911298, 'Tor zur Welt', 'alternate', NULL),
 (2911298, 'Gateway to the World', 'alternate', NULL),
+(2925533, 'FRA', 'abbreviation', NULL),
+(2925533, 'Mainhattan', 'common', NULL),
 (3169070, 'Roma', 'common', NULL),
 (3169070, 'Eternal City', 'common', NULL),
 (3169070, 'Caput Mundi', 'alternate', NULL),
@@ -10625,9 +10631,9 @@ INSERT OR REPLACE INTO meta (key, value, updated_at) VALUES
   ('states_count', 3865, unixepoch()),
   ('timezones_count', 312, unixepoch()),
   ('country_aliases_count', 730, unixepoch()),
-  ('city_aliases_count', 200, unixepoch()),
+  ('city_aliases_count', 206, unixepoch()),
   ('state_aliases_count', 155, unixepoch()),
-  ('seed_built_at', '2026-07-12T01:16:30.730Z', unixepoch());
+  ('seed_built_at', '2026-07-12T01:23:24.256Z', unixepoch());
 
 
 -- Done. Verify with:

@@ -145,15 +145,39 @@ for (const c of CITIES_GEONAMES) {
 }
 
 // Add manual city aliases
+// Add manual city aliases — with fuzzy fallback for names that don't match exactly
 for (const [key, aliases] of Object.entries(CITY_ALIASES)) {
   // key is "CountryCode:CityName" (e.g., "US:New York")
   const [cc, ...nameParts] = key.split(":");
   const name = nameParts.join(":");
-  const city = cityGeoIndex.get(`${cc}:${name.toLowerCase()}`);
+  const nameLower = name.toLowerCase();
+
+  // Try exact match first
+  let city = cityGeoIndex.get(`${cc}:${nameLower}`);
+
+  // Fuzzy fallback: find the most populous city in this country whose name
+  // starts with or contains the alias name
+  if (!city) {
+    const candidates = CITIES_GEONAMES.filter(
+      (c) => c.countryCode === cc && (
+        c.asciiName.toLowerCase().startsWith(nameLower) ||
+        c.asciiName.toLowerCase().includes(nameLower) ||
+        c.name.toLowerCase().includes(nameLower)
+      ),
+    ).sort((a, b) => b.population - a.population);
+
+    if (candidates.length > 0) {
+      city = candidates[0];
+      console.log(`  Alias fuzzy match: "${key}" → ${city.asciiName} (pop ${city.population.toLocaleString()})`);
+    }
+  }
+
   if (city) {
     for (const [alias, type] of Object.entries(aliases)) {
       cityAliasRows.push(`(${city.geonameId}, ${esc(alias)}, ${esc(type)}, NULL)`);
     }
+  } else {
+    console.log(`  ⚠️ Alias not matched: "${key}" (no city found)`);
   }
 }
 
