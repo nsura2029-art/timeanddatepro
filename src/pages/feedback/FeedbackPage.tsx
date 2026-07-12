@@ -204,12 +204,16 @@ export function FeedbackPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const cancelledRef = useRef(false);
 
-  // ── URL prefill (from ?type=&tool= on the feedback CTA links) ──
+  // ── URL prefill (from ?type=&tool=&interest=&locale=) ──
   // If the page is reached from a tool page's bottom CTA, the URL
   // carries the tool slug and we pre-select the "suggestion" type.
   // The "tool" prefill shows a read-only chip above the form so the
   // user knows which tool the feedback will be associated with.
+  // `interest=locale` + `locale=fr-FR` (e.g.) means the user came
+  // from the locale selector and we pre-fill the form description.
   const [prefillTool, setPrefillTool] = useState<string | null>(null);
+  const [prefillInterest, setPrefillInterest] = useState<string | null>(null);
+  const [prefillLocale, setPrefillLocale] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -220,6 +224,18 @@ export function FeedbackPage() {
     const urlTool = params.get("tool");
     if (urlTool) {
       setPrefillTool(urlTool);
+    }
+    const urlInterest = params.get("interest");
+    if (urlInterest) {
+      setPrefillInterest(urlInterest);
+    }
+    const urlLocale = params.get("locale");
+    if (urlLocale) {
+      setPrefillLocale(urlLocale);
+      // Pre-fill the description so the user doesn't have to retype
+      setFormDesc(
+        `I'd love to see Date to Words translated into ${urlLocale}. When is that coming?`
+      );
     }
   }, []);
 
