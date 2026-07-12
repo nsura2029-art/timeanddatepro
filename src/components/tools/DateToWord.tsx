@@ -10,6 +10,12 @@
 
 import React, { useState, useMemo, useCallback } from "react";
 import {
+  Clipboard,
+  Download,
+  Share2,
+  Code,
+} from "lucide-react";
+import {
   convertDateToWords,
   type DateFormatId,
   type LocaleTag,
@@ -345,34 +351,41 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                   handleCopyToClipboard(selectedText, "Copied to clipboard")
                 }
               >
-                📋 Copy
+                <Clipboard size={14} strokeWidth={2.2} />
+                Copy
               </button>
               <button
                 type="button"
                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
                 onClick={() => {
-                  const blob = new Blob([selectedText], { type: "text/plain" });
+                  const blob = new Blob([selectedText + "\n"], { type: "text/plain" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
                   a.download = `date-${selectedDate}-${selectedFormat}.txt`;
+                  document.body.appendChild(a);
                   a.click();
+                  document.body.removeChild(a);
                   URL.revokeObjectURL(url);
-                  setToastMessage("Downloaded");
+                  setToastMessage("Downloaded .txt");
                   setTimeout(() => setToastMessage(null), 2200);
                 }}
+                title={`Save "${selectedText}" as a .txt file`}
               >
-                ⬇ Download .txt
+                <Download size={14} strokeWidth={2.2} />
+                Download .txt
               </button>
               <button
                 type="button"
                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
                 onClick={() => {
-                  const shareUrl = `${window.location.origin}/date-words?date=${selectedDate}&format=${selectedFormat}&locale=${selectedLocale}`;
+                  const shareUrl = `${window.location.origin}/en/date-words?date=${encodeURIComponent(selectedDate)}&format=${selectedFormat}&locale=${selectedLocale}`;
                   handleCopyToClipboard(shareUrl, "Share link copied");
                 }}
+                title="Copy a shareable link to this conversion"
               >
-                ↗ Share link
+                <Share2 size={14} strokeWidth={2.2} />
+                Share link
               </button>
               <button
                 type="button"
@@ -380,8 +393,10 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 onClick={() =>
                   handleCopyToClipboard(`**${selectedText}**`, "Markdown copied")
                 }
+                title="Copy the result formatted as Markdown bold"
               >
-                ⎘ Markdown
+                <Code size={14} strokeWidth={2.2} />
+                Markdown
               </button>
             </div>
           </div>
@@ -400,7 +415,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                     }
                     aria-label={`Copy ${variant.label} variant`}
                   >
-                    📋
+                    <Clipboard size={12} strokeWidth={2.2} />
                   </button>
                   <button
                     type="button"

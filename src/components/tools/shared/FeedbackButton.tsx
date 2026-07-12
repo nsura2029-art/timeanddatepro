@@ -5,6 +5,7 @@
 // when the API is wired) and shows a friendly success state.
 
 import React, { useState, useRef, useEffect } from "react";
+import { MessageSquare, X } from "lucide-react";
 
 type FeedbackType = "suggestion" | "bug" | "praise";
 
@@ -173,8 +174,10 @@ export const FeedbackButton: React.FC<Props> = ({ pageName, onSubmit }) => {
         aria-expanded={isOpen}
         aria-haspopup="dialog"
       >
-        <span className="feedback-trigger-icon">💬</span>
-        <span>Suggest / Feedback</span>
+        <span className="feedback-trigger-icon">
+          <MessageSquare size={16} strokeWidth={2.2} />
+        </span>
+        <span>{isOpen ? "Close" : "Suggest / Feedback"}</span>
       </button>
     </div>
   );
