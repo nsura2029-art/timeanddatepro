@@ -37,12 +37,12 @@ const TOOLS: Tool[] = [
   { href: "/world-clock",         name: "World Clock",         Icon: Clock,         variant: "sky"      },
   { href: "#",                    name: "12-Month Calendar",   Icon: Calendar,      variant: "lavender" },
   { href: "/api-docs",            name: "API Docs",            Icon: BookOpen,      variant: "sky"      },
-  { href: "#",                    name: "Countdown Timer",     Icon: Hourglass,     variant: "mint"     },
-  { href: "#",                    name: "Date Difference",     Icon: CalendarRange, variant: "amber"    },
+  { href: "/en/countdown",        name: "Countdown Timer",     Icon: Hourglass,     variant: "mint"     },
+  { href: "/en/date-diff",        name: "Date Difference",     Icon: CalendarRange, variant: "amber"    },
   { href: "#",                    name: "Sunrise & Sunset",    Icon: Sun,           variant: "sky"      },
   { href: "#",                    name: "Daylight Saving",     Icon: CalendarClock, variant: "lavender" },
   { href: "#",                    name: "Stopwatch",           Icon: Timer,         variant: "mint"     },
-  { href: "#",                    name: "Unix Timestamp",      Icon: Hash,          variant: "amber"    },
+  { href: "/en/unix",             name: "Unix Timestamp",      Icon: Hash,          variant: "amber"    },
 ];
 
 export function HeroExploreLinks() {

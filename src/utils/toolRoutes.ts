@@ -8,7 +8,8 @@ export const TOOL_SLUGS = [
   "date-diff",
   "date-words",
   "time-zone-converter",
-  "currency-converter"
+  "currency-converter",
+  "countdown"
 ] as const;
 
 export type ToolSlug = typeof TOOL_SLUGS[number];
@@ -22,7 +23,8 @@ export const TOOL_LABELS: Record<ToolSlug, Record<string, string>> = {
   "date-diff": { en: "Date Difference", fr: "Difference de Date", zh: "\u65e5\u671f\u5dee", ja: "\u65e5\u4ed8\u5dee" },
   "date-words": { en: "Date to Words", fr: "Date en Mots", zh: "\u65e5\u671f\u8f6c\u6587\u5b57", ja: "\u65e5\u4ed8\u3092\u6587\u5b57\u3067" },
   "time-zone-converter": { en: "Time Zone Converter", fr: "Convertisseur de Fuseaux", zh: "\u65f6\u533a\u8f6c\u6362\u5668", ja: "\u30bf\u30a4\u30e0\u30be\u30fc\u30f3\u5909\u63db" },
-  "currency-converter": { en: "Currency Converter", fr: "Convertisseur de Devises", zh: "\u8d27\u5e01\u8f6c\u6362\u5668", ja: "\u6c47\u7387\u30b3\u30f3\u30d0\u30fc\u30bf\u30fc" }
+  "currency-converter": { en: "Currency Converter", fr: "Convertisseur de Devises", zh: "\u8d27\u5e01\u8f6c\u6362\u5668", ja: "\u6c47\u7387\u30b3\u30f3\u30d0\u30fc\u30bf\u30fc" },
+  "countdown": { en: "Countdown Timer", fr: "Compte a Rebours", zh: "\u5012\u8ba1\u65f6", ja: "\u30ab\u30a6\u30f3\u30c8\u30c0\u30a6\u30f3" }
 };
 
 // Map URL slugs to component import names
@@ -35,7 +37,8 @@ export const TOOL_COMPONENT_MAP: Record<ToolSlug, string> = {
   "date-diff": "DateDifference",
   "date-words": "DateToWords",
   "time-zone-converter": "TimeZoneConverter",
-  "currency-converter": "CurrencyConverter"
+  "currency-converter": "CurrencyConverter",
+  "countdown": "CountdownTimer"
 };
 
 export const LANG_SLUGS = ["en", "fr", "zh", "ja"] as const;

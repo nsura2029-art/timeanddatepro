@@ -35,6 +35,7 @@ import { useClickOutside } from "./utils/useClickOutside";
 import HolidayHoursCalculator from "./components/tools/HolidayHoursCalculator";
 import MeetingFinder from "./components/MeetingFinder";
 import UnixTimestampConverter from "./components/tools/UnixTimestampConverter";
+import CountdownTimer from "./components/tools/CountdownTimer";
 import ISO8601Formatter from "./components/tools/ISO8601Formatter";
 import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
@@ -1378,6 +1379,7 @@ export default function App() {
             {currentPathRoute.tool === "holidays" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "working-hours" && <HolidayHoursCalculator lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "unix" && <UnixTimestampConverter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "countdown" && <CountdownTimer lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "iso8601" && <ISO8601Formatter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-math" && <DateAddSubtract lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
