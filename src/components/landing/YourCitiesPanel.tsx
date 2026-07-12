@@ -26,7 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { TrackedCity } from "../../data/defaultCities";
-import { CITIES, type CityEntry } from "../../data/cities";
+import type { CityEntry } from "../../data/cities";
 
 interface YourCitiesPanelProps {
   /** All tracked cities (already sorted with home first) */
@@ -82,66 +82,12 @@ function formatTimezoneAbbr(d: Date, tz: string): string {
   }
 }
 
-// Common city name aliases. Maps legacy/alternative spellings to the
-// official name in the bundled CITIES dataset. Lowercase, no diacritics.
-// When the user types an alias, the search matches the canonical name.
-const CITY_ALIASES: Record<string, string> = {
-  bangalore: "bengaluru",
-  bombay: "mumbai",
-  madras: "chennai",
-  calcutta: "kolkata",
-  peking: "beijing",
-  "sao paulo": "são paulo",
-  "rio": "rio de janeiro",
-  "istambul": "istanbul",
-  "constantinople": "istanbul",
-  "byzantium": "istanbul",
-  "new york": "new york",
-  "nyc": "new york",
-  "la": "los angeles",
-  "sf": "san francisco",
-  "dc": "washington",
-  "vegg": "vega",
-};
-
-// Client-side city search. The dev API Worker's /api/v1/cities/search
-// endpoint is currently unavailable (returns 404), so the search runs
-// against the bundled CITIES dataset (~300 cities, ~33KB). Scoring:
-//   - Exact code match wins
-//   - Name prefix match gets a big boost
-//   - Substring match in name or country
-//   - Population acts as a tiebreaker
-// Also supports common aliases (bangalore -> Bengaluru, etc.)
-// Excludes codes already in the tracked list.
-function searchCities(
-  query: string,
-  excludeCodes: Set<string>,
-  limit: number,
-): CityEntry[] {
-  const raw = query.trim().toLowerCase();
-  if (raw.length < 2) return [];
-  // Resolve aliases: if the user typed an alias, search the canonical name
-  const q = CITY_ALIASES[raw] ?? raw;
-  const scored: { city: CityEntry; score: number }[] = [];
-  for (const city of CITIES) {
-    if (excludeCodes.has(city.code)) continue;
-    const name = city.name.toLowerCase();
-    const country = city.country.toLowerCase();
-    let score = 0;
-    if (name === q) score += 1000;
-    else if (name.startsWith(q)) score += 500;
-    else if (name.includes(q)) score += 200;
-    if (country.startsWith(q)) score += 100;
-    else if (country.includes(q)) score += 50;
-    // Population tiebreaker (0-50 points, log scale)
-    if (city.population) {
-      score += Math.min(50, Math.log10(city.population) * 5);
-    }
-    if (score > 0) scored.push({ city, score });
-  }
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit).map((s) => s.city);
-}
+// VITE_API_BASE: absolute origin of the search API (set at build time).
+// Falls back to a relative path so local dev (Vite proxy on /api) still works.
+const RAW_API_BASE = (import.meta as any).env?.VITE_API_BASE as string | undefined;
+const SEARCH_API_BASE = RAW_API_BASE
+  ? `${RAW_API_BASE.replace(/\/+$/, "")}/api/v1/cities`
+  : "/api/v1/cities";
 
 export function YourCitiesPanel({
   cities,
@@ -176,6 +122,7 @@ export function YourCitiesPanel({
   const addInputRef = useRef<HTMLInputElement>(null);
   const addDropdownRef = useRef<HTMLUListElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   // Mirror of the `cities` prop. The search useEffect reads it via ref
   // so the effect only re-runs when `addQuery` changes — not when the
   // parent re-renders with a new `cities` array reference (which would
@@ -199,9 +146,10 @@ export function YourCitiesPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [addOpen]);
 
-  // Debounced client-side search — 200ms
+  // Debounced API search — 200ms
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (abortRef.current) abortRef.current.abort();
     const q = addQuery.trim();
     if (q.length < 2) {
       setAddResults([]);
@@ -210,17 +158,24 @@ export function YourCitiesPanel({
       return;
     }
     setAddLoading(true);
-    debounceRef.current = setTimeout(() => {
-      // Client-side search: no async, no AbortController needed.
-      // The 200ms debounce still applies via setTimeout.
+    debounceRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      abortRef.current = controller;
       try {
-        const excludeCodes = new Set(citiesRef.current.map((c) => c.code));
-        const list = searchCities(q, excludeCodes, 8);
+        const exclude = citiesRef.current.map((c) => c.code).join(",");
+        const url = `${SEARCH_API_BASE}/search?q=${encodeURIComponent(q)}&limit=8&exclude=${encodeURIComponent(exclude)}`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // API response shape: { success, data: { cities: [...] } }
+        const json = await res.json();
+        const list: CityEntry[] = json?.data?.cities ?? [];
         setAddResults(list);
         setAddOpen(list.length > 0);
       } catch (e) {
-        setAddResults([]);
-        setAddOpen(false);
+        if ((e as Error).name !== "AbortError") {
+          setAddResults([]);
+          setAddOpen(false);
+        }
       } finally {
         setAddLoading(false);
       }
