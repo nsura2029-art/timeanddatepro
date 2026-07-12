@@ -135,7 +135,7 @@
 /* ── Input row ────────────────────────────────────────────── */
 .dtw-input-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -173,6 +173,67 @@
 .dtw-field-input:focus, .dtw-field-select:focus {
   border-color: var(--color-brand-500);
   box-shadow: var(--shadow-focus);
+}
+
+/* Date input wrapper: text input + native date picker trigger.
+ * The native picker is visually hidden but kept in the DOM (and
+ * clickable) so the user gets the system calendar widget.
+ */
+.dtw-date-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.dtw-date-input-wrap .dtw-field-input {
+  padding-right: 44px;
+  flex: 1;
+}
+.dtw-date-picker-trigger {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--color-brand-50);
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+  transition: all 150ms;
+  user-select: none;
+}
+.dtw-date-picker-trigger:hover {
+  background: var(--color-brand-100);
+  border-color: var(--color-brand-300);
+  transform: translateY(-50%) scale(1.05);
+}
+.dtw-date-picker-trigger:active {
+  transform: translateY(-50%) scale(0.95);
+}
+.dtw-date-picker-native {
+  position: absolute;
+  right: 6px;
+  top: 0;
+  width: 32px;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  z-index: 1;
+}
+.dtw-date-picker-native::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
 }
 
 /* ── NotebookLM pastel tabs ───────────────────────────────── */

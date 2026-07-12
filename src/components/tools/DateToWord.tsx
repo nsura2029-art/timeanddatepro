@@ -48,20 +48,24 @@ const NON_ENGLISH_LOCALES: PopularLanguage[] = POPULAR_LANGUAGES.filter(
   (lang) => !isEnglishLocale(`${lang.code}-${lang.region}`)
 );
 
-/** Related tools for the bottom grid (12 cards, auto-rotation of pastels). */
+/** Related tools for the bottom grid.
+ *  Tools that already exist under /en/<slug> link to their real route.
+ *  Tools not built yet link to /feedback with the tool pre-filled so the
+ *  user can express interest (matches the "one by one" build plan).
+ */
 const RELATED_TOOLS: RelatedTool[] = [
-  { label: "Word to Date",     href: "/word-to-date",          icon: "🔁" },
-  { label: "Date Math",        href: "/date-math",             icon: "➕" },
-  { label: "Date Difference",  href: "/date-diff",             icon: "↔️" },
-  { label: "Countdown",        href: "/countdown",             icon: "⏱️" },
-  { label: "TZ Converter",     href: "/time-zone-converter",   icon: "🌐" },
-  { label: "Age Calculator",   href: "/age-calculator",        icon: "🎂" },
-  { label: "12-Month Calendar", href: "/12-month-calendar",    icon: "📅" },
-  { label: "Week Number",      href: "/week-number",           icon: "📆" },
-  { label: "Sunrise & Sunset", href: "/sunrise-sunset",        icon: "🌅" },
-  { label: "Stopwatch",        href: "/stopwatch",             icon: "⏲️" },
-  { label: "Unix Timestamp",   href: "/unix",                  icon: "🕐" },
-  { label: "DST Tracker",      href: "/daylight-saving",       icon: "🌍" },
+  { label: "Word to Date",      href: "/feedback?type=suggestion&tool=word-to-date",  icon: "🔁" },
+  { label: "Date Math",         href: "/en/date-math",                              icon: "➕" },
+  { label: "Date Difference",   href: "/en/date-diff",                              icon: "↔️" },
+  { label: "Countdown",         href: "/en/countdown",                              icon: "⏱️" },
+  { label: "TZ Converter",      href: "/en/time-zone-converter",                    icon: "🌐" },
+  { label: "Age Calculator",    href: "/feedback?type=suggestion&tool=age-calculator", icon: "🎂" },
+  { label: "12-Month Calendar", href: "/en/12-month-calendar",                      icon: "📅" },
+  { label: "Week Number",       href: "/feedback?type=suggestion&tool=week-number", icon: "📆" },
+  { label: "Sunrise & Sunset",  href: "/en/sunrise-sunset",                         icon: "🌅" },
+  { label: "Stopwatch",         href: "/en/stopwatch",                              icon: "⏲️" },
+  { label: "Unix Timestamp",    href: "/en/unix",                                   icon: "🕐" },
+  { label: "DST Tracker",       href: "/en/daylight-saving",                        icon: "🌍" },
 ];
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -186,8 +190,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
             </h1>
             <p className="dtw-lede">
               Convert calendar dates to formal written words for legal
-              documents, cheques, and official forms. Five formats, 1 to 9999,
-              locale-aware.
+              documents, cheques, and official forms.
             </p>
           </div>
           <div className="dtw-hero-right">
@@ -196,9 +199,6 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <span>
                 <strong>1,247</strong> on translation waitlist
               </span>
-            </div>
-            <div className="dtw-kbd-hint">
-              Press <span className="dtw-kbd">⌘</span> <span className="dtw-kbd">K</span> for shortcuts
             </div>
           </div>
         </header>
@@ -210,7 +210,6 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <span className="tool-step">01</span>
               <span>Convert a date to words</span>
             </div>
-            <div className="tool-head-right">Client-side · 0ms</div>
           </div>
 
           <div className="tool-body">
@@ -218,24 +217,35 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <div className="dtw-field">
                 <label className="dtw-field-label" htmlFor="dtw-date-input">
                   <span>Date</span>
-                  <span className="dtw-field-label-hint">auto-detect</span>
                 </label>
-                <input
-                  id="dtw-date-input"
-                  className="dtw-field-input mono"
-                  type="text"
-                  inputMode="numeric"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  placeholder="YYYY-MM-DD, 07/11/2026, or 11 July 2026"
-                />
+                <div className="dtw-date-input-wrap">
+                  <input
+                    id="dtw-date-input"
+                    className="dtw-field-input mono"
+                    type="text"
+                    inputMode="numeric"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    placeholder="YYYY-MM-DD, 07/11/2026, or 11 July 2026"
+                  />
+                  <label className="dtw-date-picker-trigger" htmlFor="dtw-date-picker" title="Open date picker">
+                    <span aria-hidden>📅</span>
+                  </label>
+                  <input
+                    id="dtw-date-picker"
+                    className="dtw-date-picker-native"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => {
+                      if (e.target.value) setSelectedDate(e.target.value);
+                    }}
+                    aria-label="Pick a date from the calendar"
+                  />
+                </div>
               </div>
               <div className="dtw-field">
                 <label className="dtw-field-label" htmlFor="dtw-locale-select">
-                  <span>Locale</span>
-                  <span className="dtw-field-label-hint">
-                    {isEnglishLocale(selectedLocale) ? "English" : "—"}
-                  </span>
+                  <span>Language</span>
                 </label>
                 <select
                   id="dtw-locale-select"
@@ -260,20 +270,6 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                       </option>
                     ))}
                   </optgroup>
-                </select>
-              </div>
-              <div className="dtw-field">
-                <label className="dtw-field-label" htmlFor="dtw-calendar-select">
-                  <span>Calendar</span>
-                  <span className="dtw-field-label-hint">gregorian</span>
-                </label>
-                <select
-                  id="dtw-calendar-select"
-                  className="dtw-field-select"
-                  defaultValue="gregorian"
-                >
-                  <option value="gregorian">Gregorian (default)</option>
-                  <option value="julian">Julian (legacy)</option>
                 </select>
               </div>
             </div>
@@ -324,9 +320,6 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 Reset
               </button>
               <div className="dtw-cta-spacer" />
-              <span className="dtw-kbd-hint">
-                <span className="dtw-kbd">↵</span> Enter
-              </span>
             </div>
           </div>
         </section>
