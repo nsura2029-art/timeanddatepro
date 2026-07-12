@@ -364,19 +364,21 @@ function scoreCity(
   // Exclude check
   if (excludeCodes.has(String(r.geoname_id))) return null;
 
-  // Country filter
-  if (options.country && r.country_code !== options.country) {
-    // Still allow if the query is asking about the country itself
-    if (parsed.country && parsed.country !== r.country_code) return null;
-  }
+  // Country filter (from parsed query or options)
+  if (parsed.country && r.country_code !== parsed.country) return null;
+  if (options.country && r.country_code !== options.country) return null;
 
-  // State filter — when user explicitly types a state, filter to that state
+  // State filter — when user explicitly types a state, filter to that state.
+  // Match by: admin1_code, state name, or state name prefix.
   if (parsed.state) {
     const stateUpper = parsed.state.toUpperCase();
     const stateNorm = normalize(parsed.state);
     const stateNameNorm = normalize(r.state_name ?? "");
-    if (r.admin1_code !== stateUpper && stateNameNorm !== stateNorm) {
-      return null;  // Hard filter: user said "Paris TX", don't show Paris, France
+    const codeMatch = r.admin1_code === stateUpper;
+    const nameMatch = stateNameNorm === stateNorm;
+    const prefixMatch = stateNameNorm.startsWith(stateNorm) || stateNorm.startsWith(stateNameNorm);
+    if (!codeMatch && !nameMatch && !prefixMatch) {
+      return null;
     }
   } else if (options.state && r.admin1_code !== options.state) {
     return null;

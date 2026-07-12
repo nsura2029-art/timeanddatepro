@@ -60,6 +60,31 @@ const AU_STATE_CODES = new Set([
   "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT",
 ]);
 
+// Known state/province names (lowercase) — used to disambiguate
+// "City State" from "Multi-word City Name"
+const KNOWN_STATE_NAMES = new Set([
+  // US states
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+  "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho",
+  "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana",
+  "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada",
+  "hampshire", "jersey", "mexico", "york", "carolina", "dakota",
+  "ohio", "oklahoma", "oregon", "pennsylvania", "rhode", "tennessee",
+  "texas", "utah", "vermont", "virginia", "washington", "west",
+  "wisconsin", "wyoming", "columbia",
+  // Canadian provinces
+  "ontario", "quebec", "british", "alberta", "manitoba", "saskatchewan",
+  "nova", "brunswick", "newfoundland", "edward", "prince",
+  // Australian states
+  "south", "victoria", "queensland", "tasmania",
+  // Indian states
+  "karnataka", "maharashtra", "tamil", "telangana", "bengal", "uttar",
+  "gujarat", "rajasthan",
+  // UK countries
+  "england", "scotland", "wales",
+]);
+
 /**
  * Parse a user query into city, state, country components.
  *
@@ -99,14 +124,17 @@ export function parseQuery(raw: string): ParsedQuery {
   let consumed = 1;
 
   // Last token: 2-letter code → check if country or state
+  // Priority: state first (US states are more common in city searches),
+  // then country. This avoids "Springfield MO" being parsed as
+  // Springfield, Macao instead of Springfield, Missouri.
   const last = tokens[tokens.length - 1].toUpperCase();
   if (tokens.length >= 2 && last.length === 2) {
-    if (COUNTRY_CODES.has(last)) {
-      result.country = last;
-      consumed = tokens.length;  // country is always last
-    } else if (US_STATE_CODES.has(last) || CA_PROVINCE_CODES.has(last) ||
-               ["ENG", "SCT", "WLS", "NIR"].includes(last) /* UK */) {
+    if (US_STATE_CODES.has(last) || CA_PROVINCE_CODES.has(last) ||
+        ["ENG", "SCT", "WLS", "NIR"].includes(last) /* UK */) {
       result.state = last;
+      consumed = tokens.length;
+    } else if (COUNTRY_CODES.has(last)) {
+      result.country = last;
       consumed = tokens.length;
     }
   }
@@ -119,10 +147,14 @@ export function parseQuery(raw: string): ParsedQuery {
   // If we consumed the last token, middle tokens are part of the city name
   // or the state name
   if (consumed === 1 && tokens.length === 2) {
-    // "City State" — the 2nd token is the state (no code, just a word)
-    result.state = tokens[1];
+    // Only treat as state if the 2nd token is a KNOWN state/province name.
+    // This avoids false positives like "New York" (York is not a state)
+    // or "Sao Paulo" (Paulo is not a state).
+    const second = tokens[1].toLowerCase();
+    if (KNOWN_STATE_NAMES.has(second)) {
+      result.state = tokens[1];
+    }
   } else if (consumed === 1 && tokens.length === 3) {
-    // "City State-Name Country-Code" — handled above
     // "City State-Name Part2" — 2nd and 3rd are the state
     result.state = `${tokens[1]} ${tokens[2]}`;
   } else if (consumed === 1 && tokens.length > 3) {
