@@ -8,13 +8,15 @@
 // redirect to /feedback with the tool pre-selected when a non-English
 // locale is chosen.
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Clipboard,
   Download,
   Share2,
-  Code,
+  FileText,
 } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import {
   convertDateToWords,
   type DateFormatId,
@@ -92,6 +94,40 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
   const [selectedFormat, setSelectedFormat] = useState<DateFormatId>("legal");
   const [openTranslateRow, setOpenTranslateRow] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+
+  /** Parse the selectedDate (YYYY-MM-DD) into a Date for the DayPicker */
+  const selectedDateObject = useMemo(() => {
+    const parts = selectedDate.split("-");
+    if (parts.length === 3) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const date = new Date(y, m, d);
+      if (!isNaN(date.getTime())) return date;
+    }
+    return new Date();
+  }, [selectedDate]);
+
+  /** Convert a Date back to YYYY-MM-DD */
+  const formatDateForInput = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  /** Close the DayPicker when clicking outside */
+  useEffect(() => {
+    if (!isPickerOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current?.contains(event.target as Node)) return;
+      setIsPickerOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isPickerOpen]);
 
   /* ── Derived state: the conversion result ─────────────────────── */
   const conversionResult = useMemo(() => {
@@ -134,18 +170,88 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
     setSelectedFormat(formatId);
   }, []);
 
+  /**
+   * Robust copy: tries the async Clipboard API first, then falls back
+   * to a hidden textarea + document.execCommand("copy") for older
+   * browsers, restricted contexts, and HTTP origins.
+   */
   const handleCopyToClipboard = useCallback(
     async (text: string, message: string) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        setToastMessage(message);
-        setTimeout(() => setToastMessage(null), 2200);
-      } catch {
-        setToastMessage("Copy failed — try selecting the text manually");
-        setTimeout(() => setToastMessage(null), 2200);
+      let success = false;
+      // Modern API
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          success = true;
+        } catch {
+          // fall through to legacy
+        }
       }
+      // Legacy fallback
+      if (!success) {
+        try {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          textarea.style.pointerEvents = "none";
+          document.body.appendChild(textarea);
+          textarea.select();
+          success = document.execCommand("copy");
+          document.body.removeChild(textarea);
+        } catch {
+          success = false;
+        }
+      }
+      setToastMessage(success ? message : "Copy failed — select the text manually");
+      setTimeout(() => setToastMessage(null), 2200);
     },
     []
+  );
+
+  /** Trigger a file download for any text content */
+  const handleDownload = useCallback(
+    (content: string, filename: string, mimeType: string) => {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setToastMessage(`Downloaded ${filename}`);
+      setTimeout(() => setToastMessage(null), 2200);
+    },
+    []
+  );
+
+  /** Share: native share sheet on mobile, copy URL on desktop.
+   *  The selectedText is computed inside the handler so the callback
+   *  can be declared above the `selectedText` const (no temporal coupling).
+   */
+  const handleShare = useCallback(
+    async (textToShare: string) => {
+      const shareUrl = `${window.location.origin}/en/date-words?date=${encodeURIComponent(selectedDate)}&format=${selectedFormat}&locale=${selectedLocale}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Date in words: ${selectedDate}`,
+            text: textToShare,
+            url: shareUrl,
+          });
+          setToastMessage("Shared");
+          setTimeout(() => setToastMessage(null), 2200);
+          return;
+        } catch {
+          // user cancelled or share failed — fall through to copy
+        }
+      }
+      await handleCopyToClipboard(shareUrl, "Share link copied");
+    },
+    [selectedDate, selectedFormat, selectedLocale, handleCopyToClipboard]
   );
 
   const handleTranslateRowToggle = useCallback((rowNumber: number) => {
@@ -313,7 +419,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                   handleCopyToClipboard(selectedText, "Copied to clipboard")
                 }
               >
-                Copy result →
+                Convert date to format text
               </button>
               <button
                 type="button"
@@ -321,7 +427,11 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 onClick={() => {
                   setSelectedDate(new Date().toISOString().slice(0, 10));
                   setSelectedFormat("legal");
+                  setOpenTranslateRow(null);
+                  setToastMessage("Reset to today");
+                  setTimeout(() => setToastMessage(null), 1800);
                 }}
+                title="Reset date to today and format to Legal"
               >
                 Reset
               </button>
@@ -350,26 +460,21 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 onClick={() =>
                   handleCopyToClipboard(selectedText, "Copied to clipboard")
                 }
+                title="Copy the result text"
               >
                 <Clipboard size={14} strokeWidth={2.2} />
-                Copy
+                Copy text
               </button>
               <button
                 type="button"
                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
-                onClick={() => {
-                  const blob = new Blob([selectedText + "\n"], { type: "text/plain" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `date-${selectedDate}-${selectedFormat}.txt`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                  setToastMessage("Downloaded .txt");
-                  setTimeout(() => setToastMessage(null), 2200);
-                }}
+                onClick={() =>
+                  handleDownload(
+                    selectedText + "\n",
+                    `date-${selectedDate}-${selectedFormat}.txt`,
+                    "text/plain"
+                  )
+                }
                 title={`Save "${selectedText}" as a .txt file`}
               >
                 <Download size={14} strokeWidth={2.2} />
@@ -378,11 +483,8 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <button
                 type="button"
                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/en/date-words?date=${encodeURIComponent(selectedDate)}&format=${selectedFormat}&locale=${selectedLocale}`;
-                  handleCopyToClipboard(shareUrl, "Share link copied");
-                }}
-                title="Copy a shareable link to this conversion"
+                onClick={() => handleShare(selectedText)}
+                title="Share via system share sheet, or copy a link"
               >
                 <Share2 size={14} strokeWidth={2.2} />
                 Share link
@@ -391,11 +493,15 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 type="button"
                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
                 onClick={() =>
-                  handleCopyToClipboard(`**${selectedText}**`, "Markdown copied")
+                  handleDownload(
+                    `# ${selectedText}\n\n_Date in words (${selectedFormat}, ${selectedLocale})_  \n_Generated by TimeAndDatePro on ${new Date().toISOString().slice(0, 10)}_\n`,
+                    `date-${selectedDate}-${selectedFormat}.md`,
+                    "text/markdown"
+                  )
                 }
-                title="Copy the result formatted as Markdown bold"
+                title="Download the result as a Markdown file"
               >
-                <Code size={14} strokeWidth={2.2} />
+                <FileText size={14} strokeWidth={2.2} />
                 Markdown
               </button>
             </div>
@@ -440,47 +546,6 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 </div>
               </React.Fragment>
             ))}
-          </div>
-        </section>
-
-        {/* How it works */}
-        <section className="dtw-howitworks">
-          <div className="dtw-howitworks-head">
-            <div className="dtw-howitworks-eyebrow">How it works</div>
-            <div className="dtw-howitworks-title">Three steps. Five seconds.</div>
-          </div>
-          <div className="dtw-howitworks-grid">
-            <div className="dtw-how-step">
-              <div className="dtw-how-step-num">STEP 01</div>
-              <div className="dtw-how-step-title">Type a date</div>
-              <div className="dtw-how-step-desc">
-                Any format works. YYYY-MM-DD, MM/DD/YYYY, or written out —
-                we auto-detect.
-              </div>
-              <div className="dtw-how-step-mock">{selectedDate}</div>
-            </div>
-            <div className="dtw-how-step">
-              <div className="dtw-how-step-num">STEP 02</div>
-              <div className="dtw-how-step-title">Pick a format</div>
-              <div className="dtw-how-step-desc">
-                Legal for contracts. Banking for cheques. Casual for invites.
-                Five options.
-              </div>
-              <div className="dtw-how-step-mock dtw-how-step-mock--accent">
-                {selectedFormat} · selected
-              </div>
-            </div>
-            <div className="dtw-how-step">
-              <div className="dtw-how-step-num">STEP 03</div>
-              <div className="dtw-how-step-title">Copy the result</div>
-              <div className="dtw-how-step-desc">
-                One click copies. Or download as .txt, share a link, or hit
-                the API.
-              </div>
-              <div className="dtw-how-step-mock dtw-how-step-mock--success">
-                ✓ copied to clipboard
-              </div>
-            </div>
           </div>
         </section>
 
