@@ -86,8 +86,8 @@ function formatTimezoneAbbr(d: Date, tz: string): string {
 // Falls back to a relative path so local dev (Vite proxy on /api) still works.
 const RAW_API_BASE = (import.meta as any).env?.VITE_API_BASE as string | undefined;
 const SEARCH_API_BASE = RAW_API_BASE
-  ? `${RAW_API_BASE.replace(/\/+$/, "")}/api/v1/cities`
-  : "/api/v1/cities";
+  ? RAW_API_BASE.replace(/\/+$/, "")
+  : "/api/v2";
 
 export function YourCitiesPanel({
   cities,
@@ -163,12 +163,28 @@ export function YourCitiesPanel({
       abortRef.current = controller;
       try {
         const exclude = citiesRef.current.map((c) => c.code).join(",");
-        const url = `${SEARCH_API_BASE}/search?q=${encodeURIComponent(q)}&limit=8&exclude=${encodeURIComponent(exclude)}`;
+        const url = `${SEARCH_API_BASE}/api/v2/search?q=${encodeURIComponent(q)}&limit=8&exclude=${encodeURIComponent(exclude)}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        // API response shape: { success, data: { cities: [...] } }
+        // v2 response shape: { success, data: { results: [...], breakdown: {...} } }
         const json = await res.json();
-        const list: CityEntry[] = json?.data?.cities ?? [];
+        const v2Results: any[] = json?.data?.results ?? [];
+        // Convert v2 city results to CityEntry shape
+        const list: CityEntry[] = v2Results
+          .filter((r: any) => r.type === "city")
+          .map((r: any) => ({
+            code: String(r.id),
+            name: r.name,
+            asciiName: r.asciiName,
+            countryCode: r.countryCode,
+            countryName: r.countryName,
+            latitude: r.latitude,
+            longitude: r.longitude,
+            timezone: r.timezone,
+            population: r.population,
+            isCapital: r.isCapital,
+            featureCode: r.featureCode,
+          }));
         setAddResults(list);
         setAddOpen(list.length > 0);
       } catch (e) {
