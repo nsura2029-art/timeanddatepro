@@ -19,11 +19,11 @@ name = "datetime-api-dev"
 # binding = "CACHE"
 # id = "b709b446a6c04457bc6a60fd2a0d69c8"  # datetime-api-dev-dev-CACHE
 
-# D1 database (optional in V1)
-# [[env.dev.d1_databases]]
-# binding = "DB"
-# database_name = "timeanddatepro-dev"
-# database_id = "TODO"
+# D1 database (full geographic dataset)
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "timeanddatepro-full"
+database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
 
 # ── Prod environment ──────────────────────────────────────────
 [env.prod]
@@ -34,7 +34,7 @@ name = "datetime-api"
 # binding = "CACHE"
 # id = "ea49aa1578ef474e8881d88722acd809"  # datetime-api-CACHE
 
-# [[env.prod.d1_databases]]
-# binding = "DB"
-# database_name = "timeanddatepro"
-# database_id = "TODO"
+[[env.prod.d1_databases]]
+binding = "DB"
+database_name = "timeanddatepro-full"
+database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
