@@ -1,95 +1,271 @@
+import type { D1Database } from "@cloudflare/workers-types";
 // src/routes/auxiliary.ts
 // Auxiliary endpoints: DST, holidays, events, popular, quotes, onthisday,
-// browse, currency, news, history. All V1 stubs that return sensible
-// shapes so the frontend can wire to them. Full implementations in B5.
+// browse, currency. Phase 5: wired up with D1 + curated data.
 
 import { Hono } from "hono";
-import { ok, err } from "../lib/responses";
+import { ok, err, safeDate } from "../lib/responses";
+import {
+  HOLIDAYS, ON_THIS_DAY, QUOTES, CURRENCY_RATES, DEFAULT_POPULAR_CITIES,
+  type Holiday, type OnThisDayEvent, type Quote,
+} from "../data/static-data";
 
-const aux = new Hono();
+type Bindings = { DB: D1Database };
+const aux = new Hono<{ Bindings: Bindings }>();
 
-// ── DST ────────────────────────────────────────────────────────
+// ── DST (computed from IANA timezone + Intl.DateTimeFormat) ──
 aux.get("/dst", (c) => {
-  const country = c.req.query("country")?.toUpperCase();
-  if (!country) return err(c, 400, "country code required", "missing_country");
-  return ok(c, { country, dst: null, note: "V1 stub. B5 will return DST status." });
+  const tz = c.req.query("tz");
+  if (!tz) return err(c, 400, "tz query param required (IANA timezone)", "missing_tz");
+  const dateParam = c.req.query("date");
+  const date = dateParam ? safeDate(dateParam) : new Date();
+  if (!date) return err(c, 400, "Invalid date", "invalid_date");
+  try {
+    // Get offset in July (summer in N hemisphere) and January (winter)
+    const jul = new Date(date.getFullYear(), 6, 1);
+    const jan = new Date(date.getFullYear(), 0, 1);
+    const fmt = (d: Date) => {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz, timeZoneName: "shortOffset", year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(d);
+      const off = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+      return off;
+    };
+    const julOffset = fmt(jul);
+    const janOffset = fmt(jan);
+    const isDst = julOffset !== janOffset;
+    // Current offset
+    const nowParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz, timeZoneName: "shortOffset",
+    }).formatToParts(date);
+    const currentOffset = nowParts.find((p) => p.type === "timeZoneName")?.value ?? "";
+    return ok(c, {
+      timezone: tz,
+      currentOffset,
+      januaryOffset: janOffset,
+      julyOffset: julOffset,
+      observesDst: isDst,
+      date: date.toISOString().slice(0, 10),
+    });
+  } catch (e) {
+    return err(c, 400, `Invalid timezone: ${tz}`, "invalid_tz");
+  }
 });
 
 aux.get("/dst/upcoming", (c) => {
-  const country = c.req.query("country")?.toUpperCase();
-  if (!country) return err(c, 400, "country code required", "missing_country");
-  return ok(c, { country, upcoming: [], note: "V1 stub." });
+  const tz = c.req.query("tz");
+  if (!tz) return err(c, 400, "tz query param required", "missing_tz");
+  // Approximate DST transitions in 2026:
+  // US: spring forward Mar 8, fall back Nov 1
+  // EU: spring forward Mar 29, fall back Oct 25
+  // Just return approximate dates — this is a stub-level endpoint
+  const year = new Date().getFullYear();
+  return ok(c, {
+    timezone: tz,
+    year,
+    spring_forward: { us: `${year}-03-08`, eu: `${year}-03-29` },
+    fall_back: { us: `${year}-11-01`, eu: `${year}-10-25` },
+    note: "Approximate dates. Exact transitions depend on year + country rules.",
+  });
 });
 
-// ── Holidays ───────────────────────────────────────────────────
+// ── Holidays (curated static data) ───────────────────────────
+function expandHolidays(holidays: Holiday[], year: number) {
+  return holidays.map((h) => {
+    if (h.date === "RECURRING") {
+      // Compute approximate date for known recurring holidays
+      // For full accuracy, would need a holiday library like date-holidays
+      return { ...h, year, date: "Varies (computed dynamically)", note: "Easter/Diwali/etc. — exact date varies by year. Use a holiday library for production." };
+    }
+    return { ...h, year, date: `${year}-${h.date}` };
+  });
+}
+
 aux.get("/holidays/today", (c) => {
   const country = c.req.query("country")?.toUpperCase();
-  return ok(c, { country: country ?? null, holidays: [], note: "V1 stub." });
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const today = `${mm}-${dd}`;
+  let list = HOLIDAYS.filter((h) => h.date === today);
+  if (country) list = list.filter((h) => h.cca2 === country);
+  return ok(c, {
+    date: today,
+    country: country ?? null,
+    count: list.length,
+    holidays: expandHolidays(list, now.getFullYear()),
+  });
 });
 
 aux.get("/holidays/upcoming", (c) => {
   const country = c.req.query("country")?.toUpperCase();
-  const limit = Math.min(parseInt(c.req.query("limit") ?? "10", 10) || 10, 100);
-  return ok(c, { country: country ?? null, limit, holidays: [], note: "V1 stub." });
+  const days = Math.min(90, Math.max(1, parseInt(c.req.query("days") ?? "30", 10) || 30));
+  const now = new Date();
+  const results: Array<Holiday & { date: string; daysFromNow: number }> = [];
+  let list = country ? HOLIDAYS.filter((h) => h.cca2 === country) : HOLIDAYS;
+  for (const h of list) {
+    if (h.date === "RECURRING") continue;  // skip dynamic
+    const [mm, dd] = h.date.split("-").map(Number);
+    const holidayDate = new Date(now.getFullYear(), mm - 1, dd);
+    if (holidayDate < now) holidayDate.setFullYear(now.getFullYear() + 1);
+    const daysFromNow = Math.ceil((holidayDate.getTime() - now.getTime()) / 86400000);
+    if (daysFromNow <= days) {
+      results.push({ ...h, date: `${holidayDate.toISOString().slice(0, 10)}`, daysFromNow });
+    }
+  }
+  results.sort((a, b) => a.daysFromNow - b.daysFromNow);
+  return ok(c, {
+    country: country ?? null,
+    days,
+    count: results.length,
+    holidays: results.slice(0, 20),
+  });
 });
 
 aux.get("/holidays/year", (c) => {
   const country = c.req.query("country")?.toUpperCase();
-  const year = parseInt(c.req.query("year") ?? String(new Date().getFullYear()), 10);
+  if (!country) return err(c, 400, "country query param required (ISO 3166-1 alpha-2)", "missing_country");
+  const yearParam = c.req.query("year");
+  const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
   if (!Number.isFinite(year) || year < 1900 || year > 2200) {
     return err(c, 400, "year must be between 1900 and 2200", "invalid_year");
   }
-  return ok(c, { country: country ?? null, year, holidays: [], note: "V1 stub." });
+  const list = HOLIDAYS.filter((h) => h.cca2 === country);
+  return ok(c, {
+    country,
+    year,
+    count: list.length,
+    holidays: expandHolidays(list, year),
+  });
 });
 
-// ── Popular ────────────────────────────────────────────────────
-aux.get("/popular/cities", (c) => {
-  const limit = Math.min(parseInt(c.req.query("limit") ?? "20", 10) || 20, 100);
-  return ok(c, { count: limit, cities: [], note: "V1 stub." });
+// ── Popular cities (D1) ─────────────────────────────────────
+aux.get("/popular/cities", async (c) => {
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "20", 10) || 20));
+  const country = c.req.query("country")?.toUpperCase();
+  let sql = `SELECT geoname_id AS id, name, ascii_name AS asciiName, country_code AS countryCode,
+                    country_name AS countryName, latitude, longitude, timezone, population,
+                    is_capital AS isCapital, feature_code AS featureCode
+             FROM cities
+             WHERE 1=1`;
+  const params: any[] = [];
+  if (country) { sql += ` AND country_code = ?${params.length + 1}`; params.push(country); }
+  sql += ` ORDER BY population DESC LIMIT ?${params.length + 1}`;
+  params.push(limit);
+  const result = await c.env.DB.prepare(sql).bind(...params).all();
+  return ok(c, {
+    count: (result.results || []).length,
+    limit,
+    cities: result.results || [],
+  });
 });
 
-aux.get("/popular/defaults", (c) => {
-  return ok(c, { cities: [], note: "V1 stub." });
+aux.get("/popular/defaults", async (c) => {
+  // Get the top 20 most populous cities (default recommendations)
+  const result = await c.env.DB.prepare(
+    `SELECT geoname_id AS id, name, ascii_name AS asciiName, country_code AS countryCode,
+            country_name AS countryName, latitude, longitude, timezone, population,
+            is_capital AS isCapital
+     FROM cities
+     ORDER BY population DESC
+     LIMIT 20`,
+  ).all();
+  return ok(c, {
+    count: (result.results || []).length,
+    cities: result.results || [],
+  });
 });
 
-// ── Quotes ─────────────────────────────────────────────────────
+// ── Quotes (curated) ─────────────────────────────────────────
 aux.get("/quotes/random", (c) => {
-  return ok(c, { quote: null, note: "V1 stub." });
+  const idx = Math.floor(Math.random() * QUOTES.length);
+  return ok(c, QUOTES[idx]);
 });
 
 aux.get("/quotes/ranked", (c) => {
-  const limit = Math.min(parseInt(c.req.query("limit") ?? "20", 10) || 20, 100);
-  return ok(c, { count: limit, quotes: [], note: "V1 stub." });
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query("limit") ?? "20", 10) || 20));
+  return ok(c, { count: limit, quotes: QUOTES.slice(0, limit) });
 });
 
-// ── Events ─────────────────────────────────────────────────────
+// ── Events (V1 stub) ─────────────────────────────────────────
 aux.get("/events/upcoming", (c) => {
   const country = c.req.query("country")?.toUpperCase();
-  return ok(c, { country: country ?? null, events: [], note: "V1 stub." });
+  return ok(c, {
+    country: country ?? null,
+    events: [],
+    note: "Events table not seeded in Phase 5. See holiday endpoints for date-based events.",
+  });
 });
 
 aux.get("/events/next", (c) => {
-  return ok(c, { event: null, note: "V1 stub." });
+  return ok(c, { event: null, note: "Events table not seeded in Phase 5." });
 });
 
-// ── OnThisDay ──────────────────────────────────────────────────
+// ── OnThisDay (curated) ──────────────────────────────────────
 aux.get("/onthisday", (c) => {
-  const month = parseInt(c.req.query("month") ?? String(new Date().getMonth() + 1), 10);
-  const day = parseInt(c.req.query("day") ?? String(new Date().getDate()), 10);
+  const now = new Date();
+  const month = parseInt(c.req.query("month") ?? String(now.getMonth() + 1), 10);
+  const day = parseInt(c.req.query("day") ?? String(now.getDate()), 10);
   if (month < 1 || month > 12) return err(c, 400, "month must be 1-12", "invalid_month");
   if (day < 1 || day > 31) return err(c, 400, "day must be 1-31", "invalid_day");
-  return ok(c, { month, day, events: [], note: "V1 stub." });
+  const events = ON_THIS_DAY.filter((e) => e.month === month && e.day === day);
+  return ok(c, {
+    month,
+    day,
+    count: events.length,
+    events: events.sort((a, b) => a.year - b.year),
+  });
 });
 
-// ── Browse home ────────────────────────────────────────────────
-aux.get("/browse/home", (c) => {
-  return ok(c, { greeting: null, statusPills: [], holiday: null, sun: null, sync: null, note: "V1 stub." });
+// ── Browse home (computed from D1) ───────────────────────────
+aux.get("/browse/home", async (c) => {
+  // Top 5 cities by population
+  const topCities = await c.env.DB.prepare(
+    `SELECT geoname_id AS id, name, ascii_name AS asciiName, country_code AS countryCode,
+            country_name AS countryName, latitude, longitude, timezone, population
+     FROM cities
+     WHERE is_capital = 1
+     ORDER BY population DESC
+     LIMIT 5`,
+  ).all();
+  // Today's holidays
+  const now = new Date();
+  const today = `${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const todayHolidays = HOLIDAYS.filter((h) => h.date === today).map((h) => ({
+    cca2: h.cca2,
+    name: h.name,
+    type: h.type,
+  }));
+  // OnThisDay for today
+  const todayOTD = ON_THIS_DAY.filter((e) => e.month === now.getMonth() + 1 && e.day === now.getDate());
+  return ok(c, {
+    greeting: "Hello, World!",
+    statusPills: ["Local time", "Timezone", "Weather"],
+    holiday: todayHolidays[0] ?? null,
+    holidays: todayHolidays,
+    onThisDay: todayOTD[0] ?? null,
+    onThisDayCount: todayOTD.length,
+    popularCities: topCities.results || [],
+    sun: null,
+    sync: null,
+  });
 });
 
-// ── Currency ───────────────────────────────────────────────────
+// ── Currency (static snapshot) ───────────────────────────────
 aux.get("/currency/rates", (c) => {
   const base = (c.req.query("base") ?? "USD").toUpperCase();
-  return ok(c, { base, rates: {}, note: "V1 stub. Will use exchangerate.host in B5." });
+  if (!CURRENCY_RATES[base]) return err(c, 400, `Unknown currency: ${base}`, "invalid_currency");
+  const baseRate = CURRENCY_RATES[base].rate;
+  const rates: Record<string, number> = {};
+  for (const [code, info] of Object.entries(CURRENCY_RATES)) {
+    rates[code] = +(info.rate / baseRate).toFixed(6);
+  }
+  return ok(c, {
+    base,
+    date: "2024-01-01",
+    source: "open.er-api.com snapshot",
+    rates,
+  });
 });
 
 aux.get("/currency/convert", (c) => {
@@ -97,41 +273,50 @@ aux.get("/currency/convert", (c) => {
   const to = c.req.query("to")?.toUpperCase();
   const amount = parseFloat(c.req.query("amount") ?? "1");
   if (!from || !to) return err(c, 400, "from and to required", "missing_params");
-  if (!Number.isFinite(amount) || amount < 0) return err(c, 400, "amount must be a positive number", "invalid_amount");
-  return ok(c, { from, to, amount, converted: null, rate: null, note: "V1 stub." });
+  if (!CURRENCY_RATES[from]) return err(c, 400, `Unknown currency: ${from}`, "invalid_from");
+  if (!CURRENCY_RATES[to]) return err(c, 400, `Unknown currency: ${to}`, "invalid_to");
+  if (!Number.isFinite(amount) || amount < 0) return err(c, 400, "amount must be positive", "invalid_amount");
+  // Convert via USD
+  const inUsd = amount / CURRENCY_RATES[from].rate;
+  const converted = inUsd * CURRENCY_RATES[to].rate;
+  const rate = CURRENCY_RATES[to].rate / CURRENCY_RATES[from].rate;
+  return ok(c, {
+    from,
+    to,
+    amount,
+    converted: +converted.toFixed(2),
+    rate: +rate.toFixed(6),
+    date: "2024-01-01",
+  });
 });
 
 aux.get("/currency/codes", (c) => {
-  return ok(c, { codes: ["USD", "EUR", "GBP", "JPY", "CNY", "INR", "AUD", "CAD", "CHF", "SGD"], note: "V1 stub. Will return 170+ ISO 4217 codes in B5." });
+  const codes = Object.entries(CURRENCY_RATES).map(([code, info]) => ({
+    code,
+    name: info.name,
+    symbol: info.symbol,
+  }));
+  return ok(c, { count: codes.length, currencies: codes });
 });
 
-// ── News ───────────────────────────────────────────────────────
+// ── News / History (V1 stubs) ────────────────────────────────
 aux.get("/news/by-country", (c) => {
-  const country = c.req.query("country")?.toUpperCase();
-  return ok(c, { country: country ?? null, articles: [], note: "V1 stub." });
+  return err(c, 501, "News endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
-
 aux.get("/news/by-category", (c) => {
-  const category = c.req.query("category");
-  return ok(c, { category, articles: [], note: "V1 stub." });
+  return err(c, 501, "News endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
-
 aux.get("/news/global", (c) => {
-  return ok(c, { articles: [], note: "V1 stub." });
+  return err(c, 501, "News endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
-
 aux.get("/news/feeds", (c) => {
-  return ok(c, { feeds: [], note: "V1 stub." });
+  return err(c, 501, "News endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
-
-// ── History ────────────────────────────────────────────────────
 aux.get("/history/by-country", (c) => {
-  const country = c.req.query("country")?.toUpperCase();
-  return ok(c, { country: country ?? null, events: [], note: "V1 stub." });
+  return err(c, 501, "History endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
-
 aux.get("/history/countries", (c) => {
-  return ok(c, { countries: [], note: "V1 stub." });
+  return err(c, 501, "History endpoint not yet implemented. Phase 5.10 placeholder.", "not_implemented");
 });
 
 export { aux as auxRouter };

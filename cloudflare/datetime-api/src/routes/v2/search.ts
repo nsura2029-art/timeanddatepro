@@ -1,3 +1,4 @@
+import type { D1Database } from "@cloudflare/workers-types";
 // ============================================================
 // v2 search endpoint — full geographic + locale-aware search
 // ============================================================

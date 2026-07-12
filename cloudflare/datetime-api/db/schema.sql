@@ -194,3 +194,24 @@ INSERT OR REPLACE INTO meta (key, value) VALUES
   ('regions_source', 'UN M49 (unstats.un.org/unsd/methodology/m49/)'),
   ('timezones_source', 'IANA tz database (canonical 312 zones)'),
   ('states_source', 'GeoNames admin1Codes.txt');
+
+-- ── Feedback (Phase 5.8) ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS feedback (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  type          TEXT NOT NULL,            -- 'feature' | 'bug' | 'praise' | 'question'
+  title         TEXT NOT NULL,
+  body          TEXT NOT NULL,
+  author        TEXT,                     -- optional display name
+  country_code  TEXT,                     -- optional 2-letter country code
+  status        TEXT DEFAULT 'open',      -- 'open' | 'planned' | 'done' | 'deleted'
+  votes         INTEGER DEFAULT 0,
+  created_at    INTEGER NOT NULL,         -- unixepoch seconds
+  updated_at    INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_type ON feedback(type);
+CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
+CREATE INDEX IF NOT EXISTS idx_feedback_votes ON feedback(votes DESC);
+CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at DESC);
+
+UPDATE meta SET value = '2.1.0' WHERE key = 'schema_version';
