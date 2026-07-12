@@ -163,10 +163,13 @@ export function buildAdminRouter(): Router {
   });
 
   // ── CDN edge cache purge (Cloudflare Pages) ──────────────────────
-  // Purges the entire CDN edge cache for the timeanddatepro-dev Pages
+  // Purges the entire CDN edge cache for the timeanddatepro Pages
   // project. Uses the account-level Pages API (not the zone-level
   // cache API), so the existing account-scoped CLOUDFLARE_API_TOKEN
   // works without needing zone resources.
+  //
+  // On failure, returns the Cloudflare dashboard URL in `data.dashboardUrl`
+  // so the admin UI can show a one-click fallback button.
   authed.post("/cdn/purge", async (req, res) => {
     const user = (req as AuthedRequest).user!;
     const token = process.env.CLOUDFLARE_API_TOKEN;
@@ -178,9 +181,10 @@ export function buildAdminRouter(): Router {
       });
       return;
     }
+    const dashboardUrl = `https://dash.cloudflare.com/${accountId}/pages/view/timeanddatepro`;
     try {
       const cfRes = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/timeanddatepro-dev/purge_cache`,
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/timeanddatepro/purge_cache`,
         {
           method: "POST",
           headers: {
@@ -195,16 +199,106 @@ export function buildAdminRouter(): Router {
       // Log the purge action for the audit trail
       run(
         "INSERT INTO cache_invalidation (cache_key, triggered_by, reason, created_at) VALUES (?, ?, ?, ?)",
-        [`cdn:timeanddatepro-dev:${Date.now()}`, user.id, ok ? "manual admin CDN purge" : `CDN purge FAILED: ${cfJson.errors?.[0]?.message ?? cfRes.status}`, Date.now()]
+        [`cdn:timeanddatepro:${Date.now()}`, user.id, ok ? "manual admin CDN purge" : `CDN purge FAILED: ${cfJson.errors?.[0]?.message ?? cfRes.status}`, Date.now()]
       );
       if (ok) {
-        res.json({ success: true, data: { purged: true, project: "timeanddatepro-dev" } });
+        res.json({ success: true, data: { purged: true, project: "timeanddatepro" } });
       } else {
         res.status(502).json({
           success: false,
-          error: { message: cfJson.errors?.[0]?.message ?? `Cloudflare responded ${cfRes.status}` },
+          error: {
+            message: cfJson.errors?.[0]?.message ?? `Cloudflare responded ${cfRes.status}`,
+          },
+          data: { dashboardUrl, fallback: true },
         });
       }
+    } catch (e) {
+      res.status(500).json({
+        success: false,
+        error: { message: (e as Error).message },
+        data: { dashboardUrl, fallback: true },
+      });
+    }
+  });
+
+  // ── KV cache: list namespaces ────────────────────────────────
+  // Lists all KV namespaces in the account. Used by the admin Cache
+  // page to show which caches are available to purge.
+  authed.get("/kv/namespaces", async (_req, res) => {
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    if (!token || !accountId) {
+      res.status(503).json({ success: false, error: { message: "Cloudflare creds not configured" } });
+      return;
+    }
+    try {
+      const r = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces?per_page=100`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const j: any = await r.json();
+      if (!j.success) {
+        res.status(502).json({ success: false, error: { message: j.errors?.[0]?.message ?? "Failed" } });
+        return;
+      }
+      res.json({
+        success: true,
+        data: {
+          namespaces: (j.result || []).map((n: any) => ({ id: n.id, title: n.title })),
+        },
+      });
+    } catch (e) {
+      res.status(500).json({ success: false, error: { message: (e as Error).message } });
+    }
+  });
+
+  // ── KV cache: purge all keys in a namespace ──────────────────
+  // Lists all keys in the namespace, then deletes each one.
+  // WARNING: destructive — wipes the entire namespace contents.
+  // The admin UI should require explicit confirmation before calling.
+  authed.post("/kv/purge", async (req, res) => {
+    const user = (req as AuthedRequest).user!;
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const { namespaceId, confirm } = (req.body || {}) as { namespaceId: string; confirm: boolean };
+    if (!token || !accountId) {
+      res.status(503).json({ success: false, error: { message: "Cloudflare creds not configured" } });
+      return;
+    }
+    if (!namespaceId || !confirm) {
+      res.status(400).json({
+        success: false,
+        error: { message: "namespaceId and confirm=true required (destructive op)" },
+      });
+      return;
+    }
+    try {
+      // List all keys
+      const listRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/keys?per_page=1000`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const listJson: any = await listRes.json();
+      if (!listJson.success) {
+        res.status(502).json({ success: false, error: { message: listJson.errors?.[0]?.message ?? "List failed" } });
+        return;
+      }
+      const keys: string[] = (listJson.result || []).map((k: any) => k.name);
+      // Delete each key (bulk endpoint accepts up to 10000 per call)
+      let deleted = 0;
+      for (const key of keys) {
+        const delRes = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/${encodeURIComponent(key)}`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (delRes.ok) deleted++;
+      }
+      // Audit log
+      run(
+        "INSERT INTO cache_invalidation (cache_key, triggered_by, reason, created_at) VALUES (?, ?, ?, ?)",
+        [`kv:${namespaceId}:${Date.now()}`, user.id, `KV namespace purge: ${deleted} keys deleted`, Date.now()]
+      );
+      res.json({ success: true, data: { namespaceId, totalKeys: keys.length, deleted } });
     } catch (e) {
       res.status(500).json({ success: false, error: { message: (e as Error).message } });
     }
