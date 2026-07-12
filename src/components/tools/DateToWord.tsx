@@ -322,6 +322,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <span className="tool-step">01</span>
               <span>Convert a date to words</span>
             </div>
+            <div className="tool-head-right">Client-side · 0ms</div>
           </div>
 
           <div className="tool-body">
@@ -329,6 +330,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <div className="dtw-field">
                 <label className="dtw-field-label" htmlFor="dtw-date-input">
                   <span>Date</span>
+                  <span className="dtw-field-label-hint">auto-detect</span>
                 </label>
                 <div className="dtw-date-input-wrap">
                   <input
@@ -358,6 +360,9 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
               <div className="dtw-field">
                 <label className="dtw-field-label" htmlFor="dtw-locale-select">
                   <span>Language</span>
+                  <span className="dtw-field-label-hint">
+                    {selectedLocale.toLowerCase()}
+                  </span>
                 </label>
                 <select
                   id="dtw-locale-select"
@@ -419,7 +424,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                   handleCopyToClipboard(selectedText, "Copied to clipboard")
                 }
               >
-                Convert date to format text
+                Convert to words →
               </button>
               <button
                 type="button"
@@ -436,6 +441,9 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 Reset
               </button>
               <div className="dtw-cta-spacer" />
+              <span className="dtw-kbd-hint">
+                <span className="dtw-kbd">↵</span> Enter
+              </span>
             </div>
           </div>
         </section>
