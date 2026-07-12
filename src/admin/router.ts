@@ -162,6 +162,54 @@ export function buildAdminRouter(): Router {
     res.json({ success: true, data: { cacheKey, invalidated: true } });
   });
 
+  // ── CDN edge cache purge (Cloudflare Pages) ──────────────────────
+  // Purges the entire CDN edge cache for the timeanddatepro-dev Pages
+  // project. Uses the account-level Pages API (not the zone-level
+  // cache API), so the existing account-scoped CLOUDFLARE_API_TOKEN
+  // works without needing zone resources.
+  authed.post("/cdn/purge", async (req, res) => {
+    const user = (req as AuthedRequest).user!;
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    if (!token || !accountId) {
+      res.status(503).json({
+        success: false,
+        error: { message: "CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID not configured" },
+      });
+      return;
+    }
+    try {
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/timeanddatepro-dev/purge_cache`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        }
+      );
+      const cfJson: any = await cfRes.json().catch(() => ({}));
+      const ok = cfRes.ok && cfJson.success !== false;
+      // Log the purge action for the audit trail
+      run(
+        "INSERT INTO cache_invalidation (cache_key, triggered_by, reason, created_at) VALUES (?, ?, ?, ?)",
+        [`cdn:timeanddatepro-dev:${Date.now()}`, user.id, ok ? "manual admin CDN purge" : `CDN purge FAILED: ${cfJson.errors?.[0]?.message ?? cfRes.status}`, Date.now()]
+      );
+      if (ok) {
+        res.json({ success: true, data: { purged: true, project: "timeanddatepro-dev" } });
+      } else {
+        res.status(502).json({
+          success: false,
+          error: { message: cfJson.errors?.[0]?.message ?? `Cloudflare responded ${cfRes.status}` },
+        });
+      }
+    } catch (e) {
+      res.status(500).json({ success: false, error: { message: (e as Error).message } });
+    }
+  });
+
   // ── Triggers (Phase E) ────────────────────────────────────────────────
   authed.get("/triggers", (_req, res) => {
     res.json({ success: true, data: { grouped: triggersGrouped(), total: TRIGGERS.length } });
