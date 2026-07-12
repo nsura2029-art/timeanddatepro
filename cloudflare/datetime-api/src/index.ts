@@ -1,0 +1,132 @@
+// src/index.ts
+// TimeAndDatePro API Worker — Hono on Cloudflare Workers.
+// Wires all route modules + middleware + global error handler.
+
+import { Hono } from "hono";
+import { corsMiddleware } from "./middleware/cors";
+import { citiesRouter } from "./routes/cities";
+import { timeRouter } from "./routes/time";
+import { countriesRouter } from "./routes/countries";
+import { pairsRouter } from "./routes/pairs";
+import { auxRouter } from "./routes/auxiliary";
+import { feedbackRouter } from "./routes/feedback";
+import { ok, err, API_VERSION } from "./lib/responses";
+
+const app = new Hono();
+
+// ── Global middleware ──────────────────────────────────────
+app.use("*", corsMiddleware);
+
+// ── Root: API info + endpoint list ───────────────────────
+app.get("/", (c) =>
+  ok(c, {
+    name: "TimeAndDatePro API",
+    version: API_VERSION,
+    status: "live",
+    documentation: "/api/v1",
+    health: "/api/v1/health",
+  })
+);
+
+app.get("/api/v1", (c) =>
+  ok(c, {
+    name: "TimeAndDatePro API",
+    version: API_VERSION,
+    sdk: { nodejs: "sdk/node/README.md" },
+    endpoints: [
+      // Cities (V1)
+      "GET /api/v1/cities",
+      "GET /api/v1/cities/:slug",
+      "GET /api/v1/cities/live",
+      "GET /api/v1/cities/search",
+      // Time (V1)
+      "GET /api/v1/time/now",
+      "GET /api/v1/time/convert",
+      "GET /api/v1/time/diff",
+      "GET /api/v1/time/add",
+      "GET /api/v1/time/unix",
+      "GET /api/v1/time/iso",
+      "GET /api/v1/time/words",
+      "GET /api/v1/time/sun",
+      // Countries (V1 stub)
+      "GET /api/v1/countries",
+      "GET /api/v1/countries/:code",
+      "GET /api/v1/countries/:code/holidays",
+      "GET /api/v1/countries/:code/working-hours",
+      // Pairs (V1 stub)
+      "GET /api/v1/pairs/:from/:to",
+      "GET /api/v1/meeting/best",
+      // Auxiliary (V1 stub)
+      "GET /api/v1/dst",
+      "GET /api/v1/dst/upcoming",
+      "GET /api/v1/holidays/today",
+      "GET /api/v1/holidays/upcoming",
+      "GET /api/v1/holidays/year",
+      "GET /api/v1/popular/cities",
+      "GET /api/v1/popular/defaults",
+      "GET /api/v1/quotes/random",
+      "GET /api/v1/quotes/ranked",
+      "GET /api/v1/events/upcoming",
+      "GET /api/v1/events/next",
+      "GET /api/v1/onthisday",
+      "GET /api/v1/browse/home",
+      "GET /api/v1/currency/rates",
+      "GET /api/v1/currency/convert",
+      "GET /api/v1/currency/codes",
+      "GET /api/v1/news/by-country",
+      "GET /api/v1/news/by-category",
+      "GET /api/v1/news/global",
+      "GET /api/v1/news/feeds",
+      "GET /api/v1/history/by-country",
+      "GET /api/v1/history/countries",
+      // Feedback (V1 stub)
+      "GET /api/v1/feedback",
+      "GET /api/v1/feedback/top",
+      "GET /api/v1/feedback/:id",
+      "POST /api/v1/feedback",
+      "POST /api/v1/feedback/:id/vote",
+      "DELETE /api/v1/feedback/:id",
+    ],
+  })
+);
+
+// ── Health ────────────────────────────────────────────────
+app.get("/api/v1/health", (c) =>
+  ok(c, {
+    status: "ok",
+    version: API_VERSION,
+    uptime_ms: typeof performance !== "undefined" ? performance.now() : 0,
+  })
+);
+
+// ── Mount route modules ──────────────────────────────────
+app.route("/api/v1/cities", citiesRouter);
+app.route("/api/v1/time", timeRouter);
+app.route("/api/v1/countries", countriesRouter);
+app.route("/api/v1/pairs", pairsRouter);
+app.route("/api/v1/meeting", pairsRouter);
+app.route("/api/v1", auxRouter);
+app.route("/api/v1/feedback", feedbackRouter);
+
+// ── 404 handler ──────────────────────────────────────────
+app.notFound((c) => err(c, 404, `Route not found: ${c.req.method} ${c.req.path}`, "not_found"));
+
+// ── Global error handler ─────────────────────────────────
+// Catches any unhandled exception and returns a 500 with a stable shape.
+app.onError((err, c) => {
+  // eslint-disable-next-line no-console
+  console.error("[api] unhandled error:", err);
+  return c.json(
+    {
+      success: false,
+      error: {
+        message: "Internal server error",
+        code: "internal_error",
+        status: 500,
+      },
+    },
+    500
+  );
+});
+
+export default app;

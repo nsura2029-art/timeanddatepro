@@ -1,0 +1,40 @@
+# wrangler.toml — Cloudflare Workers config for the TimeAndDatePro API
+# Two environments: dev (free, on dev.api.dateandtime.live) and prod.
+# D1 + KV bindings are optional in V1 — V1 self-contains the cities data.
+# B6 will add D1 + KV for the full port.
+
+name = "datetime-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Dev environment (default) ────────────────────────────────
+[env.dev]
+name = "datetime-api-dev"
+# Custom domain — attached via dashboard (no zone-level API access on this token)
+# routes = { pattern = "dev.api.dateandtime.live/*", custom_domain = true }
+
+# KV cache (optional in V1)
+# [[env.dev.kv_namespaces]]
+# binding = "CACHE"
+# id = "b709b446a6c04457bc6a60fd2a0d69c8"  # datetime-api-dev-dev-CACHE
+
+# D1 database (optional in V1)
+# [[env.dev.d1_databases]]
+# binding = "DB"
+# database_name = "timeanddatepro-dev"
+# database_id = "TODO"
+
+# ── Prod environment ──────────────────────────────────────────
+[env.prod]
+name = "datetime-api"
+# routes = { pattern = "api.dateandtime.live/*", custom_domain = true }
+
+# [[env.prod.kv_namespaces]]
+# binding = "CACHE"
+# id = "ea49aa1578ef474e8881d88722acd809"  # datetime-api-CACHE
+
+# [[env.prod.d1_databases]]
+# binding = "DB"
+# database_name = "timeanddatepro"
+# database_id = "TODO"
