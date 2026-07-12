@@ -1064,6 +1064,383 @@ result.topSlots.forEach((slot) => {
     cache: "no-store",
     rateLimited: true,
   },
+  /* placeholder - real entries inserted below */
+
+  // ── v2 Search (D1, 13 edge cases) ─────────────────────
+  {
+    slug: "v2-search",
+    title: "GET /api/v2/search",
+    method: "GET",
+    summary: "Full-text search with disambiguation, diacritics, fuzzy matching, timezone + location filters, locale-aware country names. Backed by D1 (5,081 cities, 194 countries, 3,865 states, 312 timezones).",
+    apiPath: "/api/v2/search",
+    intro: [
+      "Handles all 13 edge cases from the spec: same-name disambiguation, city/state/country types, exact > prefix > substring, diacritics, abbreviations, fuzzy misspellings, city+state patterns, country codes, location-aware ranking, timezone grouping, pagination, and locale-aware results.",
+      "Query param `q` is required. Returns a paginated `results` array where each item has a `type` field (city|country|state).",
+    ],
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=Hyderabad&limit=3"` },
+      { lang: "curl", label: "With location boost", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=York&near=40.7128,-74.0060&limit=3"` },
+      { lang: "curl", label: "Timezone filter", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=a&tz=America/New_York&limit=10"` },
+    ],
+    responseExample: {
+      success: true,
+      data: {
+        query: "Hyderabad",
+        parsed: { raw: "Hyderabad", primary: "Hyderabad", type: "city" },
+        total: 2, page: 1, limit: 3, hasMore: false,
+        results: [
+          { type: "city", id: 1269843, name: "Hyderabad", countryCode: "IN", countryName: "India", stateName: "Telangana", timezone: "Asia/Kolkata", population: 6993262, isCapital: false, score: 1001.37 },
+          { type: "city", id: 1176734, name: "Hyderabad", countryCode: "PK", countryName: "Pakistan", stateName: "Sindh", timezone: "Asia/Karachi", population: 1386330, isCapital: false, score: 1001.26 },
+        ],
+        breakdown: { cities: 2, countries: 0, states: 0 },
+      },
+    },
+    cache: "no-store",
+  },
+  // ── Countries (D1, 194) ────────────────────────────────
+  {
+    slug: "countries-list",
+    title: "GET /api/v1/countries",
+    method: "GET",
+    summary: "List all 194 countries with full ISO 3166 data. Backed by D1 (mledoze/restcountries dataset).",
+    apiPath: "/api/v1/countries",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries?limit=5"` },
+      { lang: "curl", label: "Filter by region", code: `curl "https://dev.api.dateandtime.live/api/v1/countries?region=Asia&limit=10"` },
+    ],
+    responseExample: {
+      success: true,
+      data: { count: 5, countries: [{ code: "JP", code3: "JPN", name: "Japan", capital: "Tokyo", region: "Asia", subregion: "Eastern Asia", languages: [{ iso639_1: "jpn", name: "Japanese" }], currencies: [{ iso4217: "JPY", name: "Japanese yen", symbol: "¥" }], timezones: ["Asia/Tokyo"], population: 125710000 }] },
+    },
+  },
+  {
+    slug: "country-get",
+    title: "GET /api/v1/countries/:code",
+    method: "GET",
+    summary: "Get a single country by cca2, cca3, or IOC code.",
+    apiPath: "/api/v1/countries/:code",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries/JP"` }],
+    responseExample: { success: true, data: { code: "JP", code3: "JPN", name: "Japan", capital: "Tokyo", region: "Asia", timezones: ["Asia/Tokyo"], languages: [{ name: "Japanese" }] } },
+  },
+  {
+    slug: "country-cities",
+    title: "GET /api/v1/countries/:code/cities",
+    method: "GET",
+    summary: "List cities in a country, ordered by population. Backed by D1.",
+    apiPath: "/api/v1/countries/:code/cities",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries/GB/cities?limit=5"` }],
+  },
+  // ── Popular cities (D1) ────────────────────────────────
+  {
+    slug: "popular-cities",
+    title: "GET /api/v1/popular/cities",
+    method: "GET",
+    summary: "Top N cities by population. Optional country filter. Backed by D1.",
+    apiPath: "/api/v1/popular/cities",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/popular/cities?limit=5"` },
+      { lang: "curl", label: "By country", code: `curl "https://dev.api.dateandtime.live/api/v1/popular/cities?country=JP&limit=3"` },
+    ],
+  },
+  {
+    slug: "popular-defaults",
+    title: "GET /api/v1/popular/defaults",
+    method: "GET",
+    summary: "20 default city recommendations (highest population worldwide).",
+    apiPath: "/api/v1/popular/defaults",
+  },
+  // ── Holidays (curated) ─────────────────────────────────
+  {
+    slug: "holidays-today",
+    title: "GET /api/v1/holidays/today",
+    method: "GET",
+    summary: "Public holidays happening today. Optional country filter. 200+ curated holidays.",
+    apiPath: "/api/v1/holidays/today",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/today"` },
+      { lang: "curl", label: "By country", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/today?country=US"` },
+    ],
+  },
+  {
+    slug: "holidays-upcoming",
+    title: "GET /api/v1/holidays/upcoming",
+    method: "GET",
+    summary: "Upcoming public holidays in the next N days (max 90).",
+    apiPath: "/api/v1/holidays/upcoming",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/upcoming?country=US&days=30"` }],
+  },
+  {
+    slug: "holidays-year",
+    title: "GET /api/v1/holidays/year",
+    method: "GET",
+    summary: "All holidays for a country in a given year. Year param required.",
+    apiPath: "/api/v1/holidays/year",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/year?country=GB&year=2026"` }],
+  },
+  // ── DST (computed) ─────────────────────────────────────
+  {
+    slug: "dst",
+    title: "GET /api/v1/dst",
+    method: "GET",
+    summary: "DST status for a timezone. Computes offset in Jan vs Jul using Intl.DateTimeFormat.",
+    apiPath: "/api/v1/dst",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/dst?tz=America/New_York"` },
+    ],
+  },
+  {
+    slug: "dst-upcoming",
+    title: "GET /api/v1/dst/upcoming",
+    method: "GET",
+    summary: "Approximate DST transition dates for the current year (US + EU).",
+    apiPath: "/api/v1/dst/upcoming",
+  },
+  // ── Quotes (curated) ───────────────────────────────────
+  {
+    slug: "quotes-random",
+    title: "GET /api/v1/quotes/random",
+    method: "GET",
+    summary: "Random time-related quote. 20 curated quotes from Theophrastus, Einstein, etc.",
+    apiPath: "/api/v1/quotes/random",
+  },
+  {
+    slug: "quotes-ranked",
+    title: "GET /api/v1/quotes/ranked",
+    method: "GET",
+    summary: "List of curated time-related quotes.",
+    apiPath: "/api/v1/quotes/ranked",
+  },
+  // ── OnThisDay (curated) ────────────────────────────────
+  {
+    slug: "onthisday",
+    title: "GET /api/v1/onthisday",
+    method: "GET",
+    summary: "Historical events for a given month/day. ~100 curated events across 12 months.",
+    apiPath: "/api/v1/onthisday",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/onthisday"` },
+      { lang: "curl", label: "Specific date", code: `curl "https://dev.api.dateandtime.live/api/v1/onthisday?month=7&day=20"` },
+    ],
+  },
+  // ── Currency (static) ──────────────────────────────────
+  {
+    slug: "currency-rates",
+    title: "GET /api/v1/currency/rates",
+    method: "GET",
+    summary: "Exchange rates for 36 currencies. Static snapshot from open.er-api.com (2024-01-01).",
+    apiPath: "/api/v1/currency/rates",
+  },
+  {
+    slug: "currency-convert",
+    title: "GET /api/v1/currency/convert",
+    method: "GET",
+    summary: "Convert amount from one currency to another.",
+    apiPath: "/api/v1/currency/convert",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/currency/convert?from=USD&to=EUR&amount=100"` }],
+  },
+  {
+    slug: "currency-codes",
+    title: "GET /api/v1/currency/codes",
+    method: "GET",
+    summary: "List of 36 supported currency codes with names and symbols.",
+    apiPath: "/api/v1/currency/codes",
+  },
+  // ── Browse home (computed) ─────────────────────────────
+  {
+    slug: "browse-home",
+    title: "GET /api/v1/browse/home",
+    method: "GET",
+    summary: "Home page data: top capital cities, today's holidays, OnThisDay. Powers the landing hero.",
+    apiPath: "/api/v1/browse/home",
+  },
+
+  // ── v2 Search (D1, 13 edge cases) ─────────────────────
+  {
+    slug: "v2-search",
+    title: "GET /api/v2/search",
+    method: "GET",
+    summary: "Full-text search with disambiguation, diacritics, fuzzy matching, timezone + location filters, locale-aware country names. Backed by D1 (5,081 cities, 194 countries, 3,865 states, 312 timezones).",
+    apiPath: "/api/v2/search",
+    intro: [
+      "Handles all 13 edge cases from the spec: same-name disambiguation, city/state/country types, exact > prefix > substring, diacritics, abbreviations, fuzzy misspellings, city+state patterns, country codes, location-aware ranking, timezone grouping, pagination, and locale-aware results.",
+      "Query param `q` is required. Returns a paginated `results` array where each item has a `type` field (city|country|state).",
+    ],
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=Hyderabad&limit=3"` },
+      { lang: "curl", label: "With location boost", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=York&near=40.7128,-74.0060&limit=3"` },
+      { lang: "curl", label: "Timezone filter", code: `curl "https://dev.api.dateandtime.live/api/v2/search?q=a&tz=America/New_York&limit=10"` },
+    ],
+    responseExample: {
+      success: true,
+      data: {
+        query: "Hyderabad",
+        parsed: { raw: "Hyderabad", primary: "Hyderabad", type: "city" },
+        total: 2, page: 1, limit: 3, hasMore: false,
+        results: [
+          { type: "city", id: 1269843, name: "Hyderabad", countryCode: "IN", countryName: "India", stateName: "Telangana", timezone: "Asia/Kolkata", population: 6993262, isCapital: false, score: 1001.37 },
+          { type: "city", id: 1176734, name: "Hyderabad", countryCode: "PK", countryName: "Pakistan", stateName: "Sindh", timezone: "Asia/Karachi", population: 1386330, isCapital: false, score: 1001.26 },
+        ],
+        breakdown: { cities: 2, countries: 0, states: 0 },
+      },
+    },
+    cache: "no-store",
+  },
+  // ── Countries (D1, 194) ────────────────────────────────
+  {
+    slug: "countries-list",
+    title: "GET /api/v1/countries",
+    method: "GET",
+    summary: "List all 194 countries with full ISO 3166 data. Backed by D1 (mledoze/restcountries dataset).",
+    apiPath: "/api/v1/countries",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries?limit=5"` },
+      { lang: "curl", label: "Filter by region", code: `curl "https://dev.api.dateandtime.live/api/v1/countries?region=Asia&limit=10"` },
+    ],
+    responseExample: {
+      success: true,
+      data: { count: 5, countries: [{ code: "JP", code3: "JPN", name: "Japan", capital: "Tokyo", region: "Asia", subregion: "Eastern Asia", languages: [{ iso639_1: "jpn", name: "Japanese" }], currencies: [{ iso4217: "JPY", name: "Japanese yen", symbol: "¥" }], timezones: ["Asia/Tokyo"], population: 125710000 }] },
+    },
+  },
+  {
+    slug: "country-get",
+    title: "GET /api/v1/countries/:code",
+    method: "GET",
+    summary: "Get a single country by cca2, cca3, or IOC code.",
+    apiPath: "/api/v1/countries/:code",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries/JP"` }],
+    responseExample: { success: true, data: { code: "JP", code3: "JPN", name: "Japan", capital: "Tokyo", region: "Asia", timezones: ["Asia/Tokyo"], languages: [{ name: "Japanese" }] } },
+  },
+  {
+    slug: "country-cities",
+    title: "GET /api/v1/countries/:code/cities",
+    method: "GET",
+    summary: "List cities in a country, ordered by population. Backed by D1.",
+    apiPath: "/api/v1/countries/:code/cities",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/countries/GB/cities?limit=5"` }],
+  },
+  // ── Popular cities (D1) ────────────────────────────────
+  {
+    slug: "popular-cities",
+    title: "GET /api/v1/popular/cities",
+    method: "GET",
+    summary: "Top N cities by population. Optional country filter. Backed by D1.",
+    apiPath: "/api/v1/popular/cities",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/popular/cities?limit=5"` },
+      { lang: "curl", label: "By country", code: `curl "https://dev.api.dateandtime.live/api/v1/popular/cities?country=JP&limit=3"` },
+    ],
+  },
+  {
+    slug: "popular-defaults",
+    title: "GET /api/v1/popular/defaults",
+    method: "GET",
+    summary: "20 default city recommendations (highest population worldwide).",
+    apiPath: "/api/v1/popular/defaults",
+  },
+  // ── Holidays (curated) ─────────────────────────────────
+  {
+    slug: "holidays-today",
+    title: "GET /api/v1/holidays/today",
+    method: "GET",
+    summary: "Public holidays happening today. Optional country filter. 200+ curated holidays.",
+    apiPath: "/api/v1/holidays/today",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/today"` },
+      { lang: "curl", label: "By country", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/today?country=US"` },
+    ],
+  },
+  {
+    slug: "holidays-upcoming",
+    title: "GET /api/v1/holidays/upcoming",
+    method: "GET",
+    summary: "Upcoming public holidays in the next N days (max 90).",
+    apiPath: "/api/v1/holidays/upcoming",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/upcoming?country=US&days=30"` }],
+  },
+  {
+    slug: "holidays-year",
+    title: "GET /api/v1/holidays/year",
+    method: "GET",
+    summary: "All holidays for a country in a given year. Year param required.",
+    apiPath: "/api/v1/holidays/year",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/holidays/year?country=GB&year=2026"` }],
+  },
+  // ── DST (computed) ─────────────────────────────────────
+  {
+    slug: "dst",
+    title: "GET /api/v1/dst",
+    method: "GET",
+    summary: "DST status for a timezone. Computes offset in Jan vs Jul using Intl.DateTimeFormat.",
+    apiPath: "/api/v1/dst",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/dst?tz=America/New_York"` },
+    ],
+  },
+  {
+    slug: "dst-upcoming",
+    title: "GET /api/v1/dst/upcoming",
+    method: "GET",
+    summary: "Approximate DST transition dates for the current year (US + EU).",
+    apiPath: "/api/v1/dst/upcoming",
+  },
+  // ── Quotes (curated) ───────────────────────────────────
+  {
+    slug: "quotes-random",
+    title: "GET /api/v1/quotes/random",
+    method: "GET",
+    summary: "Random time-related quote. 20 curated quotes from Theophrastus, Einstein, etc.",
+    apiPath: "/api/v1/quotes/random",
+  },
+  {
+    slug: "quotes-ranked",
+    title: "GET /api/v1/quotes/ranked",
+    method: "GET",
+    summary: "List of curated time-related quotes.",
+    apiPath: "/api/v1/quotes/ranked",
+  },
+  // ── OnThisDay (curated) ────────────────────────────────
+  {
+    slug: "onthisday",
+    title: "GET /api/v1/onthisday",
+    method: "GET",
+    summary: "Historical events for a given month/day. ~100 curated events across 12 months.",
+    apiPath: "/api/v1/onthisday",
+    samples: [
+      { lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/onthisday"` },
+      { lang: "curl", label: "Specific date", code: `curl "https://dev.api.dateandtime.live/api/v1/onthisday?month=7&day=20"` },
+    ],
+  },
+  // ── Currency (static) ──────────────────────────────────
+  {
+    slug: "currency-rates",
+    title: "GET /api/v1/currency/rates",
+    method: "GET",
+    summary: "Exchange rates for 36 currencies. Static snapshot from open.er-api.com (2024-01-01).",
+    apiPath: "/api/v1/currency/rates",
+  },
+  {
+    slug: "currency-convert",
+    title: "GET /api/v1/currency/convert",
+    method: "GET",
+    summary: "Convert amount from one currency to another.",
+    apiPath: "/api/v1/currency/convert",
+    samples: [{ lang: "curl", label: "cURL", code: `curl "https://dev.api.dateandtime.live/api/v1/currency/convert?from=USD&to=EUR&amount=100"` }],
+  },
+  {
+    slug: "currency-codes",
+    title: "GET /api/v1/currency/codes",
+    method: "GET",
+    summary: "List of 36 supported currency codes with names and symbols.",
+    apiPath: "/api/v1/currency/codes",
+  },
+  // ── Browse home (computed) ─────────────────────────────
+  {
+    slug: "browse-home",
+    title: "GET /api/v1/browse/home",
+    method: "GET",
+    summary: "Home page data: top capital cities, today's holidays, OnThisDay. Powers the landing hero.",
+    apiPath: "/api/v1/browse/home",
+  },
 ];
 /** Lookup by the doc-page slug (matches docRoutes.ts). */
 export function findEndpoint(slug: string): EndpointDoc | undefined {

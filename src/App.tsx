@@ -41,6 +41,10 @@ import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
+import TwelveMonthCalendar from "./components/tools/TwelveMonthCalendar";
+import SunriseSunset from "./components/tools/SunriseSunset";
+import DaylightSaving from "./components/tools/DaylightSaving";
+import Stopwatch from "./components/tools/Stopwatch";
 import CurrencyConverter from "./components/tools/CurrencyConverter";
 import PairConverter from "./components/tools/PairConverter";
 import RouterDebugOverlay from "./components/common/RouterDebugOverlay";
@@ -1385,6 +1389,10 @@ export default function App() {
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "12-month-calendar" && <TwelveMonthCalendar />}
+            {currentPathRoute.tool === "sunrise-sunset" && <SunriseSunset />}
+            {currentPathRoute.tool === "daylight-saving" && <DaylightSaving />}
+            {currentPathRoute.tool === "stopwatch" && <Stopwatch />}
             {currentPathRoute.tool === "currency-converter" && <CurrencyConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.pair && <PairConverter pair={currentPathRoute.pair} lang={currentPathRoute.pair.lang} />}
             {!currentPathRoute.pair && currentPathRoute?.tool && (

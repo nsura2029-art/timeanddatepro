@@ -9,7 +9,11 @@ export const TOOL_SLUGS = [
   "date-words",
   "time-zone-converter",
   "currency-converter",
-  "countdown"
+  "countdown",
+  "12-month-calendar",
+  "sunrise-sunset",
+  "daylight-saving",
+  "stopwatch"
 ] as const;
 
 export type ToolSlug = typeof TOOL_SLUGS[number];
@@ -38,7 +42,11 @@ export const TOOL_COMPONENT_MAP: Record<ToolSlug, string> = {
   "date-words": "DateToWords",
   "time-zone-converter": "TimeZoneConverter",
   "currency-converter": "CurrencyConverter",
-  "countdown": "CountdownTimer"
+  "countdown": "CountdownTimer",
+  "12-month-calendar": "TwelveMonthCalendar",
+  "sunrise-sunset": "SunriseSunset",
+  "daylight-saving": "DaylightSaving",
+  "stopwatch": "Stopwatch"
 };
 
 export const LANG_SLUGS = ["en", "fr", "zh", "ja"] as const;

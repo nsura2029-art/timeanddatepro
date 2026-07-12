@@ -35,13 +35,13 @@ const TOOLS: Tool[] = [
   { href: "/meeting-finder",      name: "Meeting Finder",      Icon: CalendarDays,  variant: "mint"     },
   { href: "/holidays",            name: "Holidays & Hours",    Icon: PartyPopper,   variant: "amber"    },
   { href: "/world-clock",         name: "World Clock",         Icon: Clock,         variant: "sky"      },
-  { href: "#",                    name: "12-Month Calendar",   Icon: Calendar,      variant: "lavender" },
+  { href: "/en/12-month-calendar", name: "12-Month Calendar",  Icon: Calendar,      variant: "lavender" },
   { href: "/api-docs",            name: "API Docs",            Icon: BookOpen,      variant: "sky"      },
   { href: "/en/countdown",        name: "Countdown Timer",     Icon: Hourglass,     variant: "mint"     },
   { href: "/en/date-diff",        name: "Date Difference",     Icon: CalendarRange, variant: "amber"    },
-  { href: "#",                    name: "Sunrise & Sunset",    Icon: Sun,           variant: "sky"      },
-  { href: "#",                    name: "Daylight Saving",     Icon: CalendarClock, variant: "lavender" },
-  { href: "#",                    name: "Stopwatch",           Icon: Timer,         variant: "mint"     },
+  { href: "/en/sunrise-sunset",   name: "Sunrise & Sunset",    Icon: Sun,           variant: "sky"      },
+  { href: "/en/daylight-saving",  name: "Daylight Saving",     Icon: CalendarClock, variant: "lavender" },
+  { href: "/en/stopwatch",        name: "Stopwatch",           Icon: Timer,         variant: "mint"     },
   { href: "/en/unix",             name: "Unix Timestamp",      Icon: Hash,          variant: "amber"    },
 ];
 
