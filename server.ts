@@ -845,6 +845,13 @@ async function setupVite() {
     app.get(/^\/admin(\/.*)?$/, (_req, res) => {
       res.sendFile(path.join(process.cwd(), 'index.html'));
     });
+    // SPA fallback for all other non-API routes in dev. Vite's
+    // appType:'spa' should handle this, but adding an explicit catch-all
+    // ensures nested paths like /en/date-words/2026 always serve
+    // index.html so the React app can handle client-side routing.
+    app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+      res.sendFile(path.join(process.cwd(), 'index.html'));
+    });
   } else {
     console.log("Starting server in production mode serving static files...");
     const distPath = path.join(process.cwd(), 'dist');
