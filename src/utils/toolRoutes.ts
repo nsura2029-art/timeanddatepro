@@ -54,11 +54,14 @@ export type LangSlug = typeof LANG_SLUGS[number];
 
 export function parseToolPath(path: string): { lang: LangSlug; tool: ToolSlug } | null {
   const p = path.toLowerCase().replace(/^\//, "").replace(/\/$/, "");
-  // /<lang>/<tool>
+  // /<lang>/<tool>[/<sub-path>]
+  // Only the first 2 segments matter for tool resolution; any additional
+  // segments (e.g. /en/date-words/2026 or /en/date-words/2026-07-11)
+  // are sub-paths handled by the caller (parseRouteFromPath).
   const parts = p.split("/");
   if (parts.length >= 2) {
     const langPart = parts[0];
-    const toolPart = parts.slice(1).join("/"); // in case tool slug has hyphens
+    const toolPart = parts[1];
     const lang = LANG_SLUGS.find(l => l === langPart);
     if (!lang) return null;
     const tool = TOOL_SLUGS.find(t => t === toolPart);
