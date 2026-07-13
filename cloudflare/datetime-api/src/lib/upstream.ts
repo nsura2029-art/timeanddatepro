@@ -113,21 +113,54 @@ export async function fetchCoinGeckoPrices(
   }
 }
 
+// ── open.er-api.com (free, no key, works from CF Workers, 160+ currencies) ──
+// Replaces AllRatesToday as the primary real-time source. Daily updates
+// (vs AllRatesToday's 60s), but works reliably from Worker context.
+// Refactor #2: this is the fix for the upstream 404 from CF Workers.
+const OPEN_ER_API = "https://open.er-api.com/v6";
+
+export async function fetchOpenERApiLatest(base: string): Promise<UpstreamResult<{ rates: Record<string, number>; timestamp: number; source: string }>> {
+  try {
+    const r = await fetchWithTimeout(`${OPEN_ER_API}/latest/${encodeURIComponent(base)}`);
+    if (!r.ok) return { ok: false, error: `HTTP ${r.status}`, status: r.status };
+    const j: any = await r.json();
+    if (j.result !== "success") return { ok: false, error: j["error-type"] || "api_error" };
+    return {
+      ok: true,
+      data: {
+        rates: j.rates || {},
+        timestamp: j.time_last_update_unix || Math.floor(Date.now() / 1000),
+        source: "open.er-api.com",
+      },
+    };
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "fetch_error" };
+  }
+}
+
 // ── Fallback chain: try primary, fall back to secondary ──
+// Refactor #2: open.er-api.com is the primary real-time source (works from CF Workers).
+// AllRatesToday is kept as last resort (returns 404 from Worker context).
+// Frankfurter is the history source (returns 404 from Worker, but D1 history is seeded).
 export async function fetchFiatLatestWithFallback(
   base: string,
   kv?: KVNamespace
 ): Promise<UpstreamResult<{ rates: Record<string, number>; source: string; stale: boolean; timestamp: number }>> {
-  // Try real-time first
-  let result = await fetchAllRatesTodayLatest(base);
-  if (result.ok) {
-    return { ok: true, data: { rates: result.data!, source: "allratestoday", stale: false, timestamp: Math.floor(Date.now() / 1000) } };
+  // Try open.er-api.com (works from CF Workers)
+  const openEr = await fetchOpenERApiLatest(base);
+  if (openEr.ok) {
+    return { ok: true, data: { rates: openEr.data!.rates, source: openEr.data!.source, stale: false, timestamp: openEr.data!.timestamp } };
   }
   // Fall back to daily ECB
-  result = await fetchFrankfurterLatest(base);
-  if (result.ok) {
-    return { ok: true, data: { rates: result.data!, source: "frankfurter", stale: false, timestamp: Math.floor(Date.now() / 1000) } };
+  const frankfurter = await fetchFrankfurterLatest(base);
+  if (frankfurter.ok) {
+    return { ok: true, data: { rates: frankfurter.data!, source: "frankfurter", stale: false, timestamp: Math.floor(Date.now() / 1000) } };
   }
-  // Both failed
-  return { ok: false, error: `allratestoday: ${result.error}; frankfurter: ${result.error}` };
+  // Last resort: AllRatesToday (returns 404 from Worker, but works from curl)
+  const art = await fetchAllRatesTodayLatest(base);
+  if (art.ok) {
+    return { ok: true, data: { rates: art.data!, source: "allratestoday", stale: false, timestamp: Math.floor(Date.now() / 1000) } };
+  }
+  // All failed
+  return { ok: false, error: `open.er-api: ${openEr.error}; frankfurter: ${frankfurter.error}; allratestoday: ${art.error}` };
 }

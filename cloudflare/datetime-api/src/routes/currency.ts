@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import type { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import { ok, err } from "../lib/responses";
 import { fetchFrankfurterLatest, fetchFrankfurterHistory, fetchFiatLatestWithFallback } from "../lib/upstream";
+import { fetchOpenERApiLatest } from "../lib/upstream";
 
 type Bindings = { DB: D1Database; CACHE: KVNamespace };
 const currency = new Hono<{ Bindings: Bindings }>();
