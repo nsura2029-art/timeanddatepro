@@ -122,14 +122,14 @@ function TodayPage() {
               className="tdp-today-currency-select"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
+              title={fromInfo?.name || from}
             >
               {codes?.codes.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.flag || "🏳️"} {c.code}
+                <option key={c.code} value={c.code} title={c.name}>
+                  {c.code} — {c.name}
                 </option>
               )) || <option value={from}>{from}</option>}
             </select>
-            <span className="tdp-today-currency-name">{from}</span>
           </div>
         </div>
 
@@ -152,14 +152,14 @@ function TodayPage() {
               className="tdp-today-currency-select"
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              title={toInfo?.name || to}
             >
               {codes?.codes.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.flag || "🏳️"} {c.code}
+                <option key={c.code} value={c.code} title={c.name}>
+                  {c.code} — {c.name}
                 </option>
               )) || <option value={to}>{to}</option>}
             </select>
-            <span className="tdp-today-currency-name">{to}</span>
           </div>
         </div>
       </div>
