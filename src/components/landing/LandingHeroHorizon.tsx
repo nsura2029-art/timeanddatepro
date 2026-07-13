@@ -27,7 +27,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Clock, Globe } from "lucide-react";
 import { HeroClock, HeroStatusPills } from "./HeroClock";
 import { HeroDateBlock } from "./HeroDateBlock";
-import { HeroExploreLinks } from "./HeroExploreLinks";
+import { RelatedToolsGrid, HERO_TOOLS } from "../tools/shared/RelatedToolsGrid";
 import { YourCitiesPanel } from "./YourCitiesPanel";
 import { useHomeData } from "../../hooks/useHomeData";
 import { CityPickerOverlay } from "./CityPickerOverlay";
@@ -277,7 +277,7 @@ export function LandingHeroHorizon({
               clock sync block. Left-aligned, simple text links (not the
               colorful gradient cards). Replaces the old bottom-of-page
               <HeroExploreMore /> section. */}
-          <HeroExploreLinks />
+          <RelatedToolsGrid tools={HERO_TOOLS} eyebrow="Explore more" meta="14 tools" />
         </div>
 
         {/* Column 2: YourCitiesPanel — home + 5 popular cities by default,
