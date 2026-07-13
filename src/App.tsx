@@ -65,6 +65,7 @@ import { TermsOfService } from "./pages/legal/TermsOfService";
 import { AboutPage } from "./pages/about/AboutPage";
 import { FeedbackPage } from "./pages/feedback/FeedbackPage";
 import { TodayPage } from "./pages/today/TodayPage";
+import { CurrencyPage } from "./pages/currency/CurrencyPage";
 import { FeedbackPrompt } from "./components/feedback/FeedbackPrompt";
 import { CookieConsent } from "./components/common/CookieConsent";
 import { useHomeData } from "./hooks/useHomeData";
@@ -73,6 +74,7 @@ import "./pages/legal/PrivacyPolicy.css";
 import "./pages/about/AboutPage.css";
 import "./pages/feedback/FeedbackPage.css";
 import "./pages/today/TodayPage.css";
+import "./pages/currency/CurrencyPage.css";
 import "./components/feedback/FeedbackPrompt.css";
 import "./components/common/CookieConsent.css";
 
@@ -252,6 +254,10 @@ function parseRouteFromPath() {
   // /today + /<lang>/today — live hub of widgets (currency, date, news, etc.)
   if (path === "/today" || path.endsWith("/today")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isToday: true };
+  }
+  // /currency + /<lang>/currency — full currency dashboard (Design E v2)
+  if (path === "/currency" || path.endsWith("/currency")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isCurrency: true };
   }
   return null;
 }
@@ -1441,6 +1447,7 @@ export default function App() {
         {currentPathRoute?.isAbout && <AboutPage />}
         {currentPathRoute?.isFeedback && <FeedbackPage />}
         {currentPathRoute?.isToday && <TodayPage />}
+        {currentPathRoute?.isCurrency && <CurrencyPage />}
 
         {(currentPathRoute?.tool || currentPathRoute?.pair) ? (
           <div className="animate-fade-in">
