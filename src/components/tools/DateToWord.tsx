@@ -397,7 +397,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                 <span className="dtw-tabs-label">Output format</span>
                 <span className="dtw-tabs-popular">
                   <span className="dtw-tabs-popular-dot" />
-                  Legal is most popular for contracts
+                  Legal is the most popular for contracts
                 </span>
               </div>
               <div className="dtw-tabs">
