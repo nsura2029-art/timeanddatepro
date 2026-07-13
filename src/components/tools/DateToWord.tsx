@@ -30,6 +30,14 @@ import {
 import { RelatedToolsGrid, type RelatedTool } from "./shared/RelatedToolsGrid";
 import { FeedbackButton } from "./shared/FeedbackButton";
 import { ToolDisclaimer } from "./shared/ToolDisclaimer";
+import { useDocumentSeo } from "../../lib/seo/useDocumentSeo";
+import {
+  buildDateToWordsSeo,
+  buildDateToWordsFaqSchema,
+  buildDateToWordsHowToSchema,
+  buildBreadcrumbSchema,
+  DATE_TO_WORDS_FAQS,
+} from "../../lib/seo/dateToWordsSeo";
 import "./DateToWord.css";
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -85,6 +93,29 @@ interface Props {
 }
 
 export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
+  // Mount SEO meta tags (title, description, OG, Twitter, canonical,
+  // hreflang alternates, JSON-LD schemas). Idempotent — cleans up
+  // when the component unmounts.
+  const seo = useMemo(() => {
+    const base = buildDateToWordsSeo(lang);
+    return {
+      ...base,
+      schemas: [
+        buildDateToWordsFaqSchema(DATE_TO_WORDS_FAQS),
+        buildDateToWordsHowToSchema(),
+        buildBreadcrumbSchema([
+          { name: "Home", url: "https://dateandtime.live/" },
+          { name: "Tools", url: `https://dateandtime.live/${lang}/tools` },
+          {
+            name: "Date to Words",
+            url: base.canonicalUrl,
+          },
+        ]),
+      ],
+    };
+  }, [lang]);
+  useDocumentSeo(seo);
+
   const [selectedDate, setSelectedDate] = useState(() =>
     new Date().toISOString().slice(0, 10)
   );
@@ -553,6 +584,106 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
                   />
                 </div>
               </React.Fragment>
+            ))}
+          </div>
+        </section>
+
+        {/* Content section: What is */}
+        <section className="dtw-content">
+          <h2 className="dtw-content-title">What is a date-to-words converter?</h2>
+          <p>
+            A date-to-words converter transforms a numeric calendar date
+            (like 11/07/2026) into its fully written-out form
+            ("Eleventh day of July, Two Thousand Twenty-Six"). It's used
+            whenever a document requires an unambiguous, tamper-resistant
+            date — legal contracts, cheques, affidavits, notarized
+            documents, passports, and wills. Written dates can't be
+            altered after the fact, which is why banks, courts, and
+            government agencies require them.
+          </p>
+        </section>
+
+        {/* Content section: How to write */}
+        <section className="dtw-content">
+          <h2 className="dtw-content-title">How to write a date in formal words</h2>
+          <p>
+            Converting a date to words follows three steps. The example
+            uses 11 July 2026.
+          </p>
+          <ol className="dtw-content-steps">
+            <li>
+              <strong>Spell out the day as an ordinal.</strong> The
+              11th becomes "Eleventh", the 1st becomes "First", the
+              23rd becomes "Twenty-third".
+            </li>
+            <li>
+              <strong>Write the month by name.</strong> Always spell
+              out the full month — "July", never "Jul".
+            </li>
+            <li>
+              <strong>Spell out the year in full.</strong> 2026 becomes
+              "Two Thousand Twenty-Six". The full result is
+              "Eleventh day of July, Two Thousand Twenty-Six".
+            </li>
+          </ol>
+          <p>
+            This tool handles all five common formats (formal, legal,
+            banking, casual, British) plus the irregular ordinals
+            (first, second, third, fifth, eighth, ninth, twelfth,
+            twentieth, thirtieth) and compound ordinals (twenty-third,
+            thirty-first) automatically.
+          </p>
+        </section>
+
+        {/* Content section: Example conversions (programmatic SEO entry point) */}
+        <section className="dtw-content">
+          <h2 className="dtw-content-title">Example conversions</h2>
+          <p>
+            See the date-to-words converter in action for common dates:
+          </p>
+          <ul className="dtw-content-examples">
+            <li>
+              <a href="/en/date-words/2026-07-11">
+                11 July 2026 → "Eleventh day of July, Two Thousand Twenty-Six"
+              </a>
+            </li>
+            <li>
+              <a href="/en/date-words/2026-01-01">
+                1 January 2026 → "First day of January, Two Thousand Twenty-Six"
+              </a>
+            </li>
+            <li>
+              <a href="/en/date-words/2024-02-29">
+                29 February 2024 → "Twenty-ninth day of February, Two Thousand Twenty-Four" (leap day)
+              </a>
+            </li>
+            <li>
+              <a href="/en/date-words/2000-01-01">
+                1 January 2000 → "First day of January, Two Thousand" (Y2K)
+              </a>
+            </li>
+            <li>
+              <a href="/en/date-words/9999-12-31">
+                31 December 9999 → "Thirty-first day of December, Nine Thousand Nine Hundred Ninety-Nine"
+              </a>
+            </li>
+            <li>
+              <a href="/en/date-words/2026">
+                All dates in 2026
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        {/* Content section: FAQ (visible, in addition to JSON-LD) */}
+        <section className="dtw-content">
+          <h2 className="dtw-content-title">Frequently asked questions</h2>
+          <div className="dtw-faq-list">
+            {DATE_TO_WORDS_FAQS.map((faq, index) => (
+              <details key={index} className="dtw-faq-item">
+                <summary className="dtw-faq-question">{faq.question}</summary>
+                <p className="dtw-faq-answer">{faq.answer}</p>
+              </details>
             ))}
           </div>
         </section>

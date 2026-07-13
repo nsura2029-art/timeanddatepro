@@ -40,6 +40,8 @@ import ISO8601Formatter from "./components/tools/ISO8601Formatter";
 import DateAddSubtract from "./components/tools/DateAddSubtract";
 import DateDifference from "./components/tools/DateDifference";
 import DateToWords from "./components/tools/DateToWords";
+import DateToWordForYear from "./components/tools/dateToWordsProgrammatic/DateToWordForYear";
+import DateToWordForDate from "./components/tools/dateToWordsProgrammatic/DateToWordForDate";
 import TimeZoneConverter from "./components/tools/TimeZoneConverter";
 import TwelveMonthCalendar from "./components/tools/TwelveMonthCalendar";
 import SunriseSunset from "./components/tools/SunriseSunset";
@@ -120,6 +122,41 @@ function parseRouteFromPath() {
   // Check for /<lang>/<tool> sub-routes first
   const toolRoute = parseToolPath(path);
   if (toolRoute) {
+    // Check for programmatic Date to Words sub-paths:
+    //   /<lang>/date-words/<year>          → year page
+    //   /<lang>/date-words/<YYYY-MM-DD>    → specific date page
+    if (toolRoute.tool === "date-words") {
+      const stripped = path.replace(/^\/+/, "").replace(/\/+$/, "");
+      const parts = stripped.split("/");
+      if (parts.length >= 3) {
+        const seg = parts[2];
+        // Year: 1-9999 (1-4 digits, 1-9999)
+        if (/^\d{1,4}$/.test(seg)) {
+          const yearNum = parseInt(seg, 10);
+          if (yearNum >= 1 && yearNum <= 9999) {
+            return {
+              lang: toolRoute.lang,
+              city: toolRoute.lang === "en" ? "london" : toolRoute.lang === "fr" ? "paris" : toolRoute.lang === "zh" ? "beijing" : "tokyo",
+              country: toolRoute.lang === "en" ? "GB" : toolRoute.lang === "fr" ? "FR" : toolRoute.lang === "zh" ? "CN" : "JP",
+              timezone: toolRoute.lang === "en" ? "Europe/London" : toolRoute.lang === "fr" ? "Europe/Paris" : toolRoute.lang === "zh" ? "Asia/Shanghai" : "Asia/Tokyo",
+              tool: toolRoute.tool,
+              dateWordsYear: yearNum,
+            };
+          }
+        }
+        // Specific date: YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(seg)) {
+          return {
+            lang: toolRoute.lang,
+            city: toolRoute.lang === "en" ? "london" : toolRoute.lang === "fr" ? "paris" : toolRoute.lang === "zh" ? "beijing" : "tokyo",
+            country: toolRoute.lang === "en" ? "GB" : toolRoute.lang === "fr" ? "FR" : toolRoute.lang === "zh" ? "CN" : "JP",
+            timezone: toolRoute.lang === "en" ? "Europe/London" : toolRoute.lang === "fr" ? "Europe/Paris" : toolRoute.lang === "zh" ? "Asia/Shanghai" : "Asia/Tokyo",
+            tool: toolRoute.tool,
+            dateWordsDate: seg,
+          };
+        }
+      }
+    }
     return {
       lang: toolRoute.lang,
       city: toolRoute.lang === "en" ? "london" : toolRoute.lang === "fr" ? "paris" : toolRoute.lang === "zh" ? "beijing" : "tokyo",
@@ -1387,7 +1424,9 @@ export default function App() {
             {currentPathRoute.tool === "iso8601" && <ISO8601Formatter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-math" && <DateAddSubtract lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "date-diff" && <DateDifference lang={currentPathRoute?.lang || "en"} />}
-            {currentPathRoute.tool === "date-words" && <DateToWords lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-words" && currentPathRoute?.dateWordsYear && <DateToWordForYear year={currentPathRoute.dateWordsYear} lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-words" && currentPathRoute?.dateWordsDate && <DateToWordForDate dateString={currentPathRoute.dateWordsDate} lang={currentPathRoute?.lang || "en"} />}
+            {currentPathRoute.tool === "date-words" && !currentPathRoute?.dateWordsYear && !currentPathRoute?.dateWordsDate && <DateToWords lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "time-zone-converter" && <TimeZoneConverter lang={currentPathRoute?.lang || "en"} />}
             {currentPathRoute.tool === "12-month-calendar" && <TwelveMonthCalendar />}
             {currentPathRoute.tool === "sunrise-sunset" && <SunriseSunset />}

@@ -1078,6 +1078,106 @@
   justify-content: center !important;
 }
 
+/* ── SEO content sections (What is, How to write, FAQ) ── */
+.dtw-content {
+  max-width: 720px;
+  margin: 64px auto 0;
+  padding: 0 8px;
+}
+.dtw-content-title {
+  font-size: 24px;
+  font-weight: var(--font-weight-extrabold, 850);
+  color: var(--color-ink);
+  letter-spacing: -0.015em;
+  margin-bottom: 16px;
+}
+.dtw-content p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-ink-2);
+  margin-bottom: 12px;
+}
+.dtw-content strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+.dtw-content-steps {
+  margin: 16px 0 16px 0;
+  padding-left: 24px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-ink-2);
+}
+.dtw-content-steps li { margin-bottom: 8px; }
+.dtw-content-examples {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.dtw-content-examples li a {
+  display: block;
+  padding: 12px 16px;
+  background: var(--color-brand-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-2);
+  text-decoration: none;
+  font-size: 14px;
+  font-family: var(--font-family-mono);
+  transition: all 150ms;
+}
+.dtw-content-examples li a:hover {
+  background: var(--color-surface);
+  border-color: var(--color-brand-300);
+  color: var(--color-brand-700);
+  transform: translateX(2px);
+}
+.dtw-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dtw-faq-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+  transition: border-color 150ms;
+}
+.dtw-faq-item[open] { border-color: var(--color-brand-300); }
+.dtw-faq-question {
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.dtw-faq-question::-webkit-details-marker { display: none; }
+.dtw-faq-question::after {
+  content: "+";
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--color-muted);
+  flex-shrink: 0;
+  transition: transform 200ms;
+}
+.dtw-faq-item[open] .dtw-faq-question::after {
+  content: "−";
+}
+.dtw-faq-answer {
+  padding: 0 18px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink-2);
+}
+
 /* ── Mobile ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .dtw-hero { grid-template-columns: 1fr; }
