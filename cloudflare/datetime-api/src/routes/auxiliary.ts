@@ -251,53 +251,8 @@ aux.get("/browse/home", async (c) => {
   });
 });
 
-// ── Currency (static snapshot) ───────────────────────────────
-aux.get("/currency/rates", (c) => {
-  const base = (c.req.query("base") ?? "USD").toUpperCase();
-  if (!CURRENCY_RATES[base]) return err(c, 400, `Unknown currency: ${base}`, "invalid_currency");
-  const baseRate = CURRENCY_RATES[base].rate;
-  const rates: Record<string, number> = {};
-  for (const [code, info] of Object.entries(CURRENCY_RATES)) {
-    rates[code] = +(info.rate / baseRate).toFixed(6);
-  }
-  return ok(c, {
-    base,
-    date: "2024-01-01",
-    source: "open.er-api.com snapshot",
-    rates,
-  });
-});
-
-aux.get("/currency/convert", (c) => {
-  const from = c.req.query("from")?.toUpperCase();
-  const to = c.req.query("to")?.toUpperCase();
-  const amount = parseFloat(c.req.query("amount") ?? "1");
-  if (!from || !to) return err(c, 400, "from and to required", "missing_params");
-  if (!CURRENCY_RATES[from]) return err(c, 400, `Unknown currency: ${from}`, "invalid_from");
-  if (!CURRENCY_RATES[to]) return err(c, 400, `Unknown currency: ${to}`, "invalid_to");
-  if (!Number.isFinite(amount) || amount < 0) return err(c, 400, "amount must be positive", "invalid_amount");
-  // Convert via USD
-  const inUsd = amount / CURRENCY_RATES[from].rate;
-  const converted = inUsd * CURRENCY_RATES[to].rate;
-  const rate = CURRENCY_RATES[to].rate / CURRENCY_RATES[from].rate;
-  return ok(c, {
-    from,
-    to,
-    amount,
-    converted: +converted.toFixed(2),
-    rate: +rate.toFixed(6),
-    date: "2024-01-01",
-  });
-});
-
-aux.get("/currency/codes", (c) => {
-  const codes = Object.entries(CURRENCY_RATES).map(([code, info]) => ({
-    code,
-    name: info.name,
-    symbol: info.symbol,
-  }));
-  return ok(c, { count: codes.length, currencies: codes });
-});
+// Currency endpoints moved to /routes/currency.ts in Phase 6.5. Removed here
+// so the new D1-backed endpoints can take over without shadow routing.
 
 // ── News / History (V1 stubs) ────────────────────────────────
 aux.get("/news/by-country", (c) => {

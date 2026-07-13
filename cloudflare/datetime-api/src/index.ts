@@ -13,6 +13,9 @@ import { feedbackRouter } from "./routes/feedback";
 import { waitlistRouter } from "./routes/waitlist";
 import { capturesRouter } from "./routes/captures";
 import { dateToWordRouter } from "./routes/dateToWord";
+import { currencyRouter } from "./routes/currency";
+import { cryptoRouter } from "./routes/crypto";
+import { statusRouter } from "./routes/status";
 import { v2SearchRouter } from "./routes/v2/search";
 import { ok, err, API_VERSION } from "./lib/responses";
 
@@ -101,6 +104,16 @@ app.get("/api/v1", (c) =>
       "GET /api/v1/tools/date-to-word/translate",
       "GET /api/v1/tools/date-to-word/formats",
       "GET /api/v1/tools/date-to-word/preview",
+      // Phase 6.5 — Currency API (9 endpoints)
+      "GET  /api/v1/currency/codes",
+      "GET  /api/v1/currency/rates",
+      "GET  /api/v1/currency/convert",
+      "GET  /api/v1/currency/pair",
+      "GET  /api/v1/currency/timeseries",
+      "POST /api/v1/currency/bulk",
+      "GET  /api/v1/crypto/prices",
+      "GET  /api/v1/crypto/convert",
+      "GET  /api/v1/status",
     ],
   })
 );
@@ -125,6 +138,9 @@ app.route("/api/v1/feedback", feedbackRouter);
 app.route("/api/v1/waitlist", waitlistRouter);
 app.route("/api/v1/captures", capturesRouter);
 app.route("/api/v1/tools/date-to-word", dateToWordRouter);
+app.route("/api/v1/currency", currencyRouter);
+app.route("/api/v1/crypto", cryptoRouter);
+app.route("/api/v1/status", statusRouter);
 
 // ── v2 — full D1-backed geographic + locale-aware search ──
 // Mounted BEFORE the v1 cities router so /api/v2/* takes priority
