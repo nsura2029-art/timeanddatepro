@@ -83,31 +83,50 @@ export async function fetchAllRatesTodayLatest(base: string): Promise<UpstreamRe
   }
 }
 
-// ── CoinGecko (free, 10-30 req/min, 1000+ crypto, no key) ──
-const COINGECKO = "https://api.coingecko.com/api/v3";
+// ── CoinPaprika (free, 25k req/day, 1000+ crypto, no key) ──
+// Replaces CoinGecko (returns HTTP 403 from CF Worker context).
+// CoinPaprika works reliably from Workers and is free without API key.
+const COINPAPRIKA = "https://api.coinpaprika.com/v1";
 
 export async function fetchCoinGeckoPrices(
   ids: string[],
   vs: string
 ): Promise<UpstreamResult<Record<string, { price: number; change24h: number; change7d: number; marketCap: number }>>> {
   try {
-    const url = `${COINGECKO}/simple/price?ids=${ids.join(",")}&vs_currencies=${vs}&include_24hr_change=true&include_7d_change=true&include_market_cap=true`;
+    // CoinPaprika uses slug-based IDs. Map common symbols → slugs.
+    const SYMBOL_TO_SLUG: Record<string, string> = {
+      BTC: "btc-bitcoin", ETH: "eth-ethereum", USDT: "usdt-tether",
+      USDC: "usdc-usd-coin", BNB: "bnb-binance-coin", XRP: "xrp-xrp",
+      ADA: "ada-cardano", SOL: "sol-solana", DOGE: "doge-dogecoin",
+      TRX: "trx-tron", DOT: "dot-polkadot", MATIC: "matic-polygon",
+      LTC: "ltc-litecoin", SHIB: "shib-shiba-inu", DAI: "dai-dai",
+      AVAX: "avax-avalanche", LINK: "link-chainlink", BCH: "bch-bitcoin-cash",
+      UNI: "uni-uniswap", ATOM: "atom-cosmos",
+    };
+    const slugs = ids.map((s) => SYMBOL_TO_SLUG[s.toUpperCase()] || s.toLowerCase());
+    // CoinPaprika tickers endpoint: /v1/tickers?quotes=USD
+    // Returns array; we filter by slug. Quote key is uppercase (USD, not usd).
+    const vsKey = vs.toUpperCase();
+    const url = `${COINPAPRIKA}/tickers?quotes=${vsKey}`;
     const r = await fetchWithTimeout(url);
     if (!r.ok) return { ok: false, error: `HTTP ${r.status}`, status: r.status };
-    const j: any = await r.json();
+    const arr: any[] = await r.json();
     const out: Record<string, any> = {};
-    for (const id of ids) {
-      const d = j[id];
-      if (d) {
-        out[id] = {
-          price: d[vs.toLowerCase()] || 0,
-          change24h: d[`${vs.toLowerCase()}_24h_change`] || 0,
-          change7d: d[`${vs.toLowerCase()}_7d_change`] || 0,
-          marketCap: d[`${vs.toLowerCase()}_market_cap`] || 0,
-        };
-      }
+    for (const slug of slugs) {
+      const ticker = arr.find((t) => t.id === slug);
+      if (!ticker) continue;
+      const quote = ticker.quotes?.[vsKey];
+      if (!quote) continue;
+      // Find the original symbol that mapped to this slug
+      const originalSymbol = ids.find((s) => (SYMBOL_TO_SLUG[s.toUpperCase()] || s.toLowerCase()) === slug) || slug;
+      out[originalSymbol] = {
+        price: quote.price || 0,
+        change24h: quote.percent_change_24h || 0,
+        change7d: quote.percent_change_7d || 0,
+        marketCap: quote.market_cap || 0,
+      };
     }
-    return { ok: true, data: out, source: "coingecko" };
+    return { ok: true, data: out, source: "coinpaprika" };
   } catch (e: any) {
     return { ok: false, error: e?.message || "fetch_error" };
   }

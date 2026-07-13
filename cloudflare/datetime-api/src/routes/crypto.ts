@@ -10,11 +10,13 @@ import { fetchCoinGeckoPrices } from "../lib/upstream";
 type Bindings = { DB: D1Database; CACHE: KVNamespace };
 const crypto = new Hono<{ Bindings: Bindings }>();
 
+// CoinPaprika slugs (replaces CoinGecko — was 403 from CF Worker)
 const KNOWN_CRYPTO_IDS = new Set([
-  "bitcoin", "ethereum", "tether", "binancecoin", "solana", "usd-coin",
-  "ripple", "dogecoin", "cardano", "tron", "avalanche-2", "chainlink",
-  "polkadot", "matic-network", "litecoin", "shiba-inu", "uniswap",
-  "stellar", "cosmos", "monero",
+  "btc-bitcoin", "eth-ethereum", "usdt-tether", "usdc-usd-coin",
+  "bnb-binance-coin", "xrp-xrp", "ada-cardano", "sol-solana",
+  "doge-dogecoin", "trx-tron", "dot-polkadot", "matic-polygon",
+  "ltc-litecoin", "shib-shiba-inu", "dai-dai", "avax-avalanche",
+  "link-chainlink", "bch-bitcoin-cash", "uni-uniswap", "atom-cosmos",
 ]);
 
 interface CryptoPrice {
@@ -38,13 +40,13 @@ crypto.get("/prices", async (c) => {
   const unknown = ids.filter((id) => !KNOWN_CRYPTO_IDS.has(id));
   if (known.length === 0) return err(c, 400, "no known crypto ids in request", "all_unknown");
 
-  // Try CoinGecko
+  // Try CoinPaprika (replaces CoinGecko — was 403 from CF Worker)
   const result = await fetchCoinGeckoPrices(known, vs);
-  if (!result.ok) return err(c, 503, `coingecko_unavailable: ${result.error}`, "upstream_down");
+  if (!result.ok) return err(c, 503, `coinpaprika_unavailable: ${result.error}`, "upstream_down");
   return ok(c, {
     vs: vs.toUpperCase(),
     timestamp: Math.floor(Date.now() / 1000),
-    source: "coingecko",
+    source: result.source || "coinpaprika",
     stale: false,
     prices: result.data!,
     warnings: unknown.length > 0 ? { unknownIds: unknown } : undefined,

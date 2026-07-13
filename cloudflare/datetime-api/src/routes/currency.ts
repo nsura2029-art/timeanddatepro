@@ -198,11 +198,21 @@ currency.get("/pair", async (c) => {
   }
   if (!rateData) return err(c, 503, `no_rate_available_for_${from}_${to}`, "rate_unavailable");
 
-  // Get 30-day history
+  // Get 30-day history (D1 first, upstream fallback) — Refactor #5 (was upstream-only, broke from Worker)
   const end = new Date().toISOString().slice(0, 10);
   const start = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
-  const hist = await fetchFrankfurterHistory(from, to, start, end);
-  const chart = (hist.ok && hist.data) ? hist.data : [];
+  let chart: { date: string; rate: number }[] = [];
+  const d1Hist = await c.env.DB.prepare(
+    `SELECT date, rate FROM currency_rates_history
+     WHERE base = ?1 AND quote = ?2 AND date >= ?3 AND date <= ?4
+     ORDER BY date ASC`
+  ).bind(from, to, start, end).all<{ date: string; rate: number }>();
+  if (d1Hist.results && d1Hist.results.length > 0) {
+    chart = d1Hist.results;
+  } else {
+    const hist = await fetchFrankfurterHistory(from, to, start, end);
+    chart = (hist.ok && hist.data) ? hist.data : [];
+  }
   const currentRate = rateData.rate;
   const change24h = chart.length >= 2 ? currentRate - chart[chart.length - 2].rate : 0;
   const change7d = chart.length >= 8 ? currentRate - chart[chart.length - 8].rate : 0;
