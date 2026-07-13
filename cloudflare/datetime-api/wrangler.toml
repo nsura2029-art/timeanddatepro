@@ -14,10 +14,10 @@ name = "datetime-api-dev"
 # Custom domain — attached via dashboard (no zone-level API access on this token)
 # routes = { pattern = "dev.api.dateandtime.live/*", custom_domain = true }
 
-# KV cache (optional in V1)
-# [[env.dev.kv_namespaces]]
-# binding = "CACHE"
-# id = "b709b446a6c04457bc6a60fd2a0d69c8"  # datetime-api-dev-dev-CACHE
+# KV cache (Refactor #4: enabled for rate limiting)
+[[env.dev.kv_namespaces]]
+binding = "CACHE"
+id = "b709b446a6c04457bc6a60fd2a0d69c8"  # datetime-api-dev-dev-CACHE
 
 # D1 database (full geographic dataset)
 [[env.dev.d1_databases]]

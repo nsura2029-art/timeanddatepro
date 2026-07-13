@@ -17,12 +17,18 @@ import { currencyRouter } from "./routes/currency";
 import { cryptoRouter } from "./routes/crypto";
 import { statusRouter } from "./routes/status";
 import { v2SearchRouter } from "./routes/v2/search";
+import { defaultRateLimit, strictRateLimit } from "./middleware/rateLimit";
 import { ok, err, API_VERSION } from "./lib/responses";
 
 const app = new Hono();
 
 // ── Global middleware ──────────────────────────────────────
 app.use("*", corsMiddleware);
+// ── Rate limiting (Refactor #4) ────────────────────────
+app.use("/api/v1/currency/*", defaultRateLimit);
+app.use("/api/v1/crypto/*", defaultRateLimit);
+app.use("/api/v1/status", defaultRateLimit);
+app.use("/api/v1/currency/bulk", strictRateLimit);
 
 // ── Root: API info + endpoint list ───────────────────────
 app.get("/", (c) =>
