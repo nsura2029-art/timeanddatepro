@@ -16,6 +16,23 @@ function HeroConverter({ defaultAmount = 10000 }: { defaultAmount?: number }) {
   const { data: codes } = useCodes();
   const { data, loading, error } = useConvert(from, to, amount);
 
+  // Stale-while-revalidate: keep last successful result visible during refetch
+  // so the result field doesn't flicker to "..." or "—" between fetches.
+  const lastResultRef = useRef<number | null>(null);
+  if (data) lastResultRef.current = data.result;
+
+  // Debounce amount so we don't refetch on every keystroke
+  const [debouncedAmount, setDebouncedAmount] = useState(amount);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAmount(amount), 250);
+    return () => clearTimeout(t);
+  }, [amount]);
+
+  // Only refetch when debouncedAmount changes (not raw amount)
+  const { data: stableData } = useConvert(from, to, debouncedAmount);
+  const displayResult = stableData?.result ?? lastResultRef.current;
+  const isStale = loading && lastResultRef.current !== null;
+
   const fromInfo = codes?.codes.find((c) => c.code === from);
   const toInfo = codes?.codes.find((c) => c.code === to);
   const fromFlag = fromInfo?.flag || "🌍";
@@ -33,9 +50,9 @@ function HeroConverter({ defaultAmount = 10000 }: { defaultAmount?: number }) {
         Live · European Central Bank
       </div>
       <h2 className="tdp-cp-hero-title">How much would you like to convert?</h2>
-      <div className="tdp-cp-hero-grid">
-        <div className="tdp-cp-conv-card">
-          <span className="tdp-cp-live-tag"><LiveDot size="sm" />LIVE</span>
+
+      <div className="tdp-cp-conv-box">
+        <div className="tdp-cp-conv-side">
           <div className="tdp-cp-conv-label">You send</div>
           <input
             className="tdp-cp-conv-amount"
@@ -46,31 +63,49 @@ function HeroConverter({ defaultAmount = 10000 }: { defaultAmount?: number }) {
               if (!isNaN(v)) setAmount(v);
             }}
           />
-          <CurrencySelect value={from} onChange={setFrom} flag={fromFlag} codes={codes?.codes} />
+          <CurrencySelect
+            value={from}
+            onChange={setFrom}
+            flag={fromFlag}
+            name={fromInfo?.name}
+            codes={codes?.codes}
+          />
         </div>
-        <button className="tdp-cp-swap" onClick={swap} title="Swap">⇄</button>
-        <div className="tdp-cp-conv-card">
-          <span className="tdp-cp-live-tag"><LiveDot size="sm" />LIVE</span>
+
+        <button className="tdp-cp-swap" onClick={swap} title="Swap currencies">⇄</button>
+
+        <div className="tdp-cp-conv-side">
           <div className="tdp-cp-conv-label">You get</div>
           <input
-            className="tdp-cp-conv-amount result"
+            className={`tdp-cp-conv-amount result ${isStale ? "stale" : ""}`}
             type="text"
-            value={data ? data.result.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : (loading ? "..." : "—")}
+            value={
+              displayResult != null
+                ? displayResult.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : "—"
+            }
             readOnly
           />
-          <CurrencySelect value={to} onChange={setTo} flag={toFlag} codes={codes?.codes} />
+          <CurrencySelect
+            value={to}
+            onChange={setTo}
+            flag={toFlag}
+            name={toInfo?.name}
+            codes={codes?.codes}
+          />
         </div>
       </div>
+
       <div className="tdp-cp-hero-meta">
-        {data && (
+        {stableData && (
           <>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
               <LiveDot size="sm" /><strong>Live</strong> rate
             </span>
             <span className="tdp-cp-meta-sep">·</span>
-            <span>1 {from} = <strong>{data.rate.toFixed(4)}</strong> {to}</span>
+            <span>1 {from} = <strong>{stableData.rate.toFixed(4)}</strong> {to}</span>
             <span className="tdp-cp-meta-sep">·</span>
-            <span>Source: <strong>{data.source}</strong></span>
+            <span>Source: <strong>{stableData.source}</strong></span>
             <span className="tdp-cp-meta-sep">·</span>
             <span>Updated <strong>2 sec ago</strong></span>
           </>
@@ -88,19 +123,24 @@ function HeroConverter({ defaultAmount = 10000 }: { defaultAmount?: number }) {
   );
 }
 
-function CurrencySelect({ value, onChange, flag, codes }: { value: string; onChange: (v: string) => void; flag: string; codes?: { code: string; flag: string | null }[] }) {
+function CurrencySelect({ value, onChange, flag, name, codes }: { value: string; onChange: (v: string) => void; flag: string; name?: string; codes?: { code: string; flag: string | null; name?: string }[] }) {
   return (
-    <select
-      className="tdp-cp-currency"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
-      {codes?.map((c) => (
-        <option key={c.code} value={c.code}>
-          {c.flag || "🏳️"} {c.code}
-        </option>
-      )) || <option value={value}>{flag} {value}</option>}
-    </select>
+    <div className="tdp-cp-currency-wrap">
+      <span className="tdp-cp-currency-flag">{flag}</span>
+      <select
+        className="tdp-cp-currency"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Select currency"
+      >
+        {codes?.map((c) => (
+          <option key={c.code} value={c.code}>
+            {c.flag || "🏳️"} {c.code} {c.name ? `— ${c.name}` : ""}
+          </option>
+        )) || <option value={value}>{flag} {value}</option>}
+      </select>
+      <span className="tdp-cp-currency-name">{name || value}</span>
+    </div>
   );
 }
 
