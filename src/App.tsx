@@ -64,6 +64,7 @@ import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
 import { TermsOfService } from "./pages/legal/TermsOfService";
 import { AboutPage } from "./pages/about/AboutPage";
 import { FeedbackPage } from "./pages/feedback/FeedbackPage";
+import { TodayPage } from "./pages/today/TodayPage";
 import { FeedbackPrompt } from "./components/feedback/FeedbackPrompt";
 import { CookieConsent } from "./components/common/CookieConsent";
 import { useHomeData } from "./hooks/useHomeData";
@@ -71,6 +72,7 @@ import { useHomeData } from "./hooks/useHomeData";
 import "./pages/legal/PrivacyPolicy.css";
 import "./pages/about/AboutPage.css";
 import "./pages/feedback/FeedbackPage.css";
+import "./pages/today/TodayPage.css";
 import "./components/feedback/FeedbackPrompt.css";
 import "./components/common/CookieConsent.css";
 
@@ -246,6 +248,10 @@ function parseRouteFromPath() {
   // /feedback + /<lang>/feedback — feedback and tool suggestion page.
   if (path === "/feedback" || path.endsWith("/feedback")) {
     return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isFeedback: true };
+  }
+  // /today + /<lang>/today — live hub of widgets (currency, date, news, etc.)
+  if (path === "/today" || path.endsWith("/today")) {
+    return { lang: "en", city: "london", country: "GB" as CountryCode, timezone: "Europe/London", tool: undefined, isToday: true };
   }
   return null;
 }
@@ -1135,6 +1141,26 @@ export default function App() {
               )}
             </div>
 
+            {/* Today — live hub of widgets (currency, date, news, sports) */}
+            <button
+              onClick={() => {
+                window.history.pushState(null, "", "/today");
+                window.dispatchEvent(new Event("tdp:navigate"));
+                setShowToolsDropdown(false);
+                setShowDateToolsDropdown(false);
+                setShowApisDropdown(false);
+                setShowMobileMenu(false);
+              }}
+              data-testid="today-link"
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors flex items-center gap-1.5 cursor-pointer ${currentPathRoute?.isToday ? "bg-[#e8eaf6] text-[#3f51b5] font-bold shadow-sm" : `${t.text} hover:bg-slate-100/50`}`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span>Today</span>
+            </button>
+
             {/* Admin Panel link — visible to everyone but the panel itself is auth-gated */}
             <button
               onClick={() => {
@@ -1414,6 +1440,7 @@ export default function App() {
         {currentPathRoute?.isTerms && <TermsOfService />}
         {currentPathRoute?.isAbout && <AboutPage />}
         {currentPathRoute?.isFeedback && <FeedbackPage />}
+        {currentPathRoute?.isToday && <TodayPage />}
 
         {(currentPathRoute?.tool || currentPathRoute?.pair) ? (
           <div className="animate-fade-in">

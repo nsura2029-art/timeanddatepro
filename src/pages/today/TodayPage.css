@@ -1,0 +1,417 @@
+/* src/pages/today/TodayPage.css
+   The /today hub page. 3-column widget grid that stacks on mobile. */
+
+.tdp-today {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+/* ── Hero ─────────────────────────────────────── */
+.tdp-today__hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  align-items: end;
+  padding: 40px 0 32px;
+}
+
+.tdp-today__greeting {
+  font-family: 'Caveat', 'Comic Sans MS', cursive;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--indigo, #7257d5);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.tdp-today__title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--gray-900, #0d111a);
+  margin-bottom: 14px;
+}
+
+.tdp-today__title em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--indigo, #7257d5);
+}
+
+.tdp-today__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gray-500, #6e7686);
+  flex-wrap: wrap;
+}
+
+.tdp-today__meta strong {
+  color: var(--gray-700, #2f3645);
+  font-weight: 600;
+}
+
+.tdp-today__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  background: var(--green-50, #ecfdf5);
+  color: var(--green-500, #10b981);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+/* ── Location card (right side) ───────────────── */
+.tdp-today__location {
+  background: var(--gray-0, #ffffff);
+  border: 1px solid var(--gray-200, #e1e6ec);
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.tdp-today__loc-change {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--indigo, #7257d5);
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.tdp-today__loc-change:hover {
+  background: var(--indigo-50, #f7f4ff);
+}
+
+.tdp-today__loc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tdp-today__loc-row + .tdp-today__loc-row {
+  border-top: 1px solid var(--gray-100, #f3f5f7);
+  padding-top: 12px;
+}
+
+.tdp-today__loc-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--lavender, #ece1ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.tdp-today__loc-icon--time { background: var(--indigo-50, #f7f4ff); }
+.tdp-today__loc-icon--cur { background: var(--mint, #d4f4e2); }
+
+.tdp-today__loc-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-500, #6e7686);
+  font-weight: 600;
+}
+
+.tdp-today__loc-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900, #0d111a);
+  margin-top: 1px;
+}
+
+.tdp-today__loc-coord {
+  font-size: 11px;
+  color: var(--gray-500, #6e7686);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Widget grid ──────────────────────────────── */
+.tdp-today__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.tdp-today__cell {
+  min-width: 0;
+}
+
+.tdp-today__cell--wide {
+  grid-column: span 2;
+}
+
+/* Date widget content */
+.tdp-today__date {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tdp-today__date-large {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-900, #0d111a);
+  letter-spacing: -0.02em;
+}
+
+.tdp-today__date-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--indigo, #7257d5);
+  letter-spacing: -0.01em;
+}
+
+.tdp-today__date-meta {
+  font-size: 11px;
+  color: var(--gray-500, #6e7686);
+}
+
+.tdp-today__date-progress {
+  height: 4px;
+  background: var(--gray-100, #f3f5f7);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.tdp-today__date-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--indigo, #7257d5), var(--indigo-soft, #c4b8f0));
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+/* Timezone rows */
+.tdp-today__tz {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tdp-today__tz-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--gray-50, #fafbfc);
+  border-radius: 8px;
+  border: 1px solid var(--gray-100, #f3f5f7);
+}
+
+.tdp-today__tz-row--here {
+  background: var(--indigo-50, #f7f4ff);
+  border-color: var(--indigo-soft, #c4b8f0);
+}
+
+.tdp-today__tz-city {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-900, #0d111a);
+}
+
+.tdp-today__tz-tz {
+  font-size: 10px;
+  color: var(--gray-500, #6e7686);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tdp-today__tz-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gray-900, #0d111a);
+  letter-spacing: -0.01em;
+}
+
+/* Sports */
+.tdp-today__sports {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tdp-today__sport {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--gray-100, #f3f5f7);
+  font-size: 12px;
+}
+
+.tdp-today__sport:last-of-type {
+  border-bottom: none;
+}
+
+.tdp-today__sport--muted {
+  color: var(--gray-400, #9aa3b1);
+}
+
+.tdp-today__sport-teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-700, #2f3645);
+  font-weight: 500;
+}
+
+.tdp-today__sport-icon {
+  font-size: 14px;
+}
+
+.tdp-today__sport-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tdp-today__sport-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--gray-900, #0d111a);
+}
+
+.tdp-today__sport-status {
+  font-size: 10px;
+  color: var(--green-500, #10b981);
+  font-weight: 600;
+}
+
+.tdp-today__sport--muted .tdp-today__sport-val {
+  color: var(--gray-400, #9aa3b1);
+  font-weight: 500;
+}
+
+.tdp-today__sport--muted .tdp-today__sport-status {
+  color: var(--gray-400, #9aa3b1);
+}
+
+.tdp-today__coming-soon {
+  background: var(--gray-50, #fafbfc);
+  border: 1px dashed var(--gray-300, #cbd2dc);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray-500, #6e7686);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* News */
+.tdp-today__news {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tdp-today__news-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.tdp-today__news-item:hover .tdp-today__news-title {
+  color: var(--indigo, #7257d5);
+}
+
+.tdp-today__news-bullet {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--indigo, #7257d5);
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.tdp-today__news-title {
+  font-size: 12px;
+  color: var(--gray-700, #2f3645);
+  line-height: 1.4;
+  font-weight: 500;
+  transition: color 0.1s;
+}
+
+.tdp-today__news-source {
+  font-size: 10px;
+  color: var(--gray-500, #6e7686);
+  margin-top: 2px;
+}
+
+/* Footer */
+.tdp-today__foot {
+  border-top: 1px solid var(--gray-200, #e1e6ec);
+  padding-top: 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gray-500, #6e7686);
+}
+
+.tdp-today__foot a {
+  color: var(--indigo, #7257d5);
+  text-decoration: none;
+}
+
+.tdp-today__foot a:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 1024px) {
+  .tdp-today__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tdp-today__cell--wide {
+    grid-column: span 2;
+  }
+  .tdp-today__hero {
+    grid-template-columns: 1fr;
+  }
+  .tdp-today__title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tdp-today__grid {
+    grid-template-columns: 1fr;
+  }
+  .tdp-today__cell--wide {
+    grid-column: span 1;
+  }
+  .tdp-today__title {
+    font-size: 32px;
+  }
+  .tdp-today__greeting {
+    font-size: 24px;
+  }
+  .tdp-today {
+    padding: 0 16px 32px;
+  }
+}
