@@ -22,6 +22,9 @@ import { CURRENCIES, type CurrencyInfo } from "../../data/currency/currencies";
 import { TOP_PAIRS } from "../../utils/currencyApi";
 import { getToolI18n } from "../../utils/toolTranslations";
 import ToolSdkPanel from "./ToolSdkPanel";
+// Refactor #1: use the new lib/currency hooks + formatters (D1-backed live API)
+import { useConvert, useRates, useCodes } from "../../lib/currency/hooks";
+import { formatAmount, formatPercent, formatRelative, isFiat, symbolFor } from "../../lib/currency/formatter";
 
 interface Props { lang?: string; }
 
@@ -50,82 +53,30 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
   const [amount, setAmount] = useState<number>(100);
   const [from, setFrom] = useState<string>("USD");
   const [to, setTo] = useState<string>("EUR");
-  const [result, setResult] = useState<ConvertResult | null>(null);
-  const [table, setTable] = useState<RateTableResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activePairIdx, setActivePairIdx] = useState(0);
 
+  // Refactor #1: use the new lib/currency hooks (typed, abortable, no manual state)
+  const { data: codes } = useCodes();
+  const convertState = useConvert(from, to, amount);
+  const ratesState = useRates(from);
+  const result = convertState.data;
+  const loading = convertState.loading;
+  const error = convertState.error;
+  const table = ratesState.data ? {
+    base: ratesState.data.base,
+    date: new Date(ratesState.data.timestamp * 1000).toISOString().slice(0, 10),
+    source: ratesState.data.source,
+    fetchedAt: new Date(ratesState.data.timestamp * 1000).toISOString(),
+    rates: Object.entries(ratesState.data.rates).map(([code, rate]) => ({
+      code,
+      rate,
+      info: codes?.codes.find((c) => c.code === code) || { code, name: code, symbol: code, flag: null, decimals: 2 },
+    })),
+  } as RateTableResult : null;
+
   const fromInfo = useMemo(() => CURRENCIES.find((c) => c.code === from)!, [from]);
   const toInfo = useMemo(() => CURRENCIES.find((c) => c.code === to)!, [to]);
-
-  // Convert whenever inputs change — via /api/v1/currency/convert
-  useEffect(() => {
-    if (!amount || amount <= 0) {
-      setResult(null);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetch(`/api/v1/currency/convert?amount=${amount}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((j) => {
-        if (cancelled) return;
-        const d = j?.data;
-        if (!d) throw new Error("empty response");
-        setResult({
-          amount: d.amount,
-          from: d.from,
-          to: d.to,
-          rate: d.rate,
-          result: d.result,
-          date: d.date,
-          source: d.source,
-          inverse: d.inverse,
-          formatted: d.formatted,
-        } as ConvertResult);
-      })
-      .catch((e) => {
-        if (cancelled) return;
-        setError(e?.message || "Conversion failed");
-        setResult(null);
-      })
-      .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [amount, from, to]);
-
-  // Load all rates against `from` for the table view — via /api/v1/currency/rates
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/v1/currency/rates?base=${encodeURIComponent(from)}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((j) => {
-        if (cancelled) return;
-        const d = j?.data;
-        if (!d) {
-          setTable(null);
-          return;
-        }
-        setTable({
-          base: d.base,
-          date: d.date,
-          source: d.source,
-          fetchedAt: d.fetchedAt,
-          rates: d.rates,
-        } as RateTableResult);
-      })
-      .catch(() => !cancelled && setTable(null));
-    return () => {
-      cancelled = true;
-    };
-  }, [from]);
 
   function swap() {
     setFrom(to);
@@ -249,7 +200,7 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
           <div className="md:col-span-3 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono text-[#9e9e9e] uppercase tracking-wider">{t.result}</span>
-              <CopyBtn text={result?.formatted ?? ""} k="result" />
+              <CopyBtn text={result ? formatAmount(result.result, result.to, lang === "zh" ? "zh-CN" : lang === "ja" ? "ja-JP" : lang === "fr" ? "fr-FR" : "en-US", codes?.codes) : ""} k="result" />
             </div>
             <div className="flex items-baseline gap-3">
               {loading ? (
@@ -266,7 +217,7 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
                 <>
                   <span className="text-4xl md:text-5xl font-mono font-extrabold text-[#3f51b5] tracking-tight">
                     {toInfo.symbol}
-                    {result.formatted}
+                    {formatAmount(result.result, result.to, lang === "zh" ? "zh-CN" : lang === "ja" ? "ja-JP" : lang === "fr" ? "fr-FR" : "en-US", codes?.codes)}
                   </span>
                   <span className="text-sm text-[#616161]">
                     {toInfo.flag} {toInfo.name}
@@ -280,7 +231,7 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
               <div className="text-[11px] font-mono text-[#9e9e9e]">
                 1 {result.from} = <strong className="text-[#3f51b5]">{result.rate.toFixed(6)}</strong>{" "}
                 {result.to} &nbsp;·&nbsp;
-                1 {result.to} = <strong className="text-[#3f51b5]">{result.inverse.toFixed(6)}</strong>{" "}
+                1 {result.to} = <strong className="text-[#3f51b5]">{(1 / result.rate).toFixed(6)}</strong>{" "}
                 {result.from}
               </div>
             )}
@@ -292,7 +243,7 @@ export default function CurrencyConverter({ lang = "en" }: Props) {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-3 border-t border-[#eeeeee] text-[11px] font-mono text-[#9e9e9e]">
             <span className="inline-flex items-center gap-1">
               <Globe2 size={12} /> {t.lastUpdated}{" "}
-              <strong className="text-[#616161]">{result.date}</strong>
+              <strong className="text-[#616161]">{formatRelative(result.timestamp)}</strong>
             </span>
             <span className="inline-flex items-center gap-1">
               {result.source === "ecb" ? (
