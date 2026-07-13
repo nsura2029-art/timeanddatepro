@@ -10,6 +10,9 @@ import { countriesRouter } from "./routes/countries";
 import { pairsRouter } from "./routes/pairs";
 import { auxRouter } from "./routes/auxiliary";
 import { feedbackRouter } from "./routes/feedback";
+import { waitlistRouter } from "./routes/waitlist";
+import { capturesRouter } from "./routes/captures";
+import { dateToWordRouter } from "./routes/dateToWord";
 import { v2SearchRouter } from "./routes/v2/search";
 import { ok, err, API_VERSION } from "./lib/responses";
 
@@ -87,6 +90,17 @@ app.get("/api/v1", (c) =>
       "POST /api/v1/feedback",
       "POST /api/v1/feedback/:id/vote",
       "DELETE /api/v1/feedback/:id",
+      // Phase 6 — thin API for user captures
+      "POST /api/v1/waitlist",
+      "GET /api/v1/waitlist/count",
+      "GET /api/v1/waitlist/recent",
+      "POST /api/v1/captures",
+      "GET /api/v1/captures/recent",
+      "GET /api/v1/captures/stats",
+      "POST /api/v1/tools/date-to-word/bulk",
+      "GET /api/v1/tools/date-to-word/translate",
+      "GET /api/v1/tools/date-to-word/formats",
+      "GET /api/v1/tools/date-to-word/preview",
     ],
   })
 );
@@ -108,6 +122,9 @@ app.route("/api/v1/pairs", pairsRouter);
 app.route("/api/v1/meeting", pairsRouter);
 app.route("/api/v1", auxRouter);
 app.route("/api/v1/feedback", feedbackRouter);
+app.route("/api/v1/waitlist", waitlistRouter);
+app.route("/api/v1/captures", capturesRouter);
+app.route("/api/v1/tools/date-to-word", dateToWordRouter);
 
 // ── v2 — full D1-backed geographic + locale-aware search ──
 // Mounted BEFORE the v1 cities router so /api/v2/* takes priority
