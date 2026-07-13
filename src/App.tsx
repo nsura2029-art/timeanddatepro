@@ -1421,7 +1421,7 @@ export default function App() {
       </nav>
 
       {/* 3. HERO CONTAINER SECTION */}
-      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.isFeedback && !currentPathRoute?.tool && !currentPathRoute?.pair && (
+      {!currentPathRoute?.isMeetingFinder && !currentPathRoute?.isTimezoneMap && !currentPathRoute?.isPrivacy && !currentPathRoute?.isTerms && !currentPathRoute?.isAbout && !currentPathRoute?.isFeedback && !currentPathRoute?.isToday && !currentPathRoute?.isCurrency && !currentPathRoute?.tool && !currentPathRoute?.pair && (
       <>
       <LandingPage
           liveDate={liveDate}
