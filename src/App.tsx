@@ -120,7 +120,7 @@ function parseRouteFromPath() {
   // Sub-routes like /en/<tool> still detect via parseToolPath above
   // and run early. Nothing further to warn about here.
   // Check for /<lang>/<tool> sub-routes first
-  const toolRoute = parseToolPath(path);
+  let toolRoute = parseToolPath(path);
   if (toolRoute) {
     // Check for programmatic Date to Words sub-paths:
     //   /<lang>/date-words/<year>          → year page
