@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date to Words Converter — Free Online Tool | TimeAndDatePro</title>
+  <meta name="description" content="Convert any date (1-9999) to written words for legal documents, cheques, passports, and contracts. Five formats: formal, legal, banking, casual, British. Free, no signup, locale-aware." />
+  <meta name="keywords" content="date to words, date in words, write date in words, legal date format, cheque date, date in words converter, ordinal date, number to words date" />
+  <link rel="canonical" href="https://dateandtime.live/tools/date-to-word" />
+
+  <!-- FAQ Schema (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "How do I write a date in formal words?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Use the formal format: day + 'of' + month + ',' + year. Example: 'Eleventh of July, Two Thousand Twenty-Six'." } },
+      { "@type": "Question", "name": "How do I write a date on a cheque?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Banking format: 'Eleventh July, Two Thousand Twenty-Six'." } },
+      { "@type": "Question", "name": "What years does this support?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Year 1 to 9999." } },
+      { "@type": "Question", "name": "Legal vs Formal?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Legal includes 'day of'. Formal omits it." } },
+      { "@type": "Question", "name": "Non-English dates?",
+        "acceptedAnswer": { "@type": "Answer", "text": "English (US/UK) now. French, German, Spanish, Japanese, Arabic — sign up for early access." } },
+      { "@type": "Question", "name": "Client or server?",
+        "acceptedAnswer": { "@type": "Answer", "text": "100% client-side. No data leaves your device." } },
+      { "@type": "Question", "name": "Bulk convert?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — sign in for free, up to 10,000 dates via CSV." } },
+      { "@type": "Question", "name": "API?",
+        "acceptedAnswer": { "@type": "Answer", "text": "POST /api/v1/tools/date-to-word. 100 req/day free." } }
+    ]
+  }
+  </script>
+
+  <!-- HowTo Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to write a date in formal words",
+    "description": "Convert any calendar date to written words in three simple steps.",
+    "step": [
+      { "@type": "HowToStep", "position": 1, "name": "Enter your date",
+        "text": "Type or paste a date in any common format: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, or written out. The parser auto-detects the format." },
+      { "@type": "HowToStep", "position": 2, "name": "Pick a format",
+        "text": "Choose from five formats: Formal, Legal, Banking, Casual, or British. Each is suited to a different document type." },
+      { "@type": "HowToStep", "position": 3, "name": "Copy the result",
+        "text": "Click Copy, download as .txt, share a link, or hit the API. Translation to other languages is coming soon." }
+    ],
+    "totalTime": "PT5S"
+  }
+  </script>
+
+  <style>
+    /* ── Reset ────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* Pure white palette — no glass, no blur, no off-white */
+      --bg:           #FFFFFF;
+      --surface:      #FFFFFF;
+      --surface-2:    #FAFAFA;
+      --surface-3:    #F4F4F5;
+      --ink:          #09090B;
+      --ink-2:        #3F3F46;
+      --ink-3:        #71717A;
+      --ink-4:        #A1A1AA;
+      --ink-5:        #D4D4D8;
+      --line:         #E4E4E7;
+      --line-2:       #D4D4D8;
+      /* Accent */
+      --accent:       #4F46E5;
+      --accent-2:     #4338CA;
+      --accent-soft:  #EEF2FF;
+      --accent-fade:  #F5F3FF;
+      /* Functional */
+      --success:      #16A34A;
+      --success-bg:   #DCFCE7;
+      --warn:         #D97706;
+      --warn-bg:      #FEF3C7;
+      /* Type */
+      --sans:         "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --mono:         "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+      /* Radius */
+      --r-sm:         6px;
+      --r:            8px;
+      --r-lg:         12px;
+      --r-xl:         16px;
+      --r-2xl:        20px;
+      --r-full:       9999px;
+      /* Shadow */
+      --shadow-xs:    0 1px 2px rgba(9,9,11,0.04);
+      --shadow-sm:    0 1px 3px rgba(9,9,11,0.06), 0 1px 2px rgba(9,9,11,0.04);
+      --shadow-md:    0 4px 12px rgba(9,9,11,0.06), 0 1px 3px rgba(9,9,11,0.04);
+      --shadow-lg:    0 8px 24px rgba(9,9,11,0.08), 0 2px 6px rgba(9,9,11,0.04);
+    }
+    html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01", "tnum"; }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Page ─────────────────────────────────────────── */
+    .page { max-width: 1120px; margin: 0 auto; padding: 24px 32px 80px; width: 100%; flex: 1; }
+
+    /* ── Topbar (solid white, no blur) ───────────────── */
+    .topbar { position: sticky; top: 0; z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 -32px 32px; padding: 0 32px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+    .nav-mark { width: 22px; height: 22px; background: var(--ink); border-radius: 6px; position: relative; }
+    .nav-mark::before { content: ""; position: absolute; inset: 4px; background: var(--bg); border-radius: 50%; }
+    .nav-mark::after { content: ""; position: absolute; top: 50%; left: 50%; width: 2px; height: 6px; background: var(--ink); transform: translate(-50%, -50%); border-radius: 1px; }
+    .nav-links { display: flex; gap: 2px; align-items: center; }
+    .nav-link { color: var(--ink-2); text-decoration: none; font-size: 14px; font-weight: 500; padding: 7px 12px; border-radius: var(--r); transition: all 120ms; }
+    .nav-link:hover { background: var(--surface-2); color: var(--ink); }
+    .nav-cta { background: var(--ink); color: var(--bg); padding: 7px 14px; border-radius: var(--r); font-size: 14px; font-weight: 500; border: none; cursor: pointer; font-family: var(--sans); }
+    .nav-cta:hover { background: var(--ink-2); }
+
+    /* ── Language consent (top banner, no blur) ──────── */
+    .lang-banner { background: var(--ink); color: var(--bg); padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 13px; margin: 0 -32px 24px; }
+    .lang-banner-icon { font-size: 14px; }
+    .lang-banner-text { color: rgba(255,255,255,0.75); }
+    .lang-banner-text strong { color: var(--bg); font-weight: 600; }
+    .lang-banner-actions { display: flex; gap: 6px; }
+    .lang-btn { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--r-sm); border: 1px solid rgba(255,255,255,0.2); background: transparent; color: var(--bg); cursor: pointer; transition: background 120ms; font-family: var(--sans); }
+    .lang-btn:hover { background: rgba(255,255,255,0.1); }
+    .lang-btn-primary { background: var(--bg); color: var(--ink); border-color: var(--bg); }
+    .lang-btn-primary:hover { background: rgba(255,255,255,0.9); }
+    .lang-btn-close { border: none; background: transparent; opacity: 0.5; padding: 4px 6px; }
+    .lang-btn-close:hover { opacity: 1; }
+
+    /* ── Hero ─────────────────────────────────────────── */
+    .hero { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; margin-bottom: 32px; }
+    .hero-left { max-width: 720px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: var(--accent-soft); border: 1px solid #C7D2FE; border-radius: var(--r-full); font-size: 12px; font-weight: 500; color: var(--accent); margin-bottom: 16px; }
+    .eyebrow-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; position: relative; }
+    .eyebrow-dot::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: var(--accent); opacity: 0.3; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.5); opacity: 0; } }
+    h1 { font-size: 48px; line-height: 1.05; font-weight: 600; letter-spacing: -0.035em; margin-bottom: 14px; }
+    h1 .accent { color: var(--accent); position: relative; }
+    h1 .accent::after { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 8px; background: var(--accent-soft); z-index: -1; border-radius: 2px; }
+    .lede { font-size: 17px; line-height: 1.55; color: var(--ink-3); }
+    .hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .kbd-hint { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); }
+    .kbd { font-family: var(--mono); font-size: 11px; padding: 2px 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; color: var(--ink-2); font-weight: 500; }
+    .waitlist-stat { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-full); font-size: 12px; color: var(--ink-2); }
+    .waitlist-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    /* ── Spotlight card (21st.dev signature) ────────── */
+    .spotlight-wrap { position: relative; }
+    .spotlight { position: absolute; inset: -1px; border-radius: var(--r-2xl); background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), rgba(79, 70, 229, 0.12), transparent 40%); pointer-events: none; opacity: 0; transition: opacity 300ms; }
+    .spotlight-wrap:hover .spotlight { opacity: 1; }
+
+    /* ── Tool card ───────────────────────────────────── */
+    .tool { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-2xl); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .tool-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    .tool-head-left { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink); }
+    .tool-step { font-size: 10px; font-weight: 600; color: var(--accent); font-family: var(--mono); padding: 2px 7px; background: var(--accent-soft); border-radius: 4px; }
+    .tool-head-right { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); }
+    .tool-body { padding: 24px; }
+
+    /* ── Input row ──────────────────────────────────── */
+    .input-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label { font-size: 12px; font-weight: 500; color: var(--ink-3); display: flex; align-items: center; justify-content: space-between; }
+    .field-label-hint { font-size: 11px; color: var(--ink-4); font-family: var(--mono); }
+    .field-input, .field-select { font-family: var(--sans); font-size: 15px; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r); color: var(--ink); outline: none; transition: border-color 120ms, box-shadow 120ms; width: 100%; }
+    .field-input.mono { font-family: var(--mono); font-size: 15px; letter-spacing: 0.01em; }
+    .field-input:focus, .field-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    /* ── Animated tabs (format selector, 21st.dev) ──── */
+    .tabs-section { margin-top: 8px; }
+    .tabs-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .tabs-label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+    .tabs-popular { font-size: 11px; color: var(--ink-4); display: flex; align-items: center; gap: 4px; }
+    .tabs-popular-dot { width: 4px; height: 4px; background: var(--warn); border-radius: 50%; }
+    .tabs { position: relative; display: flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r); padding: 3px; }
+    .tab { position: relative; flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--ink-3); background: transparent; border: none; cursor: pointer; border-radius: 6px; transition: color 200ms; font-family: var(--sans); z-index: 1; }
+    .tab.active { color: var(--bg); }
+    .tab-slider { position: absolute; top: 3px; bottom: 3px; background: var(--ink); border-radius: 6px; transition: all 280ms cubic-bezier(0.4, 0, 0.2, 1); z-index: 0; }
+
+    /* ── CTA row ─────────────────────────────────────── */
+    .cta-row { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .btn { font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 10px 18px; border-radius: var(--r); border: 1px solid transparent; cursor: pointer; transition: all 120ms; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: var(--ink); color: var(--bg); position: relative; overflow: hidden; }
+    .btn-primary::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent) 0%, var(--ink) 100%); opacity: 0; transition: opacity 200ms; }
+    .btn-primary:hover::before { opacity: 1; }
+    .btn-primary > * { position: relative; z-index: 1; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .btn-secondary { background: var(--bg); color: var(--ink); border-color: var(--line-2); }
+    .btn-secondary:hover { background: var(--surface-2); }
+    .btn-ghost { background: transparent; color: var(--ink-2); }
+    .btn-ghost:hover { color: var(--ink); background: var(--surface-2); }
+    .cta-spacer { flex: 1; }
+
+    /* ── Result card ─────────────────────────────────── */
+    .output { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-2xl); margin-top: 24px; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .output-eyebrow { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--line); background: var(--bg); }
+    .output-eyebrow-left { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+    .output-fmt-tag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; background: var(--ink); color: var(--bg); border-radius: 4px; letter-spacing: 0; text-transform: none; font-weight: 500; }
+    .output-eyebrow-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--ink-3); }
+    .output-locale-dot { color: var(--success); }
+    .output-body { padding: 36px 24px; }
+    .output-text { font-size: 36px; line-height: 1.2; font-weight: 500; letter-spacing: -0.025em; color: var(--ink); margin-bottom: 24px; }
+    .output-text .break { color: var(--ink-4); font-weight: 400; }
+    .output-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Variant rows with per-variant translate ────── */
+    .variants { border-top: 1px solid var(--line); }
+    .variant-row { display: grid; grid-template-columns: 80px 1fr auto auto; align-items: center; gap: 16px; padding: 14px 24px; transition: background 120ms; }
+    .variant-row:hover { background: var(--surface-2); }
+    .variant-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .variant-text { font-size: 14px; color: var(--ink); }
+    .variant-copy { padding: 6px 10px; background: transparent; border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink-2); font-size: 12px; cursor: pointer; transition: all 120ms; display: inline-flex; align-items: center; gap: 5px; font-family: var(--sans); }
+    .variant-copy:hover { background: var(--bg); border-color: var(--ink-4); color: var(--ink); }
+    /* Translate button — eye-catching per variant */
+    .variant-translate { position: relative; padding: 6px 12px; background: var(--accent-soft); border: 1px solid #C7D2FE; border-radius: var(--r-full); color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 150ms; display: inline-flex; align-items: center; gap: 6px; font-family: var(--sans); white-space: nowrap; }
+    .variant-translate:hover { background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79,70,229,0.25); }
+    .variant-translate::before { content: "🌐"; font-size: 11px; }
+    .variant-translate::after { content: ""; position: absolute; top: -3px; right: -3px; width: 6px; height: 6px; background: var(--warn); border-radius: 50%; border: 2px solid var(--bg); animation: pulse 2s ease-in-out infinite; }
+
+    /* ── Translation capture form (expandable) ──────── */
+    .translate-form-wrap { max-height: 0; overflow: hidden; transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .translate-form-wrap.open { max-height: 280px; }
+    .translate-form { padding: 16px 24px 20px; background: var(--accent-fade); border-top: 1px solid #DDD6FE; display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+    .translate-form-head { grid-column: 1 / -1; font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+    .translate-form-head strong { color: var(--ink); font-weight: 600; }
+    .translate-form-select, .translate-form-input { font-family: var(--sans); font-size: 13px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r); color: var(--ink); outline: none; transition: border-color 120ms, box-shadow 120ms; width: 100%; }
+    .translate-form-select:focus, .translate-form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .translate-form-submit { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 18px; background: var(--accent); color: white; border: none; border-radius: var(--r); cursor: pointer; transition: all 120ms; white-space: nowrap; }
+    .translate-form-submit:hover { background: var(--accent-2); }
+    .translate-form-foot { grid-column: 1 / -1; font-size: 11px; color: var(--ink-3); display: flex; align-items: center; justify-content: space-between; }
+    .translate-form-foot a { color: var(--accent); text-decoration: none; }
+    .translate-form-foot a:hover { text-decoration: underline; }
+    .translate-success { padding: 14px 24px; background: var(--success-bg); border-top: 1px solid #BBF7D0; color: var(--success); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .translate-success-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
+
+    /* ── Bento grid (use cases, 21st.dev signature) ─── */
+    .bento { margin-top: 64px; }
+    .bento-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 20px; }
+    .bento-eyebrow { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .bento-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+    .bento-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 12px; min-height: 360px; }
+    .bento-card { position: relative; padding: 20px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-xl); overflow: hidden; transition: all 200ms; cursor: pointer; display: flex; flex-direction: column; }
+    .bento-card:hover { border-color: var(--ink); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .bento-card.large { grid-column: span 1; grid-row: span 2; }
+    .bento-emoji { font-size: 24px; line-height: 1; margin-bottom: 10px; }
+    .bento-name { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .bento-sample { font-family: var(--mono); font-size: 11px; color: var(--ink-3); line-height: 1.4; }
+    .bento-card.large .bento-emoji { font-size: 32px; }
+    .bento-card.large .bento-name { font-size: 18px; }
+    .bento-card.large .bento-sample { font-size: 13px; line-height: 1.6; }
+    .bento-card.large .bento-extra { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+    .bento-card.large .bento-extra-stat { font-family: var(--mono); color: var(--ink); font-weight: 500; }
+
+    /* ── Marquee (related tools, 21st.dev pattern) ───── */
+    .marquee-section { margin-top: 64px; padding: 32px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .marquee-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; padding: 0 32px; max-width: 1120px; margin-left: auto; margin-right: auto; }
+    .marquee-eyebrow { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .marquee-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+    .marquee-wrap { overflow: hidden; mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent); }
+    .marquee-track { display: flex; gap: 12px; animation: marquee 35s linear infinite; width: max-content; }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .marquee-card { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-lg); white-space: nowrap; min-width: 280px; transition: all 150ms; }
+    .marquee-card:hover { border-color: var(--ink); }
+    .marquee-icon { width: 32px; height: 32px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
+    .marquee-info { display: flex; flex-direction: column; gap: 2px; }
+    .marquee-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .marquee-desc { font-size: 11px; color: var(--ink-3); }
+    .marquee-arrow { color: var(--ink-4); font-size: 12px; }
+
+    /* ── How it works (3 steps, premium) ─────────────── */
+    .howitworks { margin-top: 80px; }
+    .howitworks-head { margin-bottom: 32px; text-align: center; }
+    .howitworks-eyebrow { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .howitworks-title { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+    .howitworks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--bg); overflow: hidden; }
+    .how-step { padding: 28px; border-right: 1px solid var(--line); position: relative; }
+    .how-step:last-child { border-right: none; }
+    .how-step-num { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-bottom: 16px; }
+    .how-step-title { font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+    .how-step-desc { font-size: 13px; line-height: 1.55; color: var(--ink-3); margin-bottom: 16px; }
+    .how-step-mock { font-family: var(--mono); font-size: 12px; padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink-2); display: inline-block; }
+    .how-step-mock.success { background: var(--success-bg); color: var(--success); border-color: #BBF7D0; }
+    .how-step-mock.accent { background: var(--accent-soft); color: var(--accent); border-color: #C7D2FE; }
+
+    /* ── Disclaimer ──────────────────────────────────── */
+    .disclaimer { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-xl); margin-top: 80px; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+    .disclaimer-icon { flex-shrink: 0; width: 32px; height: 32px; background: var(--ink); color: var(--bg); border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-weight: 700; font-size: 14px; }
+    .disclaimer-body { flex: 1; }
+    .disclaimer-title { font-size: 12px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .disclaimer-text { font-size: 13px; line-height: 1.6; color: var(--ink-2); margin-bottom: 6px; }
+    .disclaimer-text:last-child { margin-bottom: 0; }
+    .disclaimer-text a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--ink-4); }
+    .disclaimer-text a:hover { text-decoration-color: var(--ink); }
+    .disclaimer-text strong { color: var(--ink); font-weight: 600; }
+
+    /* ── Footer ──────────────────────────────────────── */
+    .footer { margin: 64px -32px -80px; padding: 24px 32px; border-top: 1px solid var(--line); background: var(--bg); }
+    .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--ink-3); }
+    .footer a { color: var(--ink-3); text-decoration: none; margin: 0 10px; }
+    .footer a:hover { color: var(--ink); }
+
+    /* ── Toast ───────────────────────────────────────── */
+    .toast { position: fixed; bottom: 24px; right: 24px; z-index: 100; padding: 12px 18px; background: var(--ink); color: var(--bg); border-radius: var(--r); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(8px); transition: all 200ms; pointer-events: none; box-shadow: var(--shadow-lg); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    /* ── Mobile ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .page { padding: 16px 20px 60px; }
+      .topbar, .lang-banner { margin: 0 -20px 20px; padding: 0 20px; }
+      .hero { grid-template-columns: 1fr; }
+      h1 { font-size: 32px; }
+      .input-row { grid-template-columns: 1fr; }
+      .bento-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+      .bento-card.large { grid-column: span 2; grid-row: auto; }
+      .howitworks-grid { grid-template-columns: 1fr; }
+      .how-step { border-right: none; border-bottom: 1px solid var(--line); }
+      .how-step:last-child { border-bottom: none; }
+      .translate-form { grid-template-columns: 1fr; }
+      .variant-row { grid-template-columns: 70px 1fr; gap: 8px; }
+      .variant-row > *:nth-child(n+3) { grid-column: 2; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- Sticky topbar (solid white, no blur) -->
+    <div class="topbar">
+      <nav class="nav">
+        <div class="nav-brand">
+          <span class="nav-mark"></span>
+          <span>TimeAndDatePro</span>
+        </div>
+        <div class="nav-links">
+          <a class="nav-link" href="#">Tools</a>
+          <a class="nav-link" href="#">API</a>
+          <a class="nav-link" href="#">Pricing</a>
+          <a class="nav-link" href="#">Docs</a>
+          <button class="nav-cta">Sign in</button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Language consent (no blur) -->
+    <div class="lang-banner">
+      <span class="lang-banner-icon">🌐</span>
+      <span class="lang-banner-text">Detected: <strong>English (United States)</strong> · <a href="#" style="color: rgba(255,255,255,0.9); text-decoration: underline;">Switch language</a></span>
+      <div class="lang-banner-actions">
+        <button class="lang-btn lang-btn-primary">Use English (US)</button>
+        <button class="lang-btn lang-btn-close">✕</button>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-left">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> Date to Words · v2.1</div>
+        <h1>Any date, written <span class="accent">properly.</span></h1>
+        <p class="lede">Convert calendar dates to formal written words for legal documents, cheques, and official forms. Five formats, 1 to 9999, locale-aware.</p>
+      </div>
+      <div class="hero-right">
+        <div class="waitlist-stat">
+          <span class="waitlist-dot"></span>
+          <span><strong id="waitlistCount">1,247</strong> on translation waitlist</span>
+        </div>
+        <div class="kbd-hint">
+          Press <span class="kbd">⌘</span> <span class="kbd">K</span> for shortcuts
+        </div>
+      </div>
+    </div>
+
+    <!-- Main tool card with spotlight effect -->
+    <div class="spotlight-wrap">
+      <div class="spotlight" id="spotlight"></div>
+      <div class="tool">
+        <div class="tool-head">
+          <div class="tool-head-left">
+            <span class="tool-step">01</span>
+            <span>Convert a date to words</span>
+          </div>
+          <div class="tool-head-right">
+            <span>Client-side · 0ms</span>
+          </div>
+        </div>
+
+        <div class="tool-body">
+          <div class="input-row">
+            <div class="field">
+              <label class="field-label">
+                <span>Date</span>
+                <span class="field-label-hint">auto-detect</span>
+              </label>
+              <input class="field-input mono" type="text" value="2026-07-11" id="dateInput" />
+            </div>
+            <div class="field">
+              <label class="field-label">
+                <span>Locale</span>
+                <span class="field-label-hint">en-US</span>
+              </label>
+              <select class="field-select">
+                <option>🇺🇸 English (US)</option>
+                <option>🇬🇧 English (UK)</option>
+                <option>🇫🇷 Français (early access)</option>
+                <option>🇩🇪 Deutsch (early access)</option>
+                <option>🇪🇸 Español (early access)</option>
+                <option>🇯🇵 日本語 (early access)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">
+                <span>Calendar</span>
+                <span class="field-label-hint">gregorian</span>
+              </label>
+              <select class="field-select">
+                <option>Gregorian (default)</option>
+                <option>Julian (legacy)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Animated tabs (21st.dev pattern) -->
+          <div class="tabs-section">
+            <div class="tabs-head">
+              <span class="tabs-label">Output format</span>
+              <span class="tabs-popular"><span class="tabs-popular-dot"></span> Legal is most popular for contracts</span>
+            </div>
+            <div class="tabs" id="formatTabs">
+              <button class="tab" data-format="formal">Formal</button>
+              <button class="tab active" data-format="legal">Legal</button>
+              <button class="tab" data-format="banking">Banking</button>
+              <button class="tab" data-format="casual">Casual</button>
+              <button class="tab" data-format="british">British</button>
+              <div class="tab-slider" id="tabSlider"></div>
+            </div>
+          </div>
+
+          <div class="cta-row">
+            <button class="btn btn-primary"><span>Convert to words →</span></button>
+            <button class="btn btn-ghost">Reset</button>
+            <div class="cta-spacer"></div>
+            <span class="kbd-hint"><span class="kbd">↵</span> Enter</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result card -->
+    <div class="output">
+      <div class="output-eyebrow">
+        <div class="output-eyebrow-left">
+          <span>Result</span>
+          <span class="output-fmt-tag">legal</span>
+        </div>
+        <div class="output-eyebrow-right">
+          <span class="output-locale-dot">●</span> en-US · UTC-4
+        </div>
+      </div>
+      <div class="output-body">
+        <div class="output-text">Eleventh day of July,<br><span class="break">Two Thousand Twenty-Six</span></div>
+        <div class="output-actions">
+          <button class="btn btn-primary" id="copyBtn"><span>📋 Copy</span></button>
+          <button class="btn btn-secondary">⬇ Download .txt</button>
+          <button class="btn btn-secondary">↗ Share link</button>
+          <button class="btn btn-ghost">⎘ Markdown</button>
+        </div>
+      </div>
+
+      <!-- Variants with per-variant translate -->
+      <div class="variants">
+        <div class="variant-row">
+          <span class="variant-label">Formal</span>
+          <span class="variant-text">Eleventh of July, Two Thousand Twenty-Six</span>
+          <button class="variant-copy">📋 Copy</button>
+          <button class="variant-translate" data-variant="formal" data-row="1">Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-1">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Formal</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="translate-form-submit">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Legal</span>
+          <span class="variant-text">Eleventh day of July, Two Thousand Twenty-Six</span>
+          <button class="variant-copy">📋 Copy</button>
+          <button class="variant-translate" data-variant="legal" data-row="2">Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-2">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Legal</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="translate-form-submit">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Banking</span>
+          <span class="variant-text">Eleventh July, Two Thousand Twenty-Six</span>
+          <button class="variant-copy">📋 Copy</button>
+          <button class="variant-translate" data-variant="banking" data-row="3">Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-3">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Banking</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="translate-form-submit">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Casual</span>
+          <span class="variant-text">July eleventh, twenty twenty-six</span>
+          <button class="variant-copy">📋 Copy</button>
+          <button class="variant-translate" data-variant="casual" data-row="4">Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-4">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Casual</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="translate-form-submit">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">British</span>
+          <span class="variant-text">Eleventh day of July, Two Thousand <em>and</em> Twenty-Six</span>
+          <button class="variant-copy">📋 Copy</button>
+          <button class="variant-translate" data-variant="british" data-row="5">Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-5">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>British</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="translate-form-submit">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Translation success state (hidden by default, shown on submit) -->
+        <div class="translate-success" id="translateSuccess" style="display: none;">
+          <span class="translate-success-dot"></span>
+          <span><strong>You're on the list!</strong> We'll email you the moment <span id="successLang">French</span> translations are live. No spam, no follow-up.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bento grid: use cases (21st.dev pattern) -->
+    <div class="bento">
+      <div class="bento-head">
+        <div>
+          <div class="bento-eyebrow">Where it gets used</div>
+          <div class="bento-title">Five common use cases</div>
+        </div>
+        <a href="#" style="font-size: 13px; color: var(--ink-3); text-decoration: none;">All examples →</a>
+      </div>
+      <div class="bento-grid">
+        <div class="bento-card large">
+          <div class="bento-emoji">📜</div>
+          <div class="bento-name">Legal & contracts</div>
+          <div class="bento-sample">"Eleventh day of July,<br>Two Thousand Twenty-Six"</div>
+          <div class="bento-extra">
+            <span>Most common format for executed contracts</span>
+            <span class="bento-extra-stat">~62% of users</span>
+          </div>
+        </div>
+        <div class="bento-card">
+          <div class="bento-emoji">🏦</div>
+          <div class="bento-name">Cheques & drafts</div>
+          <div class="bento-sample">"Eleventh July, Two Thousand Twenty-Six"</div>
+        </div>
+        <div class="bento-card">
+          <div class="bento-emoji">🛂</div>
+          <div class="bento-name">Passports & visas</div>
+          <div class="bento-sample">DOB: 11 July 1985</div>
+        </div>
+        <div class="bento-card">
+          <div class="bento-emoji">💼</div>
+          <div class="bento-name">Board resolutions</div>
+          <div class="bento-sample">"…held on 11 July 2026"</div>
+        </div>
+        <div class="bento-card">
+          <div class="bento-emoji">💌</div>
+          <div class="bento-name">Wedding invites</div>
+          <div class="bento-sample">"…celebrate on July eleventh"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Marquee: related tools -->
+    <section class="marquee-section">
+      <div class="marquee-head">
+        <div>
+          <div class="marquee-eyebrow">Pairs well with</div>
+          <div class="marquee-title">Related tools</div>
+        </div>
+        <a href="#" style="font-size: 13px; color: var(--ink-3); text-decoration: none;">All 11 tools →</a>
+      </div>
+      <div class="marquee-wrap">
+        <div class="marquee" id="marquee">
+          <div class="marquee-track">
+            <a class="marquee-card" href="#"><div class="marquee-icon">🔁</div><div class="marquee-info"><div class="marquee-name">Word to Date</div><div class="marquee-desc">Parse "twenty-six" → 2026</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">➕</div><div class="marquee-info"><div class="marquee-name">Date Math</div><div class="marquee-desc">+ / − business days</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">↔️</div><div class="marquee-info"><div class="marquee-name">Date Difference</div><div class="marquee-desc">Days between two dates</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">⏱️</div><div class="marquee-info"><div class="marquee-name">Countdown</div><div class="marquee-desc">Ticker to any future date</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">🌐</div><div class="marquee-info"><div class="marquee-name">TZ Converter</div><div class="marquee-desc">Same date in 200+ zones</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">🎂</div><div class="marquee-info"><div class="marquee-name">Age Calculator</div><div class="marquee-desc">"26 years, 3 months"</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">📅</div><div class="marquee-info"><div class="marquee-name">12-Month Calendar</div><div class="marquee-desc">Full year with holidays</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">📆</div><div class="marquee-info"><div class="marquee-name">Week Number</div><div class="marquee-desc">ISO week + day of year</div></div><span class="marquee-arrow">→</span></a>
+            <!-- Duplicate for infinite scroll -->
+            <a class="marquee-card" href="#"><div class="marquee-icon">🔁</div><div class="marquee-info"><div class="marquee-name">Word to Date</div><div class="marquee-desc">Parse "twenty-six" → 2026</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">➕</div><div class="marquee-info"><div class="marquee-name">Date Math</div><div class="marquee-desc">+ / − business days</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">↔️</div><div class="marquee-info"><div class="marquee-name">Date Difference</div><div class="marquee-desc">Days between two dates</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">⏱️</div><div class="marquee-info"><div class="marquee-name">Countdown</div><div class="marquee-desc">Ticker to any future date</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">🌐</div><div class="marquee-info"><div class="marquee-name">TZ Converter</div><div class="marquee-desc">Same date in 200+ zones</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">🎂</div><div class="marquee-info"><div class="marquee-name">Age Calculator</div><div class="marquee-desc">"26 years, 3 months"</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">📅</div><div class="marquee-info"><div class="marquee-name">12-Month Calendar</div><div class="marquee-desc">Full year with holidays</div></div><span class="marquee-arrow">→</span></a>
+            <a class="marquee-card" href="#"><div class="marquee-icon">📆</div><div class="marquee-info"><div class="marquee-name">Week Number</div><div class="marquee-desc">ISO week + day of year</div></div><span class="marquee-arrow">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works: 3 steps with premium layout -->
+    <div class="howitworks">
+      <div class="howitworks-head">
+        <div class="howitworks-eyebrow">How it works</div>
+        <div class="howitworks-title">Three steps. Five seconds.</div>
+      </div>
+      <div class="howitworks-grid">
+        <div class="how-step">
+          <div class="how-step-num">STEP 01</div>
+          <div class="how-step-title">Type a date</div>
+          <div class="how-step-desc">Any format works. YYYY-MM-DD, MM/DD/YYYY, or written out — we auto-detect.</div>
+          <div class="how-step-mock">2026-07-11</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">STEP 02</div>
+          <div class="how-step-title">Pick a format</div>
+          <div class="how-step-desc">Legal for contracts. Banking for cheques. Casual for invites. Five options.</div>
+          <div class="how-step-mock accent">legal · selected</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">STEP 03</div>
+          <div class="how-step-title">Copy the result</div>
+          <div class="how-step-desc">One click copies. Or download as .txt, share a link, or hit the API.</div>
+          <div class="how-step-mock success">✓ copied to clipboard</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <div class="disclaimer-icon">!</div>
+      <div class="disclaimer-body">
+        <div class="disclaimer-title">Disclaimer</div>
+        <p class="disclaimer-text">This tool is provided for convenience and reference only. It is <strong>not legal advice</strong> and does not constitute a professional opinion on the validity, enforceability, or formatting of any document. For legal documents, financial instruments, immigration papers, and government filings, always have the result <strong>verified by a qualified professional</strong> (attorney, notary, banker) before signing or submission. Date formatting conventions vary by jurisdiction, institution, and document type — the formats shown here are general conventions and may not match your specific requirement.</p>
+        <p class="disclaimer-text">Conversion runs in your browser; no data is sent to a server. Free tier is provided as-is with no warranty. See <a href="#">Terms</a> and <a href="#">Privacy</a> for full terms.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© 2026 TimeAndDatePro · v2.1 · Made for legal clarity</span>
+      <span>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">API docs</a>
+        <a href="#">Changelog</a>
+        <a href="#">Status</a>
+      </span>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg">Copied to clipboard</span>
+  </div>
+
+  <script>
+    /* ── Spotlight effect (follows mouse on tool card) ─── */
+    const sw = document.querySelector('.spotlight-wrap');
+    const sp = document.getElementById('spotlight');
+    sw.addEventListener('mousemove', (e) => {
+      const r = sw.getBoundingClientRect();
+      sp.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      sp.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    });
+
+    /* ── Animated tabs (sliding indicator) ─────────────── */
+    const tabs = document.querySelectorAll('.tab');
+    const slider = document.getElementById('tabSlider');
+    function moveSlider(activeTab) {
+      const r = activeTab.getBoundingClientRect();
+      const parentR = activeTab.parentElement.getBoundingClientRect();
+      slider.style.left = (r.left - parentR.left) + 'px';
+      slider.style.width = r.width + 'px';
+    }
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        moveSlider(tab);
+        document.querySelector('.output-fmt-tag').textContent = tab.dataset.format;
+      });
+    });
+    requestAnimationFrame(() => moveSlider(document.querySelector('.tab.active')));
+
+    /* ── Per-variant translate form toggle ─────────────── */
+    document.querySelectorAll('.variant-translate').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = btn.dataset.row;
+        const wrap = document.getElementById('tf-' + row);
+        const isOpen = wrap.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.translate-form-wrap').forEach((w) => w.classList.remove('open'));
+        // Toggle current
+        if (!isOpen) wrap.classList.add('open');
+        // Update button text
+        document.querySelectorAll('.variant-translate').forEach((b) => b.textContent = 'Translate');
+        if (!isOpen) btn.textContent = 'Close';
+      });
+    });
+
+    /* ── Translate form submit (capture intent + email) ── */
+    document.querySelectorAll('.translate-form-submit').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const form = e.target.closest('.translate-form');
+        const lang = form.querySelector('select').value;
+        const email = form.querySelector('input').value;
+        const langName = lang.split(' ')[1] || 'translation';
+        // Capture intent (would POST to API in real impl)
+        console.log('[Translation Waitlist]', { lang: langName, email, ts: Date.now() });
+        // Store locally
+        const list = JSON.parse(localStorage.getItem('tdp_translate_waitlist') || '[]');
+        list.push({ lang: langName, email, ts: Date.now() });
+        localStorage.setItem('tdp_translate_waitlist', JSON.stringify(list));
+        // Increment counter
+        const counter = document.getElementById('waitlistCount');
+        const current = parseInt(counter.textContent.replace(/,/g, ''));
+        counter.textContent = (current + 1).toLocaleString();
+        // Show success
+        const success = document.getElementById('translateSuccess');
+        const successLang = document.getElementById('successLang');
+        successLang.textContent = langName;
+        success.style.display = 'flex';
+        // Close all forms
+        document.querySelectorAll('.translate-form-wrap').forEach((w) => w.classList.remove('open'));
+        // Reset buttons
+        document.querySelectorAll('.variant-translate').forEach((b) => b.textContent = 'Translate');
+        // Toast
+        showToast(`Added to ${langName} waitlist`);
+      });
+    });
+
+    /* ── Copy buttons + toast ──────────────────────────── */
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+    document.getElementById('copyBtn').addEventListener('click', () => showToast('Copied to clipboard'));
+    document.querySelectorAll('.variant-copy').forEach((b) => b.addEventListener('click', () => showToast('Copied')));
+
+    /* ── Lang banner dismiss ───────────────────────────── */
+    document.querySelector('.lang-btn-close')?.addEventListener('click', (e) => {
+      e.target.closest('.lang-banner').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

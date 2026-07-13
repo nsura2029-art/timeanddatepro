@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TDP Date-to-Word patches</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 48px auto; padding: 0 24px; color: #202438; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+    .lead { color: #595D70; margin-bottom: 32px; }
+    .btn { display: inline-block; padding: 14px 24px; background: #7257D5; color: white; border-radius: 999px; text-decoration: none; font-weight: 600; margin: 6px 6px 6px 0; }
+    .btn.secondary { background: #fff; color: #202438; border: 1px solid #E1DCF1; }
+    pre { background: #F8F7FF; border: 1px solid #E1DCF1; border-radius: 12px; padding: 16px; overflow-x: auto; font-size: 12px; line-height: 1.5; }
+    h2 { margin-top: 32px; font-size: 18px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Date to Word — 5 commits ready to apply</h1>
+  <p class="lead">Right-click each link → "Save link as" to download. Then run <code>git am &lt;file&gt;</code> in your repo on the develop branch.</p>
+
+  <h2>Combined (recommended)</h2>
+  <a class="btn" href="tdp-date-to-word-combined.patch" download>Download combined.patch (158KB)</a>
+  <p>One file, all 5 commits in order. Apply with <code>git am tdp-date-to-word-combined.patch</code></p>
+
+  <h2>Individual commits (if combined fails)</h2>
+  <a class="btn secondary" href="0001-feat-tools-premium-Date-to-Word-treatment-with-5-for.patch" download>0001 — premium Date to Word (103KB)</a>
+  <a class="btn secondary" href="0002-refactor-date-to-words-cleanup-copy-add-date-picker-.patch" download>0002 — cleanup + date picker (11KB)</a>
+  <a class="btn secondary" href="0003-fix-tools-restore-disclaimer-feedback-popover-CSS-sw.patch" download>0003 — restore disclaimer + Lucide (15KB)</a>
+  <a class="btn secondary" href="0004-style-date-to-words-center-input-row-move-date-picke.patch" download>0004 — center input + left picker (3KB)</a>
+  <a class="btn secondary" href="0005-fix-date-to-words-DayPicker-robust-copy-download-sha.patch" download>0005 — DayPicker + robust actions (21KB)</a>
+
+  <h2>Apply on your local (MINGW64)</h2>
+  <pre>cd /path/to/timeanddatepro
+git checkout develop
+# If you have local commits, reset to 866a7c5:
+# git reset --hard 866a7c5
+
+# Option A — single command:
+git am /path/to/tdp-date-to-word-combined.patch
+
+# Option B — one at a time (in order):
+git am /path/to/0001-feat-tools-*.patch
+git am /path/to/0002-refactor-*.patch
+git am /path/to/0003-fix-tools-*.patch
+git am /path/to/0004-style-*.patch
+git am /path/to/0005-fix-date-to-words-*.patch
+
+# Install the 2 new packages:
+npm install react-day-picker date-fns
+
+# Verify:
+git log --oneline -6
+npm run build</pre>
+
+  <h2>What you get</h2>
+  <ul>
+    <li>New: <code>src/components/tools/DateToWord.tsx</code> + <code>.css</code></li>
+    <li>New: <code>src/components/tools/shared/</code> (4 components)</li>
+    <li>New: <code>src/lib/dateToWords/</code> (converter + tests)</li>
+    <li>New: <code>src/lib/languages/popularLanguages.ts</code> (50 languages)</li>
+    <li>Modified: <code>src/components/tools/DateToWords.tsx</code> (re-export shim)</li>
+    <li>Modified: <code>src/pages/feedback/FeedbackPage.tsx</code> (locale pre-fill)</li>
+    <li>Modified: <code>package.json</code> (adds react-day-picker + date-fns)</li>
+  </ul>
+</body>
+</html>

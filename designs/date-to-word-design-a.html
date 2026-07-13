@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design A — Date to Word Converter (Linear / Vercel style)</title>
+  <style>
+    /* ── Reset & base ────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:            #FFFFFF;
+      --surface:       #FAFAF9;
+      --surface-2:     #F4F4F2;
+      --border:        #E7E5E4;
+      --border-strong: #D6D3D1;
+      --text:          #0A0A0A;
+      --text-2:        #57534E;
+      --text-3:        #A8A29E;
+      --accent:        #0A0A0A;
+      --accent-bg:     #0A0A0A;
+      --accent-fg:     #FFFFFF;
+      --success:       #15803D;
+      --success-bg:    #DCFCE7;
+      --danger:        #B91C1C;
+      --danger-bg:     #FEE2E2;
+      --radius:        6px;
+      --radius-lg:     10px;
+      --font:          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --font-mono:     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Layout ─────────────────────────────────────────── */
+    .page { max-width: 720px; margin: 0 auto; padding: 64px 24px 96px; width: 100%; flex: 1; }
+    .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 80px; }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+    .nav-brand-mark { width: 22px; height: 22px; background: var(--text); border-radius: 5px; display: grid; place-items: center; color: var(--accent-fg); font-size: 11px; font-weight: 700; }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── Hero ───────────────────────────────────────────── */
+    .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 20px; letter-spacing: 0.02em; text-transform: uppercase; }
+    .eyebrow-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+    h1 { font-size: 40px; font-weight: 600; line-height: 1.1; letter-spacing: -0.025em; margin-bottom: 14px; }
+    .lede { font-size: 17px; line-height: 1.55; color: var(--text-2); margin-bottom: 48px; max-width: 560px; }
+
+    /* ── Input card ────────────────────────────────────── */
+    .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+    .card-section { padding: 28px; border-bottom: 1px solid var(--border); }
+    .card-section:last-child { border-bottom: none; }
+    .section-label { font-size: 13px; font-weight: 500; color: var(--text-2); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .section-label-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+    .date-input { display: flex; align-items: center; gap: 12px; }
+    .date-input input { flex: 1; font-family: var(--font-mono); font-size: 18px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color 120ms; }
+    .date-input input:focus { border-color: var(--text); background: var(--bg); }
+    .date-input-divider { color: var(--text-3); font-size: 14px; }
+
+    /* ── Format radio ───────────────────────────────────── */
+    .format-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .format-option { position: relative; cursor: pointer; }
+    .format-option input { position: absolute; opacity: 0; pointer-events: none; }
+    .format-option-card { display: block; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); transition: all 120ms; }
+    .format-option:hover .format-option-card { border-color: var(--border-strong); }
+    .format-option input:checked + .format-option-card { border-color: var(--text); background: var(--surface); }
+    .format-option-card-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .format-option-card-sample { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+
+    /* ── Convert button ────────────────────────────────── */
+    .actions { display: flex; gap: 8px; align-items: center; margin-top: 20px; }
+    .btn { font-family: var(--font); font-size: 14px; font-weight: 500; padding: 10px 18px; border-radius: var(--radius); border: 1px solid transparent; cursor: pointer; transition: all 120ms; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: var(--accent-bg); color: var(--accent-fg); }
+    .btn-primary:hover { background: #262626; }
+    .btn-secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { border-color: var(--border-strong); }
+    .btn-ghost { background: transparent; color: var(--text-2); }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* ── Output ────────────────────────────────────────── */
+    .output { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+    .output-label { font-size: 12px; font-weight: 500; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .output-text { font-size: 32px; line-height: 1.3; font-weight: 500; letter-spacing: -0.02em; color: var(--text); margin-bottom: 24px; }
+    .output-meta { display: flex; gap: 24px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+    .output-meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .output-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
+    .output-meta-value { font-family: var(--font-mono); color: var(--text); }
+    .copy-state { font-size: 12px; color: var(--success); display: inline-flex; align-items: center; gap: 4px; opacity: 0; transition: opacity 200ms; }
+    .copy-state.show { opacity: 1; }
+
+    /* ── Variants table ────────────────────────────────── */
+    .variants { margin-top: 24px; }
+    .variant-row { display: grid; grid-template-columns: 140px 1fr; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+    .variant-row:last-child { border-bottom: none; }
+    .variant-name { font-size: 13px; font-weight: 500; color: var(--text-2); }
+    .variant-text { font-size: 15px; color: var(--text); font-family: var(--font); }
+
+    /* ── Use case chips ────────────────────────────────── */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 13px; color: var(--text-2); cursor: pointer; transition: all 120ms; }
+    .chip:hover { border-color: var(--border-strong); color: var(--text); }
+
+    /* ── History ───────────────────────────────────────── */
+    .history { margin-top: 32px; }
+    .history-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .history-row:last-child { border-bottom: none; }
+    .history-left { display: flex; flex-direction: column; gap: 2px; }
+    .history-input { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+    .history-output { font-size: 13px; color: var(--text-2); }
+    .history-time { font-size: 12px; color: var(--text-3); }
+    .history-empty { padding: 24px 0; text-align: center; color: var(--text-3); font-size: 14px; }
+
+    /* ── SEO content ───────────────────────────────────── */
+    .seo { margin-top: 80px; padding-top: 48px; border-top: 1px solid var(--border); }
+    .seo h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 16px; }
+    .seo p { font-size: 15px; line-height: 1.65; color: var(--text-2); margin-bottom: 14px; max-width: 640px; }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; font-size: 13px; color: var(--text-3); }
+    .footer a { color: var(--text-2); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Navigation -->
+    <nav class="nav">
+      <div class="nav-brand">
+        <span class="nav-brand-mark">T</span>
+        <span>TimeAndDatePro</span>
+      </div>
+      <div class="nav-links">
+        <a href="#">Tools</a>
+        <a href="#">API</a>
+        <a href="#">Pricing</a>
+        <a href="#">Docs</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="eyebrow"><span class="eyebrow-dot"></span> Date to Words</div>
+    <h1>Convert any date to formal written words.</h1>
+    <p class="lede">Five output formats. Locale-aware. 1 to 9999. Built for legal documents, cheques, and official forms where every word matters.</p>
+
+    <!-- Input card -->
+    <div class="card">
+      <div class="card-section">
+        <div class="section-label">
+          <span class="section-label-num">01</span> Date
+        </div>
+        <div class="date-input">
+          <input type="text" value="2026-07-11" placeholder="YYYY-MM-DD" aria-label="Date input" />
+          <span class="date-input-divider">/</span>
+          <input type="text" value="Eleventh of July, Two Thousand Twenty-Six" disabled style="flex: 1.5; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; font-weight: 500; border-color: var(--text);" />
+        </div>
+      </div>
+
+      <div class="card-section">
+        <div class="section-label">
+          <span class="section-label-num">02</span> Output format
+        </div>
+        <div class="format-grid">
+          <label class="format-option">
+            <input type="radio" name="format" />
+            <span class="format-option-card">
+              <div class="format-option-card-name">Formal</div>
+              <div class="format-option-card-sample">Eleventh of July</div>
+            </span>
+          </label>
+          <label class="format-option">
+            <input type="radio" name="format" checked />
+            <span class="format-option-card">
+              <div class="format-option-card-name">Legal</div>
+              <div class="format-option-card-sample">11th day of July</div>
+            </span>
+          </label>
+          <label class="format-option">
+            <input type="radio" name="format" />
+            <span class="format-option-card">
+              <div class="format-option-card-name">Banking</div>
+              <div class="format-option-card-sample">Eleventh July</div>
+            </span>
+          </label>
+          <label class="format-option">
+            <input type="radio" name="format" />
+            <span class="format-option-card">
+              <div class="format-option-card-name">Casual</div>
+              <div class="format-option-card-sample">July eleventh</div>
+            </span>
+          </label>
+          <label class="format-option">
+            <input type="radio" name="format" />
+            <span class="format-option-card">
+              <div class="format-option-card-name">British</div>
+              <div class="format-option-card-sample">11th day of July</div>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary">Convert</button>
+      <button class="btn btn-ghost">Reset</button>
+    </div>
+
+    <!-- Output -->
+    <div style="margin-top: 32px;">
+      <div class="output">
+        <div class="output-label">
+          <span>Result · Legal format</span>
+          <span class="copy-state" id="copyState">✓ Copied</span>
+        </div>
+        <div class="output-text">Eleventh day of July,<br>Two Thousand Twenty-Six</div>
+        <div class="output-meta">
+          <div class="output-meta-item">
+            <div class="output-meta-label">Input</div>
+            <div class="output-meta-value">2026-07-11</div>
+          </div>
+          <div class="output-meta-item">
+            <div class="output-meta-label">Day of year</div>
+            <div class="output-meta-value">192 / 365</div>
+          </div>
+          <div class="output-meta-item">
+            <div class="output-meta-label">Weekday</div>
+            <div class="output-meta-value">Saturday</div>
+          </div>
+          <div class="output-meta-item">
+            <div class="output-meta-label">Era</div>
+            <div class="output-meta-value">21st century</div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top: 20px;">
+          <button class="btn btn-secondary">📋 Copy</button>
+          <button class="btn btn-secondary">💾 Save</button>
+          <button class="btn btn-secondary">🔗 Share</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variants -->
+    <div style="margin-top: 32px;">
+      <div class="section-label" style="margin-bottom: 0;">
+        <span class="section-label-num">03</span> All 5 format variants
+      </div>
+      <div class="variants">
+        <div class="variant-row">
+          <div class="variant-name">Formal</div>
+          <div class="variant-text">Eleventh of July, Two Thousand Twenty-Six</div>
+        </div>
+        <div class="variant-row">
+          <div class="variant-name">Legal</div>
+          <div class="variant-text">Eleventh day of July, Two Thousand Twenty-Six</div>
+        </div>
+        <div class="variant-row">
+          <div class="variant-name">Banking</div>
+          <div class="variant-text">Eleventh July, Two Thousand Twenty-Six</div>
+        </div>
+        <div class="variant-row">
+          <div class="variant-name">Casual</div>
+          <div class="variant-text">July eleventh, twenty twenty-six</div>
+        </div>
+        <div class="variant-row">
+          <div class="variant-name">British</div>
+          <div class="variant-text">Eleventh day of July, Two Thousand and Twenty-Six</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use cases -->
+    <div style="margin-top: 32px;">
+      <div class="section-label" style="margin-bottom: 0;">
+        <span class="section-label-num">04</span> Common use cases
+      </div>
+      <div class="chips">
+        <span class="chip">📜 Legal & contracts</span>
+        <span class="chip">🏦 Cheques & drafts</span>
+        <span class="chip">🛂 Passports & visas</span>
+        <span class="chip">💼 Board resolutions</span>
+        <span class="chip">💌 Wedding invites</span>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history">
+      <div class="section-label" style="margin-bottom: 0;">
+        <span class="section-label-num">05</span> Recent conversions
+      </div>
+      <div style="margin-top: 12px;">
+        <div class="history-row">
+          <div class="history-left">
+            <div class="history-input">2026-07-11</div>
+            <div class="history-output">First of January, Two Thousand Twenty-Five</div>
+          </div>
+          <div class="history-time">2 min ago</div>
+        </div>
+        <div class="history-row">
+          <div class="history-left">
+            <div class="history-input">1985-07-11</div>
+            <div class="history-output">Eleventh of July, Nineteen Eighty-Five</div>
+          </div>
+          <div class="history-time">1 hour ago</div>
+        </div>
+        <div class="history-row">
+          <div class="history-left">
+            <div class="history-input">2100-01-01</div>
+            <div class="history-output">First of January, Twenty-One Hundred</div>
+          </div>
+          <div class="history-time">Yesterday</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEO content -->
+    <section class="seo">
+      <h2>How to write dates in formal words</h2>
+      <p>Written dates are required for legal documents, financial instruments, and official forms in most jurisdictions. Unlike numeric dates, words cannot be altered after signing — making them the standard for contracts, cheques, affidavits, and government records.</p>
+      <p>The legal format — "Eleventh day of July, Two Thousand Twenty-Six" — follows the centuries-old convention of expressing the day as an ordinal, the month by name, and the year in full words. This format eliminates ambiguity from numeric date systems (MM/DD vs DD/MM) and provides a permanent record that resists tampering.</p>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <a href="#">Privacy</a> · <a href="#">Terms</a> · <a href="#">API</a> · © 2026 TimeAndDatePro
+  </footer>
+
+  <script>
+    // Simulate copy state
+    document.querySelector('.btn-secondary').addEventListener('click', () => {
+      const s = document.getElementById('copyState');
+      s.classList.add('show');
+      setTimeout(() => s.classList.remove('show'), 2000);
+    });
+  </script>
+</body>
+</html>

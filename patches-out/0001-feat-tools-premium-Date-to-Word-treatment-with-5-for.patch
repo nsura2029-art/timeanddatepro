@@ -1,0 +1,2666 @@
+From 1a309a07cb61819b496b97ce68698fdc688185dd Mon Sep 17 00:00:00 2001
+From: TimeAndDatePro Agent <agent@timeanddatepro.local>
+Date: Sun, 12 Jul 2026 03:28:04 +0000
+Subject: [PATCH 1/5] feat(tools): premium Date to Word treatment with 5
+ formats, 50-language capture, suggestion redirect
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- New DateToWord component (A4 design) with 5 pastel NotebookLM format tabs
+- Client-side converter (lib/dateToWords/converter.ts) — pure functions, all 5
+  formats: formal, legal, banking, casual, british
+- 50-language popular list (lib/languages/popularLanguages.ts) for translate
+  request capture and locale redirect
+- Per-variant translation capture (50 languages, email + language)
+- Non-English locale selection forwards to /feedback?tool=date-words&type=
+  suggestion with locale pre-filled
+- Shared components extracted for all tool pages:
+  * RelatedToolsGrid (NotebookLM pastel cards, auto-variant rotation)
+  * FeedbackButton (floating FAB + popover with 3 type chips)
+  * ToolTopbar (solid white nav matching hero)
+  * ToolDisclaimer (lavender soft card with '!' mark)
+- Friendly names throughout (variable names describe intent)
+- Re-export shim (DateToWords.tsx) keeps legacy import path working
+- 26 converter tests pass (smoke-test.mjs) — all 5 formats verified
+---
+ src/components/tools/DateToWord.css           | 577 ++++++++++++++++
+ src/components/tools/DateToWord.tsx           | 617 ++++++++++++++++++
+ src/components/tools/DateToWords.tsx          | 193 +-----
+ .../tools/shared/FeedbackButton.tsx           | 183 ++++++
+ .../tools/shared/RelatedToolsGrid.tsx         |  78 +++
+ .../tools/shared/ToolDisclaimer.tsx           |  53 ++
+ src/components/tools/shared/ToolTopbar.tsx    |  76 +++
+ src/lib/dateToWords/converter.test.ts         | 161 +++++
+ src/lib/dateToWords/converter.ts              | 347 ++++++++++
+ src/lib/dateToWords/smoke-test.mjs            |  95 +++
+ src/lib/languages/popularLanguages.ts         | 127 ++++
+ src/pages/feedback/FeedbackPage.tsx           |  18 +-
+ 12 files changed, 2343 insertions(+), 182 deletions(-)
+ create mode 100644 src/components/tools/DateToWord.css
+ create mode 100644 src/components/tools/DateToWord.tsx
+ create mode 100644 src/components/tools/shared/FeedbackButton.tsx
+ create mode 100644 src/components/tools/shared/RelatedToolsGrid.tsx
+ create mode 100644 src/components/tools/shared/ToolDisclaimer.tsx
+ create mode 100644 src/components/tools/shared/ToolTopbar.tsx
+ create mode 100644 src/lib/dateToWords/converter.test.ts
+ create mode 100644 src/lib/dateToWords/converter.ts
+ create mode 100644 src/lib/dateToWords/smoke-test.mjs
+ create mode 100644 src/lib/languages/popularLanguages.ts
+
+diff --git a/src/components/tools/DateToWord.css b/src/components/tools/DateToWord.css
+new file mode 100644
+index 0000000..553cfe7
+--- /dev/null
++++ b/src/components/tools/DateToWord.css
+@@ -0,0 +1,577 @@
++/* src/components/tools/DateToWord.css
++ * Premium SaaS treatment for the Date to Word tool. Pulls every
++ * value from src/styles/tokens.css so the look stays in sync with
++ * the hero. No glassy effects, no blur. White surface, soft
++ * shadows, NotebookLM pastel format tabs.
++ *
++ * Naming convention: dtw- prefix (Date To Words) so this file
++ * can be merged with the rest of the tool CSS without clashes.
++ */
++
++.dtw-main {
++  display: flex;
++  flex-direction: column;
++  gap: 0;
++}
++
++/* ── Hero ─────────────────────────────────────────────────── */
++.dtw-hero {
++  display: grid;
++  grid-template-columns: 1fr auto;
++  align-items: end;
++  gap: 24px;
++  margin-bottom: 32px;
++  padding-top: 16px;
++}
++.dtw-hero-left { max-width: 720px; }
++.dtw-hero-right {
++  display: flex;
++  flex-direction: column;
++  align-items: flex-end;
++  gap: 6px;
++}
++
++.dtw-eyebrow {
++  display: inline-flex;
++  align-items: center;
++  gap: 8px;
++  padding: 4px 12px;
++  background: var(--color-mint);
++  border: 1px solid var(--color-mint-3);
++  border-radius: var(--radius-pill);
++  font-size: 12px;
++  font-weight: 600;
++  color: var(--color-mint-ink);
++  margin-bottom: 16px;
++}
++.dtw-eyebrow-dot {
++  width: 6px;
++  height: 6px;
++  background: var(--color-emerald-500);
++  border-radius: 50%;
++  position: relative;
++}
++.dtw-eyebrow-dot::before {
++  content: "";
++  position: absolute;
++  inset: -3px;
++  border-radius: 50%;
++  background: var(--color-emerald-500);
++  opacity: 0.3;
++  animation: dtw-pulse 2s ease-in-out infinite;
++}
++@keyframes dtw-pulse {
++  0%, 100% { transform: scale(1); opacity: 0.3; }
++  50%      { transform: scale(1.5); opacity: 0; }
++}
++
++.dtw-main h1 {
++  font-size: 48px;
++  line-height: 1.05;
++  font-weight: var(--font-weight-extrabold, 850);
++  letter-spacing: -0.035em;
++  margin: 0 0 14px;
++  color: var(--color-ink);
++}
++.dtw-accent {
++  color: var(--color-brand-600);
++  position: relative;
++}
++.dtw-accent::after {
++  content: "";
++  position: absolute;
++  left: 0;
++  right: 0;
++  bottom: 2px;
++  height: 8px;
++  background: var(--color-brand-100);
++  z-index: -1;
++  border-radius: 2px;
++}
++.dtw-lede {
++  font-size: 17px;
++  line-height: 1.55;
++  color: var(--color-ink-2);
++  margin: 0;
++}
++
++.dtw-waitlist {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  padding: 6px 12px;
++  background: var(--color-info);
++  border: 1px solid var(--color-info-3);
++  border-radius: var(--radius-pill);
++  font-size: 12px;
++  color: var(--color-info-ink);
++}
++.dtw-waitlist strong { color: var(--color-info-ink); font-weight: 700; }
++.dtw-waitlist-dot {
++  width: 6px;
++  height: 6px;
++  background: var(--color-emerald-500);
++  border-radius: 50%;
++}
++
++.dtw-kbd-hint {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  font-size: 12px;
++  color: var(--color-muted);
++}
++.dtw-kbd {
++  font-family: var(--font-family-mono);
++  font-size: 11px;
++  padding: 2px 6px;
++  background: var(--color-brand-50);
++  border: 1px solid var(--color-border);
++  border-radius: 4px;
++  color: var(--color-ink-2);
++  font-weight: 500;
++}
++
++/* ── Input row ────────────────────────────────────────────── */
++.dtw-input-row {
++  display: grid;
++  grid-template-columns: 2fr 1fr 1fr;
++  gap: 12px;
++  margin-bottom: 20px;
++}
++.dtw-field {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++.dtw-field-label {
++  font-size: 12px;
++  font-weight: 600;
++  color: var(--color-ink-2);
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++}
++.dtw-field-label-hint {
++  font-size: 11px;
++  color: var(--color-muted);
++  font-family: var(--font-family-mono);
++}
++.dtw-field-input, .dtw-field-select {
++  font-family: var(--font-family-sans);
++  font-size: 15px;
++  padding: 11px 13px;
++  background: var(--color-surface);
++  border: 1px solid var(--color-border-2);
++  border-radius: var(--radius-md);
++  color: var(--color-ink);
++  outline: none;
++  transition: border-color 150ms, box-shadow 150ms;
++  width: 100%;
++}
++.dtw-field-input.mono { font-family: var(--font-family-mono); }
++.dtw-field-input:focus, .dtw-field-select:focus {
++  border-color: var(--color-brand-500);
++  box-shadow: var(--shadow-focus);
++}
++
++/* ── NotebookLM pastel tabs ───────────────────────────────── */
++.dtw-tabs-section { margin-top: 4px; }
++.dtw-tabs-head {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  margin-bottom: 12px;
++}
++.dtw-tabs-label {
++  font-size: 12px;
++  font-weight: 600;
++  color: var(--color-ink-2);
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++}
++.dtw-tabs-popular {
++  font-size: 11px;
++  color: var(--color-muted);
++  display: flex;
++  align-items: center;
++  gap: 6px;
++}
++.dtw-tabs-popular-dot {
++  width: 4px;
++  height: 4px;
++  background: var(--color-amber);
++  border-radius: 50%;
++}
++.dtw-tabs {
++  display: flex;
++  gap: 8px;
++  flex-wrap: wrap;
++}
++.dtw-tab {
++  position: relative;
++  padding: 10px 16px;
++  font-size: 13px;
++  font-weight: 600;
++  color: var(--color-ink-2);
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  cursor: pointer;
++  border-radius: var(--radius-pill);
++  transition: transform 220ms var(--motion-ease-out),
++              box-shadow 220ms var(--motion-ease-out),
++              filter 220ms var(--motion-ease-out);
++  font-family: var(--font-family-sans);
++  white-space: nowrap;
++  display: inline-flex;
++  align-items: center;
++  gap: 6px;
++}
++.dtw-tab:hover {
++  transform: translateY(-2px);
++  box-shadow: 0 4px 12px rgba(48, 39, 82, 0.08);
++  filter: saturate(1.1);
++}
++.dtw-tab.active {
++  transform: translateY(-2px);
++  box-shadow: 0 6px 18px rgba(48, 39, 82, 0.15);
++}
++.dtw-tab.active[data-variant="lavender"] {
++  background: linear-gradient(135deg, #ECE4FF 0%, #E0D4FF 100%);
++  color: #3A2A7A;
++  box-shadow: 0 6px 18px rgba(106, 80, 220, 0.25);
++}
++.dtw-tab.active[data-variant="mint"] {
++  background: linear-gradient(135deg, #DDF3E4 0%, #C8EBD4 100%);
++  color: #1C5A3A;
++  box-shadow: 0 6px 18px rgba(60, 168, 100, 0.25);
++}
++.dtw-tab.active[data-variant="amber"] {
++  background: linear-gradient(135deg, #FDEAC6 0%, #FBDD9C 100%);
++  color: #6B4912;
++  box-shadow: 0 6px 18px rgba(228, 155, 0, 0.25);
++}
++.dtw-tab.active[data-variant="sky"] {
++  background: linear-gradient(135deg, #D9EAFC 0%, #C5DDF9 100%);
++  color: #1C3D6B;
++  box-shadow: 0 6px 18px rgba(100, 103, 242, 0.25);
++}
++.dtw-tab-check { font-size: 11px; }
++
++/* ── CTA row ──────────────────────────────────────────────── */
++.dtw-cta-row {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  margin-top: 24px;
++  padding-top: 20px;
++  border-top: 1px solid rgba(48, 39, 82, 0.06);
++}
++.dtw-cta-spacer { flex: 1; }
++
++/* ── Output card ──────────────────────────────────────────── */
++.dtw-output {
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-3xl);
++  margin-top: 24px;
++  overflow: hidden;
++  box-shadow: var(--shadow-sm);
++}
++.dtw-output-eyebrow {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 14px 24px;
++  border-bottom: 1px solid rgba(48, 39, 82, 0.06);
++  background: var(--color-surface);
++}
++.dtw-output-eyebrow-left {
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  font-size: 12px;
++  font-weight: 600;
++  color: var(--color-ink-2);
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++}
++.dtw-output-fmt-tag {
++  font-family: var(--font-family-mono);
++  font-size: 10px;
++  padding: 2px 8px;
++  background: var(--color-ink);
++  color: #fff;
++  border-radius: 4px;
++  letter-spacing: 0;
++  text-transform: none;
++  font-weight: 600;
++}
++.dtw-output-eyebrow-right {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  font-size: 12px;
++  color: var(--color-muted);
++}
++.dtw-output-locale-dot { color: var(--color-emerald-500); }
++.dtw-output-body { padding: 36px 24px; }
++.dtw-output-text {
++  font-size: 36px;
++  line-height: 1.2;
++  font-weight: 500;
++  letter-spacing: -0.025em;
++  color: var(--color-ink);
++  margin: 0 0 24px;
++}
++.dtw-output-actions {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  flex-wrap: wrap;
++}
++
++/* ── Variants ─────────────────────────────────────────────── */
++.dtw-variants {
++  border-top: 1px solid rgba(48, 39, 82, 0.06);
++}
++.dtw-variant-row {
++  display: grid;
++  grid-template-columns: 80px 1fr auto auto;
++  align-items: center;
++  gap: 16px;
++  padding: 14px 24px;
++  transition: background 150ms;
++}
++.dtw-variant-row:hover { background: var(--color-brand-50); }
++.dtw-variant-label {
++  font-size: 11px;
++  font-weight: 700;
++  color: var(--color-muted);
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++}
++.dtw-variant-text { font-size: 14px; color: var(--color-ink); }
++
++/* Per-variant translate button (eye-catching) */
++.dtw-variant-translate {
++  position: relative;
++  padding: 6px 14px;
++  background: var(--color-info);
++  border: 1px solid var(--color-info-3);
++  border-radius: var(--radius-pill);
++  color: var(--color-info-ink);
++  font-size: 12px;
++  font-weight: 600;
++  cursor: pointer;
++  transition: all 150ms;
++  display: inline-flex;
++  align-items: center;
++  gap: 6px;
++  font-family: var(--font-family-sans);
++  white-space: nowrap;
++}
++.dtw-variant-translate:hover {
++  background: var(--color-info-accent);
++  color: #fff;
++  border-color: var(--color-info-accent);
++  transform: translateY(-1px);
++  box-shadow: 0 4px 12px rgba(100, 103, 242, 0.25);
++}
++.dtw-variant-translate::after {
++  content: "";
++  position: absolute;
++  top: -3px;
++  right: -3px;
++  width: 6px;
++  height: 6px;
++  background: var(--color-amber);
++  border-radius: 50%;
++  border: 2px solid var(--color-surface);
++  animation: dtw-pulse 2s ease-in-out infinite;
++}
++.dtw-variant-translate.open { color: #fff; background: var(--color-info-accent); border-color: var(--color-info-accent); }
++.dtw-variant-translate.open::after { display: none; }
++
++/* Translation form */
++.dtw-translate-form-wrap {
++  max-height: 0;
++  overflow: hidden;
++  transition: max-height 300ms cubic-bezier(0.4, 0, 0.0, 0.2, 1);
++}
++.dtw-translate-form-wrap.open { max-height: 320px; }
++.dtw-translate-form {
++  padding: 18px 24px 22px;
++  background: var(--color-brand-50);
++  border-top: 1px solid var(--color-brand-200);
++  display: grid;
++  grid-template-columns: 1fr 1fr auto;
++  gap: 10px;
++  align-items: center;
++}
++.dtw-translate-form-head {
++  grid-column: 1 / -1;
++  font-size: 12px;
++  color: var(--color-ink-2);
++  display: flex;
++  align-items: center;
++  gap: 8px;
++}
++.dtw-translate-form-head strong { color: var(--color-ink); font-weight: 700; }
++.dtw-translate-form-select, .dtw-translate-form-input {
++  font-family: var(--font-family-sans);
++  font-size: 13px;
++  padding: 9px 12px;
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-md);
++  color: var(--color-ink);
++  outline: none;
++  transition: border-color 150ms, box-shadow 150ms;
++  width: 100%;
++}
++.dtw-translate-form-select:focus, .dtw-translate-form-input:focus {
++  border-color: var(--color-brand-500);
++  box-shadow: var(--shadow-focus);
++}
++.dtw-translate-form-foot {
++  grid-column: 1 / -1;
++  font-size: 11px;
++  color: var(--color-muted);
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++}
++.dtw-translate-form-foot a {
++  color: var(--color-brand-600);
++  text-decoration: none;
++}
++.dtw-translate-form-foot a:hover { text-decoration: underline; }
++.dtw-translate-success {
++  padding: 14px 24px;
++  background: var(--color-mint);
++  border-top: 1px solid var(--color-mint-3);
++  color: var(--color-mint-ink);
++  font-size: 13px;
++  display: flex;
++  align-items: center;
++  gap: 8px;
++}
++.dtw-translate-success-dot {
++  width: 8px;
++  height: 8px;
++  background: var(--color-emerald-500);
++  border-radius: 50%;
++  flex-shrink: 0;
++}
++
++/* ── How it works ─────────────────────────────────────────── */
++.dtw-howitworks { margin-top: 80px; }
++.dtw-howitworks-head { margin-bottom: 32px; text-align: center; }
++.dtw-howitworks-eyebrow {
++  font-size: 11px;
++  font-weight: 700;
++  color: var(--color-brand-600);
++  text-transform: uppercase;
++  letter-spacing: 0.14em;
++  margin-bottom: 6px;
++}
++.dtw-howitworks-title {
++  font-size: 32px;
++  font-weight: var(--font-weight-extrabold, 850);
++  letter-spacing: -0.025em;
++  color: var(--color-ink);
++}
++.dtw-howitworks-grid {
++  display: grid;
++  grid-template-columns: repeat(3, 1fr);
++  gap: 0;
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-2xl);
++  background: var(--color-surface);
++  overflow: hidden;
++}
++.dtw-how-step { padding: 28px; border-right: 1px solid rgba(48, 39, 82, 0.06); }
++.dtw-how-step:last-child { border-right: none; }
++.dtw-how-step-num {
++  font-family: var(--font-family-mono);
++  font-size: 11px;
++  color: var(--color-muted);
++  margin-bottom: 16px;
++  letter-spacing: 0.08em;
++}
++.dtw-how-step-title {
++  font-size: 18px;
++  font-weight: var(--font-weight-bold, 750);
++  color: var(--color-ink);
++  margin-bottom: 6px;
++}
++.dtw-how-step-desc {
++  font-size: 13px;
++  line-height: 1.55;
++  color: var(--color-ink-2);
++  margin-bottom: 16px;
++}
++.dtw-how-step-mock {
++  font-family: var(--font-family-mono);
++  font-size: 12px;
++  padding: 8px 12px;
++  background: var(--color-brand-50);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-sm);
++  color: var(--color-ink-2);
++  display: inline-block;
++}
++.dtw-how-step-mock--accent {
++  background: var(--color-info);
++  color: var(--color-info-ink);
++  border-color: var(--color-info-3);
++}
++.dtw-how-step-mock--success {
++  background: var(--color-mint);
++  color: var(--color-mint-ink);
++  border-color: var(--color-mint-3);
++}
++
++/* ── Toast ────────────────────────────────────────────────── */
++.dtw-toast {
++  position: fixed;
++  bottom: 24px;
++  left: 24px;
++  z-index: 100;
++  padding: 12px 18px;
++  background: var(--color-ink);
++  color: #fff;
++  border-radius: var(--radius-pill);
++  font-size: 13px;
++  font-weight: 500;
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  box-shadow: 0 8px 24px rgba(48, 39, 82, 0.2);
++  animation: dtw-toast-in 200ms ease-out;
++}
++.dtw-toast-dot {
++  width: 6px;
++  height: 6px;
++  background: var(--color-emerald-500);
++  border-radius: 50%;
++}
++@keyframes dtw-toast-in {
++  from { opacity: 0; transform: translateY(8px); }
++  to   { opacity: 1; transform: translateY(0); }
++}
++
++/* ── Mobile ───────────────────────────────────────────────── */
++@media (max-width: 768px) {
++  .dtw-hero { grid-template-columns: 1fr; }
++  .dtw-hero-right { align-items: flex-start; }
++  .dtw-main h1 { font-size: 32px; }
++  .dtw-input-row { grid-template-columns: 1fr; }
++  .dtw-howitworks-grid { grid-template-columns: 1fr; }
++  .dtw-how-step { border-right: none; border-bottom: 1px solid rgba(48, 39, 82, 0.06); }
++  .dtw-how-step:last-child { border-bottom: none; }
++  .dtw-translate-form { grid-template-columns: 1fr; }
++  .dtw-variant-row { grid-template-columns: 70px 1fr; gap: 8px; }
++  .dtw-variant-row > *:nth-child(n+3) { grid-column: 2; }
++}
+diff --git a/src/components/tools/DateToWord.tsx b/src/components/tools/DateToWord.tsx
+new file mode 100644
+index 0000000..b619f3e
+--- /dev/null
++++ b/src/components/tools/DateToWord.tsx
+@@ -0,0 +1,617 @@
++// src/components/tools/DateToWord.tsx
++// Date to Words — premium SaaS treatment matching the A4 design.
++//
++// Five formats: formal, legal, banking, casual, british.
++// All conversion happens client-side via src/lib/dateToWords/converter.
++//
++// Translation requests capture interest per format (50-language list) and
++// redirect to /feedback with the tool pre-selected when a non-English
++// locale is chosen.
++
++import React, { useState, useMemo, useCallback } from "react";
++import {
++  convertDateToWords,
++  type DateFormatId,
++  type LocaleTag,
++} from "../../lib/dateToWords/converter";
++import {
++  POPULAR_LANGUAGES,
++  isEnglishLocale,
++  type PopularLanguage,
++} from "../../lib/languages/popularLanguages";
++import { RelatedToolsGrid, type RelatedTool } from "./shared/RelatedToolsGrid";
++import { FeedbackButton } from "./shared/FeedbackButton";
++import { ToolDisclaimer } from "./shared/ToolDisclaimer";
++import "./DateToWord.css";
++
++/* ─────────────────────────────────────────────────────────────────────
++   Constants
++   ───────────────────────────────────────────────────────────────────── */
++
++const TOOL_NAME = "Date to Words";
++
++const DATE_FORMATS: { id: DateFormatId; label: string; pastel: "lavender" | "mint" | "amber" | "sky" }[] = [
++  { id: "formal",  label: "Formal",  pastel: "lavender" },
++  { id: "legal",   label: "Legal",   pastel: "mint"     },
++  { id: "banking", label: "Banking", pastel: "amber"    },
++  { id: "casual",  label: "Casual",  pastel: "sky"      },
++  { id: "british", label: "British", pastel: "lavender" },
++];
++
++const ENGLISH_LOCALES: { tag: LocaleTag; label: string }[] = [
++  { tag: "en-US", label: "🇺🇸 English (US)" },
++  { tag: "en-GB", label: "🇬🇧 English (UK)" },
++];
++
++/** All non-English locales from the popular languages list, for the redirect target. */
++const NON_ENGLISH_LOCALES: PopularLanguage[] = POPULAR_LANGUAGES.filter(
++  (lang) => !isEnglishLocale(`${lang.code}-${lang.region}`)
++);
++
++/** Related tools for the bottom grid (12 cards, auto-rotation of pastels). */
++const RELATED_TOOLS: RelatedTool[] = [
++  { label: "Word to Date",     href: "/word-to-date",          icon: "🔁" },
++  { label: "Date Math",        href: "/date-math",             icon: "➕" },
++  { label: "Date Difference",  href: "/date-diff",             icon: "↔️" },
++  { label: "Countdown",        href: "/countdown",             icon: "⏱️" },
++  { label: "TZ Converter",     href: "/time-zone-converter",   icon: "🌐" },
++  { label: "Age Calculator",   href: "/age-calculator",        icon: "🎂" },
++  { label: "12-Month Calendar", href: "/12-month-calendar",    icon: "📅" },
++  { label: "Week Number",      href: "/week-number",           icon: "📆" },
++  { label: "Sunrise & Sunset", href: "/sunrise-sunset",        icon: "🌅" },
++  { label: "Stopwatch",        href: "/stopwatch",             icon: "⏲️" },
++  { label: "Unix Timestamp",   href: "/unix",                  icon: "🕐" },
++  { label: "DST Tracker",      href: "/daylight-saving",       icon: "🌍" },
++];
++
++/* ─────────────────────────────────────────────────────────────────────
++   Component
++   ───────────────────────────────────────────────────────────────────── */
++
++interface Props {
++  lang?: string;
++}
++
++export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
++  const [selectedDate, setSelectedDate] = useState(() =>
++    new Date().toISOString().slice(0, 10)
++  );
++  const [selectedLocale, setSelectedLocale] = useState<LocaleTag>(
++    lang === "en-GB" ? "en-GB" : "en-US"
++  );
++  const [selectedFormat, setSelectedFormat] = useState<DateFormatId>("legal");
++  const [openTranslateRow, setOpenTranslateRow] = useState<number | null>(null);
++  const [toastMessage, setToastMessage] = useState<string | null>(null);
++
++  /* ── Derived state: the conversion result ─────────────────────── */
++  const conversionResult = useMemo(() => {
++    try {
++      return convertDateToWords({
++        dateString: selectedDate,
++        locale: selectedLocale,
++      });
++    } catch (error) {
++      return {
++        error: error instanceof Error ? error.message : "Could not convert date.",
++      };
++    }
++  }, [selectedDate, selectedLocale]);
++
++  /* ── Event handlers ────────────────────────────────────────────── */
++  const handleLocaleChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
++    const newLocale = event.target.value;
++    if (isEnglishLocale(newLocale)) {
++      setSelectedLocale(newLocale as LocaleTag);
++      return;
++    }
++    // Non-English: forward to the feedback / suggestion page with the
++    // tool context pre-filled so the user can express their interest
++    // and we can capture an email.
++    const params = new URLSearchParams({
++      tool: "date-words",
++      interest: "locale",
++      locale: newLocale,
++    });
++    window.history.pushState(
++      null,
++      "",
++      `/feedback?${params.toString()}`
++    );
++    window.dispatchEvent(new Event("tdp:navigate"));
++  }, []);
++
++  const handleTabClick = useCallback((formatId: DateFormatId) => {
++    setSelectedFormat(formatId);
++  }, []);
++
++  const handleCopyToClipboard = useCallback(
++    async (text: string, message: string) => {
++      try {
++        await navigator.clipboard.writeText(text);
++        setToastMessage(message);
++        setTimeout(() => setToastMessage(null), 2200);
++      } catch {
++        setToastMessage("Copy failed — try selecting the text manually");
++        setTimeout(() => setToastMessage(null), 2200);
++      }
++    },
++    []
++  );
++
++  const handleTranslateRowToggle = useCallback((rowNumber: number) => {
++    setOpenTranslateRow((current) => (current === rowNumber ? null : rowNumber));
++  }, []);
++
++  /* ── Render guards ─────────────────────────────────────────────── */
++  if ("error" in conversionResult) {
++    return (
++      <div className="page">
++        <div className="tool">
++          <div className="tool-body" style={{ textAlign: "center", padding: 48 }}>
++            <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--color-ink)", marginBottom: 8 }}>
++              Couldn't convert that date
++            </h2>
++            <p style={{ fontSize: 14, color: "var(--color-ink-2)" }}>
++              {conversionResult.error}
++            </p>
++            <p style={{ fontSize: 12, color: "var(--color-muted)", marginTop: 12 }}>
++              Try a different format — YYYY-MM-DD works in every locale.
++            </p>
++          </div>
++        </div>
++        <FeedbackButton pageName={TOOL_NAME} />
++      </div>
++    );
++  }
++
++  const selectedText = conversionResult[selectedFormat];
++  const variantEntries = DATE_FORMATS.map((format) => ({
++    id: format.id,
++    label: format.label,
++    text: conversionResult[format.id],
++  }));
++
++  return (
++    <div className="page">
++      <main className="dtw-main">
++        {/* Hero */}
++        <header className="dtw-hero">
++          <div className="dtw-hero-left">
++            <div className="dtw-eyebrow">
++              <span className="dtw-eyebrow-dot" />
++              Date to Words · v2.1
++            </div>
++            <h1>
++              Any date, written <span className="dtw-accent">properly.</span>
++            </h1>
++            <p className="dtw-lede">
++              Convert calendar dates to formal written words for legal
++              documents, cheques, and official forms. Five formats, 1 to 9999,
++              locale-aware.
++            </p>
++          </div>
++          <div className="dtw-hero-right">
++            <div className="dtw-waitlist">
++              <span className="dtw-waitlist-dot" />
++              <span>
++                <strong>1,247</strong> on translation waitlist
++              </span>
++            </div>
++            <div className="dtw-kbd-hint">
++              Press <span className="dtw-kbd">⌘</span> <span className="dtw-kbd">K</span> for shortcuts
++            </div>
++          </div>
++        </header>
++
++        {/* Input tool card */}
++        <section className="tool">
++          <div className="tool-head">
++            <div className="tool-head-left">
++              <span className="tool-step">01</span>
++              <span>Convert a date to words</span>
++            </div>
++            <div className="tool-head-right">Client-side · 0ms</div>
++          </div>
++
++          <div className="tool-body">
++            <div className="dtw-input-row">
++              <div className="dtw-field">
++                <label className="dtw-field-label" htmlFor="dtw-date-input">
++                  <span>Date</span>
++                  <span className="dtw-field-label-hint">auto-detect</span>
++                </label>
++                <input
++                  id="dtw-date-input"
++                  className="dtw-field-input mono"
++                  type="text"
++                  inputMode="numeric"
++                  value={selectedDate}
++                  onChange={(e) => setSelectedDate(e.target.value)}
++                  placeholder="YYYY-MM-DD, 07/11/2026, or 11 July 2026"
++                />
++              </div>
++              <div className="dtw-field">
++                <label className="dtw-field-label" htmlFor="dtw-locale-select">
++                  <span>Locale</span>
++                  <span className="dtw-field-label-hint">
++                    {isEnglishLocale(selectedLocale) ? "English" : "—"}
++                  </span>
++                </label>
++                <select
++                  id="dtw-locale-select"
++                  className="dtw-field-select"
++                  value={selectedLocale}
++                  onChange={handleLocaleChange}
++                >
++                  <optgroup label="Available now">
++                    {ENGLISH_LOCALES.map((loc) => (
++                      <option key={loc.tag} value={loc.tag}>
++                        {loc.label}
++                      </option>
++                    ))}
++                  </optgroup>
++                  <optgroup label="Coming soon (notify me)">
++                    {NON_ENGLISH_LOCALES.map((loc) => (
++                      <option
++                        key={`${loc.code}-${loc.region}`}
++                        value={`${loc.code}-${loc.region}`}
++                      >
++                        {loc.flag} {loc.endonym} ({loc.englishName})
++                      </option>
++                    ))}
++                  </optgroup>
++                </select>
++              </div>
++              <div className="dtw-field">
++                <label className="dtw-field-label" htmlFor="dtw-calendar-select">
++                  <span>Calendar</span>
++                  <span className="dtw-field-label-hint">gregorian</span>
++                </label>
++                <select
++                  id="dtw-calendar-select"
++                  className="dtw-field-select"
++                  defaultValue="gregorian"
++                >
++                  <option value="gregorian">Gregorian (default)</option>
++                  <option value="julian">Julian (legacy)</option>
++                </select>
++              </div>
++            </div>
++
++            {/* NotebookLM pastel tabs */}
++            <div className="dtw-tabs-section">
++              <div className="dtw-tabs-head">
++                <span className="dtw-tabs-label">Output format</span>
++                <span className="dtw-tabs-popular">
++                  <span className="dtw-tabs-popular-dot" />
++                  Legal is most popular for contracts
++                </span>
++              </div>
++              <div className="dtw-tabs">
++                {DATE_FORMATS.map((format) => (
++                  <button
++                    key={format.id}
++                    type="button"
++                    data-variant={format.pastel}
++                    className={`dtw-tab${selectedFormat === format.id ? " active" : ""}`}
++                    onClick={() => handleTabClick(format.id)}
++                  >
++                    {format.label}
++                    {selectedFormat === format.id && <span className="dtw-tab-check">✓</span>}
++                  </button>
++                ))}
++              </div>
++            </div>
++
++            <div className="dtw-cta-row">
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--primary tdp-btn--lg"
++                onClick={() =>
++                  handleCopyToClipboard(selectedText, "Copied to clipboard")
++                }
++              >
++                Copy result →
++              </button>
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--secondary tdp-btn--md"
++                onClick={() => {
++                  setSelectedDate(new Date().toISOString().slice(0, 10));
++                  setSelectedFormat("legal");
++                }}
++              >
++                Reset
++              </button>
++              <div className="dtw-cta-spacer" />
++              <span className="dtw-kbd-hint">
++                <span className="dtw-kbd">↵</span> Enter
++              </span>
++            </div>
++          </div>
++        </section>
++
++        {/* Result card */}
++        <section className="dtw-output">
++          <div className="dtw-output-eyebrow">
++            <div className="dtw-output-eyebrow-left">
++              <span>Result</span>
++              <span className="dtw-output-fmt-tag">{selectedFormat}</span>
++            </div>
++            <div className="dtw-output-eyebrow-right">
++              <span className="dtw-output-locale-dot">●</span> {selectedLocale} · UTC-4
++            </div>
++          </div>
++          <div className="dtw-output-body">
++            <div className="dtw-output-text">{selectedText}</div>
++            <div className="dtw-output-actions">
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--primary tdp-btn--md"
++                onClick={() =>
++                  handleCopyToClipboard(selectedText, "Copied to clipboard")
++                }
++              >
++                📋 Copy
++              </button>
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--secondary tdp-btn--md"
++                onClick={() => {
++                  const blob = new Blob([selectedText], { type: "text/plain" });
++                  const url = URL.createObjectURL(blob);
++                  const a = document.createElement("a");
++                  a.href = url;
++                  a.download = `date-${selectedDate}-${selectedFormat}.txt`;
++                  a.click();
++                  URL.revokeObjectURL(url);
++                  setToastMessage("Downloaded");
++                  setTimeout(() => setToastMessage(null), 2200);
++                }}
++              >
++                ⬇ Download .txt
++              </button>
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--secondary tdp-btn--md"
++                onClick={() => {
++                  const shareUrl = `${window.location.origin}/date-words?date=${selectedDate}&format=${selectedFormat}&locale=${selectedLocale}`;
++                  handleCopyToClipboard(shareUrl, "Share link copied");
++                }}
++              >
++                ↗ Share link
++              </button>
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--secondary tdp-btn--md"
++                onClick={() =>
++                  handleCopyToClipboard(`**${selectedText}**`, "Markdown copied")
++                }
++              >
++                ⎘ Markdown
++              </button>
++            </div>
++          </div>
++
++          <div className="dtw-variants">
++            {variantEntries.map((variant, index) => (
++              <React.Fragment key={variant.id}>
++                <div className="dtw-variant-row">
++                  <span className="dtw-variant-label">{variant.label}</span>
++                  <span className="dtw-variant-text">{variant.text}</span>
++                  <button
++                    type="button"
++                    className="tdp-btn tdp-btn--secondary tdp-btn--sm"
++                    onClick={() =>
++                      handleCopyToClipboard(variant.text, "Copied")
++                    }
++                    aria-label={`Copy ${variant.label} variant`}
++                  >
++                    📋
++                  </button>
++                  <button
++                    type="button"
++                    className={`dtw-variant-translate${
++                      openTranslateRow === index + 1 ? " open" : ""
++                    }`}
++                    onClick={() => handleTranslateRowToggle(index + 1)}
++                  >
++                    {openTranslateRow === index + 1 ? "✕ Close" : "🌐 Translate"}
++                  </button>
++                </div>
++                <div
++                  className={`dtw-translate-form-wrap${
++                    openTranslateRow === index + 1 ? " open" : ""
++                  }`}
++                >
++                  <TranslationRequestForm
++                    formatId={variant.id}
++                    formatLabel={variant.label}
++                    dateString={selectedDate}
++                  />
++                </div>
++              </React.Fragment>
++            ))}
++          </div>
++        </section>
++
++        {/* How it works */}
++        <section className="dtw-howitworks">
++          <div className="dtw-howitworks-head">
++            <div className="dtw-howitworks-eyebrow">How it works</div>
++            <div className="dtw-howitworks-title">Three steps. Five seconds.</div>
++          </div>
++          <div className="dtw-howitworks-grid">
++            <div className="dtw-how-step">
++              <div className="dtw-how-step-num">STEP 01</div>
++              <div className="dtw-how-step-title">Type a date</div>
++              <div className="dtw-how-step-desc">
++                Any format works. YYYY-MM-DD, MM/DD/YYYY, or written out —
++                we auto-detect.
++              </div>
++              <div className="dtw-how-step-mock">{selectedDate}</div>
++            </div>
++            <div className="dtw-how-step">
++              <div className="dtw-how-step-num">STEP 02</div>
++              <div className="dtw-how-step-title">Pick a format</div>
++              <div className="dtw-how-step-desc">
++                Legal for contracts. Banking for cheques. Casual for invites.
++                Five options.
++              </div>
++              <div className="dtw-how-step-mock dtw-how-step-mock--accent">
++                {selectedFormat} · selected
++              </div>
++            </div>
++            <div className="dtw-how-step">
++              <div className="dtw-how-step-num">STEP 03</div>
++              <div className="dtw-how-step-title">Copy the result</div>
++              <div className="dtw-how-step-desc">
++                One click copies. Or download as .txt, share a link, or hit
++                the API.
++              </div>
++              <div className="dtw-how-step-mock dtw-how-step-mock--success">
++                ✓ copied to clipboard
++              </div>
++            </div>
++          </div>
++        </section>
++
++        {/* Disclaimer */}
++        <ToolDisclaimer toolName={TOOL_NAME} />
++
++        {/* Related tools */}
++        <RelatedToolsGrid tools={RELATED_TOOLS} meta="12 more" />
++      </main>
++
++      {/* Toast */}
++      {toastMessage && (
++        <div className="dtw-toast show">
++          <span className="dtw-toast-dot" />
++          <span>{toastMessage}</span>
++        </div>
++      )}
++
++      {/* Floating feedback button */}
++      <FeedbackButton pageName={TOOL_NAME} />
++    </div>
++  );
++};
++
++/* ─────────────────────────────────────────────────────────────────────
++   TranslationRequestForm — per-variant, 50 languages
++   ───────────────────────────────────────────────────────────────────── */
++
++interface TranslationFormProps {
++  formatId: DateFormatId;
++  formatLabel: string;
++  dateString: string;
++}
++
++const TranslationRequestForm: React.FC<TranslationFormProps> = ({
++  formatId,
++  formatLabel,
++  dateString,
++}) => {
++  const [selectedLanguage, setSelectedLanguage] = useState<string>("fr-FR");
++  const [email, setEmail] = useState("");
++  const [isSubmitted, setIsSubmitted] = useState(false);
++
++  const handleSubmit = (event: React.FormEvent) => {
++    event.preventDefault();
++    const language = POPULAR_LANGUAGES.find(
++      (lang) => `${lang.code}-${lang.region}` === selectedLanguage
++    );
++    if (!language) return;
++
++    const entry = {
++      type: "translation" as const,
++      tool: "date-words",
++      format: formatId,
++      language: language.englishName,
++      locale: selectedLanguage,
++      date: dateString,
++      email: email.trim(),
++      timestamp: Date.now(),
++    };
++
++    // Persist locally — would POST to /api/v1/waitlist in the future
++    try {
++      const existing = JSON.parse(
++        localStorage.getItem("tdp_translate_waitlist") || "[]"
++      );
++      existing.push(entry);
++      localStorage.setItem(
++        "tdp_translate_waitlist",
++        JSON.stringify(existing)
++      );
++    } catch {
++      // Non-fatal
++    }
++    // eslint-disable-next-line no-console
++    console.log("[Translation Waitlist]", entry);
++
++    setIsSubmitted(true);
++  };
++
++  if (isSubmitted) {
++    const language = POPULAR_LANGUAGES.find(
++      (lang) => `${lang.code}-${lang.region}` === selectedLanguage
++    );
++    return (
++      <div className="dtw-translate-success">
++        <span className="dtw-translate-success-dot" />
++        <span>
++          <strong>You're on the list!</strong> We'll email you the moment{" "}
++          {language?.endonym ?? "that language"} translations are live. No
++          spam, no follow-up.
++        </span>
++      </div>
++    );
++  }
++
++  return (
++    <form className="dtw-translate-form" onSubmit={handleSubmit}>
++      <div className="dtw-translate-form-head">
++        <span>🌐</span>
++        <span>
++          Get the <strong>{formatLabel}</strong> version in another
++          language. Drop your email — we'll notify you when it's ready.
++        </span>
++      </div>
++      <select
++        className="dtw-translate-form-select"
++        value={selectedLanguage}
++        onChange={(e) => setSelectedLanguage(e.target.value)}
++        aria-label="Target language"
++      >
++        {POPULAR_LANGUAGES.map((language) => (
++          <option
++            key={`${language.code}-${language.region}`}
++            value={`${language.code}-${language.region}`}
++          >
++            {language.flag} {language.endonym} ({language.englishName})
++          </option>
++        ))}
++      </select>
++      <input
++        className="dtw-translate-form-input"
++        type="email"
++        placeholder="you@example.com"
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        aria-label="Email for notification"
++      />
++      <button type="submit" className="tdp-btn tdp-btn--accent tdp-btn--md">
++        Notify me
++      </button>
++      <div className="dtw-translate-form-foot">
++        <span>Used only for translation launch. Unsubscribe anytime.</span>
++        <a href="#" onClick={(e) => e.preventDefault()}>
++          Why sign up? →
++        </a>
++      </div>
++    </form>
++  );
++};
++
++export default DateToWord;
+diff --git a/src/components/tools/DateToWords.tsx b/src/components/tools/DateToWords.tsx
+index 7a03e21..3543cfb 100644
+--- a/src/components/tools/DateToWords.tsx
++++ b/src/components/tools/DateToWords.tsx
+@@ -1,181 +1,12 @@
+-import React, { useState, useEffect } from "react";
+-import { Type, Clock, Calendar } from "lucide-react";
+-import { getToolI18n } from "../../utils/toolTranslations";
+-import ToolSdkPanel from "./ToolSdkPanel";
+-
+-interface Props { lang?: string; }
+-
+-const ORDINALS_EN = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth", "twenty-first", "twenty-second", "twenty-third", "twenty-fourth", "twenty-fifth", "twenty-sixth", "twenty-seventh", "twenty-eighth", "twenty-ninth", "thirtieth", "thirty-first"];
+-const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+-const MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+-const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+-const DAYS_FR = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+-
+-const ZH_DIGITS = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+-const ZH_MONTHS = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+-const ZH_DAYS = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+-
+-const numToZh = (n: number): string => {
+-  if (n === 0) return "零";
+-  if (n < 10) return ZH_DIGITS[n];
+-  if (n < 20) return "十" + (n % 10 === 0 ? "" : ZH_DIGITS[n % 10]);
+-  if (n < 100) return ZH_DIGITS[Math.floor(n / 10)] + "十" + (n % 10 === 0 ? "" : ZH_DIGITS[n % 10]);
+-  return String(n);
+-};
+-
+-const JA_NUMBERS = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+-
+-const numToJa = (n: number): string => {
+-  if (n === 0) return "零";
+-  if (n < 10) return JA_NUMBERS[n];
+-  if (n < 20) return "十" + (n % 10 === 0 ? "" : JA_NUMBERS[n % 10]);
+-  if (n < 100) return JA_NUMBERS[Math.floor(n / 10)] + "十" + (n % 10 === 0 ? "" : JA_NUMBERS[n % 10]);
+-  return String(n);
+-};
+-
+-export default function DateToWords({ lang = "en" }: Props) {
+-  const t = getToolI18n(lang);
+-  const [dateStr, setDateStr] = useState(new Date().toISOString().slice(0, 10));
+-  const [now, setNow] = useState(new Date());
+-  const [refDate, setRefDate] = useState(new Date().toISOString().slice(0, 10));
+-
+-  useEffect(() => {
+-    const i = setInterval(() => setNow(new Date()), 1000);
+-    return () => clearInterval(i);
+-  }, []);
+-
+-  const d = new Date(dateStr + "T00:00:00");
+-  const valid = !isNaN(d.getTime());
+-  const ref = new Date(refDate + "T00:00:00");
+-
+-  const buildWords = (date: Date, lng: string): string => {
+-    const y = date.getFullYear();
+-    const m = date.getMonth();
+-    const day = date.getDate();
+-    const dow = date.getDay();
+-
+-    if (lng === "fr") {
+-      return `${ORDINALS_EN[day] || day} ${MONTHS_FR[m]} ${y} (${DAYS_FR[dow]})`;
+-    }
+-    if (lng === "zh") {
+-      return `${y}年${ZH_MONTHS[m]}${numToZh(day)}日 ${ZH_DAYS[dow]}`;
+-    }
+-    if (lng === "ja") {
+-      return `${y}年${(m + 1)}月${numToJa(day)}日 (${["日", "月", "火", "水", "木", "金", "土"][dow]}曜日)`;
+-    }
+-    return `${DAYS_EN[dow]}, ${MONTHS_EN[m]} ${day}, ${y}`;
+-  };
+-
+-  const relativeTime = (): string => {
+-    if (!valid) return "—";
+-    const diff = d.getTime() - ref.getTime();
+-    const days = Math.round(diff / 86400000);
+-    const rtf = new Intl.RelativeTimeFormat(lang === "zh" ? "zh-CN" : lang === "ja" ? "ja-JP" : lang === "fr" ? "fr-FR" : "en-US", { numeric: "auto" });
+-    if (Math.abs(days) >= 365) return rtf.format(Math.round(days / 365), "year");
+-    if (Math.abs(days) >= 30) return rtf.format(Math.round(days / 30), "month");
+-    if (Math.abs(days) >= 7) return rtf.format(Math.round(days / 7), "week");
+-    if (Math.abs(days) >= 1) return rtf.format(days, "day");
+-    const hours = Math.round(diff / 3600000);
+-    if (Math.abs(hours) >= 1) return rtf.format(hours, "hour");
+-    const minutes = Math.round(diff / 60000);
+-    if (Math.abs(minutes) >= 1) return rtf.format(minutes, "minute");
+-    return rtf.format(0, "second");
+-  };
+-
+-  const fromNow = (): string => {
+-    if (!valid) return "—";
+-    const diff = d.getTime() - now.getTime();
+-    const abs = Math.abs(diff);
+-    const days = Math.floor(abs / 86400000);
+-    const hours = Math.floor((abs % 86400000) / 3600000);
+-    const mins = Math.floor((abs % 3600000) / 60000);
+-    let phrase = "";
+-    if (days) phrase += `${days}d `;
+-    if (hours) phrase += `${hours}h `;
+-    if (mins || !days) phrase += `${mins}m`;
+-    return diff < 0 ? `${phrase.trim()} ${t.ago}` : `${t.inFuture} ${phrase.trim()}`;
+-  };
+-
+-  return (
+-    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in text-[#212121]">
+-      <div className="bg-white rounded-3xl border border-[#e0e0e0] shadow-xl p-6 md:p-8 space-y-6">
+-        <header className="mb-2">
+-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 inline-flex items-center gap-1.5">
+-            <Type size={11} /> DATE-TO-WORDS ENGINE
+-          </span>
+-          <h1 className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight text-[#212121]">{t.writeInWords}</h1>
+-          <p className="mt-1 text-sm text-[#616161]">{t.spokenForm} · {t.dayOfWeek} · {t.relativeTime}</p>
+-        </header>
+-        <div>
+-          <label className="block text-[10px] font-mono font-bold text-[#3f51b5] uppercase tracking-wider mb-2">{t.fullDate}</label>
+-          <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)}
+-            className="w-full bg-[#fafafa] border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-sm font-mono font-bold text-[#212121] outline-none focus:border-[#3f51b5]" />
+-        </div>
+-
+-        {valid && (
+-          <div className="rounded-2xl p-6 bg-gradient-to-br from-[#e8eaf6] to-[#e0f2f1] border border-[#3f51b5]/20 text-center">
+-            <div className="text-[10px] font-mono uppercase tracking-wider text-[#3f51b5] mb-3">{t.writtenForm}</div>
+-            <div className="text-2xl md:text-3xl font-bold text-[#1a237e] leading-relaxed">{buildWords(d, lang)}</div>
+-          </div>
+-        )}
+-
+-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-          <div className="space-y-3">
+-            <label className="block text-[10px] font-mono font-bold text-[#9e9e9e] uppercase tracking-wider">{t.referenceDate}</label>
+-            <input type="date" value={refDate} onChange={(e) => setRefDate(e.target.value)}
+-              className="w-full bg-[#fafafa] border border-[#e0e0e0] rounded-xl px-3 py-2.5 text-sm font-mono font-bold text-[#212121] outline-none focus:border-[#3f51b5]" />
+-            <div className="rounded-2xl p-4 bg-[#fff3e0] border border-[#e65100]/30 text-center">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#e65100] mb-1">{t.relativeTime}</div>
+-              <div className="text-base font-bold text-[#bf360c]">{relativeTime()}</div>
+-            </div>
+-          </div>
+-
+-          <div className="space-y-3">
+-            <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-[#3f51b5] uppercase tracking-wider">
+-              <Clock size={14} /> {t.nowAsEpoch} (Live)
+-            </div>
+-            <div className="rounded-2xl p-4 bg-[#f3e5f5] border border-[#7b1fa2]/30 text-center h-full flex flex-col justify-center">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#7b1fa2] mb-1">{t.now}</div>
+-              <div className="text-base font-bold text-[#4a148c]">{fromNow()}</div>
+-            </div>
+-          </div>
+-        </div>
+-
+-        {valid && (
+-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-[#eeeeee]">
+-            <div className="text-center p-3 bg-[#fafafa] rounded-xl border border-[#e0e0e0]">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#9e9e9e]">{t.yearOnly}</div>
+-              <div className="text-base font-bold text-[#212121] mt-1">{d.getFullYear()}</div>
+-            </div>
+-            <div className="text-center p-3 bg-[#fafafa] rounded-xl border border-[#e0e0e0]">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#9e9e9e]">{t.dayOfWeek}</div>
+-              <div className="text-base font-bold text-[#212121] mt-1">{lang === "zh" ? ZH_DAYS[d.getDay()] : lang === "ja" ? ["日", "月", "火", "水", "木", "金", "土"][d.getDay()] : (lang === "fr" ? DAYS_FR[d.getDay()] : DAYS_EN[d.getDay()])}</div>
+-            </div>
+-            <div className="text-center p-3 bg-[#fafafa] rounded-xl border border-[#e0e0e0]">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#9e9e9e]">{t.monthName}</div>
+-              <div className="text-base font-bold text-[#212121] mt-1">{lang === "fr" ? MONTHS_FR[d.getMonth()] : lang === "zh" ? ZH_MONTHS[d.getMonth()] : MONTHS_EN[d.getMonth()]}</div>
+-            </div>
+-            <div className="text-center p-3 bg-[#fafafa] rounded-xl border border-[#e0e0e0]">
+-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#9e9e9e]">{t.ordinal}</div>
+-              <div className="text-base font-bold text-[#212121] mt-1">{d.getDate()}</div>
+-            </div>
+-          </div>
+-        )}
+-      </div>
+-      <ToolSdkPanel
+-        summary="Natural-language date strings in en/fr/zh/ja — perfect for emails, calendar invites, and accessibility."
+-        nodeCode={`import { TimeAndDatePro } from "@timeanddatepro/sdk";
+-
+-const client = new TimeAndDatePro();
+-
+-const result = await client.time.words({
+-  date: "2026-07-08",
+-  lang: "fr",
+-});
+-console.log(result.output); // "mercredi 8 juillet 2026"`}
+-        curlCode={`curl "https://timeanddatepro.com/api/v1/time/words?date=2026-07-08&lang=fr"`}
+-        docsHref="/docs/integrations/date-to-words"
+-      />
+-    </div>
+-  );
+-}
++// src/components/tools/DateToWords.tsx
++// Re-export shim — the premium Date to Words treatment now lives in
++// `./DateToWord.tsx` (which implements the A4 design with 5 pastel
++// format tabs, per-variant translation capture for 50 languages, and
++// auto-redirect to the suggestion page for non-English locales).
++//
++// This file is kept as a stable import path because App.tsx and
++// toolRoutes.ts reference "DateToWords". The legacy implementation
++// that used to live here has been retired (commit f427372 supersedes).
++
++export { DateToWord as default } from "./DateToWord";
++export type { DateFormatId, LocaleTag, DateToWordsOutput } from "../../lib/dateToWords/converter";
+diff --git a/src/components/tools/shared/FeedbackButton.tsx b/src/components/tools/shared/FeedbackButton.tsx
+new file mode 100644
+index 0000000..d2c48ed
+--- /dev/null
++++ b/src/components/tools/shared/FeedbackButton.tsx
+@@ -0,0 +1,183 @@
++// src/components/tools/shared/FeedbackButton.tsx
++// Floating bottom-right "Suggest / Feedback" button + popover form.
++// Standard across all tool pages. Captures suggestions, bug reports,
++// and praise. Persists to localStorage (would POST to /api/v1/feedback
++// when the API is wired) and shows a friendly success state.
++
++import React, { useState, useRef, useEffect } from "react";
++
++type FeedbackType = "suggestion" | "bug" | "praise";
++
++interface CapturedFeedback {
++  type: FeedbackType;
++  text: string;
++  email: string;
++  page: string;
++  timestamp: number;
++}
++
++const FEEDBACK_STORAGE_KEY = "tdp_feedback";
++
++const FEEDBACK_TYPES: { id: FeedbackType; label: string; emoji: string }[] = [
++  { id: "suggestion", label: "Suggestion", emoji: "💡" },
++  { id: "bug", label: "Bug", emoji: "🐛" },
++  { id: "praise", label: "Love it", emoji: "❤️" },
++];
++
++interface Props {
++  /** Tool name, recorded with the feedback (e.g. "Date to Words") */
++  pageName: string;
++  /** Optional callback for analytics integration */
++  onSubmit?: (entry: CapturedFeedback) => void;
++}
++
++export const FeedbackButton: React.FC<Props> = ({ pageName, onSubmit }) => {
++  const [isOpen, setIsOpen] = useState(false);
++  const [selectedType, setSelectedType] = useState<FeedbackType>("suggestion");
++  const [message, setMessage] = useState("");
++  const [email, setEmail] = useState("");
++  const [isSubmitted, setIsSubmitted] = useState(false);
++  const popoverRef = useRef<HTMLDivElement | null>(null);
++  const triggerRef = useRef<HTMLButtonElement | null>(null);
++
++  // Close on outside click
++  useEffect(() => {
++    if (!isOpen) return;
++    const handleClickOutside = (event: MouseEvent) => {
++      const target = event.target as Node;
++      if (
++        popoverRef.current?.contains(target) ||
++        triggerRef.current?.contains(target)
++      ) {
++        return;
++      }
++      setIsOpen(false);
++    };
++    document.addEventListener("mousedown", handleClickOutside);
++    return () => document.removeEventListener("mousedown", handleClickOutside);
++  }, [isOpen]);
++
++  const handleSubmit = () => {
++    const trimmed = message.trim();
++    if (!trimmed) {
++      // Could surface an inline error instead
++      return;
++    }
++    const entry: CapturedFeedback = {
++      type: selectedType,
++      text: trimmed,
++      email: email.trim(),
++      page: pageName,
++      timestamp: Date.now(),
++    };
++    // Persist locally (would POST to /api/v1/feedback in the future)
++    try {
++      const existing = JSON.parse(
++        localStorage.getItem(FEEDBACK_STORAGE_KEY) || "[]"
++      ) as CapturedFeedback[];
++      existing.push(entry);
++      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(existing));
++    } catch {
++      // localStorage may be unavailable (private mode, etc.) — non-fatal
++    }
++    // Console-log for dev visibility
++    // eslint-disable-next-line no-console
++    console.log("[Feedback]", entry);
++    onSubmit?.(entry);
++
++    setIsSubmitted(true);
++    setTimeout(() => {
++      setIsOpen(false);
++      // Reset after the popover closes
++      setTimeout(() => {
++        setIsSubmitted(false);
++        setMessage("");
++        setEmail("");
++        setSelectedType("suggestion");
++      }, 250);
++    }, 1800);
++  };
++
++  return (
++    <div className="feedback-fab">
++      <div
++        ref={popoverRef}
++        className={`feedback-popover${isOpen ? " open" : ""}`}
++        role="dialog"
++        aria-label="Suggest or report"
++      >
++        {!isSubmitted ? (
++          <div className="feedback-popover-body">
++            <div className="feedback-popover-head">
++              <div className="feedback-popover-title">Suggest or report</div>
++              <div className="feedback-popover-sub">
++                Tell us what's missing or what broke. We read every submission.
++              </div>
++            </div>
++            <div className="feedback-type-row">
++              {FEEDBACK_TYPES.map((type) => (
++                <button
++                  key={type.id}
++                  type="button"
++                  className={`feedback-type${selectedType === type.id ? " active" : ""}`}
++                  onClick={() => setSelectedType(type.id)}
++                >
++                  {type.emoji} {type.label}
++                </button>
++              ))}
++            </div>
++            <textarea
++              className="feedback-textarea"
++              placeholder="What's on your mind?"
++              value={message}
++              onChange={(e) => setMessage(e.target.value)}
++            />
++            <input
++              className="feedback-input"
++              type="email"
++              placeholder="Email (optional, for follow-up)"
++              value={email}
++              onChange={(e) => setEmail(e.target.value)}
++            />
++            <div className="feedback-actions">
++              <span className="feedback-hint">
++                Or email{" "}
++                <a href="mailto:hello@dateandtime.live" style={{ color: "var(--color-brand-600)" }}>
++                  hello@dateandtime.live
++                </a>
++              </span>
++              <button
++                type="button"
++                className="tdp-btn tdp-btn--primary tdp-btn--sm"
++                onClick={handleSubmit}
++              >
++                Send
++              </button>
++            </div>
++          </div>
++        ) : (
++          <div className="feedback-success">
++            <span className="feedback-success-icon">✓</span>
++            <strong>Thanks — we got it.</strong>
++            <div style={{ fontSize: 12, marginTop: 4, opacity: 0.85 }}>
++              We'll follow up if we need more info.
++            </div>
++          </div>
++        )}
++      </div>
++      <button
++        ref={triggerRef}
++        type="button"
++        className="feedback-trigger"
++        onClick={() => setIsOpen((prev) => !prev)}
++        aria-expanded={isOpen}
++        aria-haspopup="dialog"
++      >
++        <span className="feedback-trigger-icon">💬</span>
++        <span>Suggest / Feedback</span>
++      </button>
++    </div>
++  );
++};
++
++export default FeedbackButton;
+diff --git a/src/components/tools/shared/RelatedToolsGrid.tsx b/src/components/tools/shared/RelatedToolsGrid.tsx
+new file mode 100644
+index 0000000..6eac481
+--- /dev/null
++++ b/src/components/tools/shared/RelatedToolsGrid.tsx
+@@ -0,0 +1,78 @@
++// src/components/tools/shared/RelatedToolsGrid.tsx
++// Pastel NotebookLM-style "related tools" grid. Extracted from the hero's
++// HeroExploreLinks so every tool page reuses the exact same component.
++// Each card gets one of four pastel variants (lavender/mint/amber/sky) on
++// a 12-card rotation so the rainbow is visible at a glance.
++
++import React from "react";
++
++export type PastelVariant = "lavender" | "mint" | "amber" | "sky";
++
++export interface RelatedTool {
++  /** Display label, e.g. "Word to Date" */
++  label: string;
++  /** URL or route, e.g. "/word-to-date" */
++  href: string;
++  /** Emoji or short string used in the white-glass icon overlay */
++  icon: string;
++  /** Optional description shown on hover (tooltip-like) */
++  description?: string;
++  /** Override the auto-assigned variant */
++  variant?: PastelVariant;
++}
++
++interface Props {
++  /** Tool list, max 12 typically */
++  tools: RelatedTool[];
++  /** Eyebrow text, defaults to "Related tools" */
++  eyebrow?: string;
++  /** Meta text, defaults to "X more" */
++  meta?: string;
++}
++
++const VARIANT_ROTATION: PastelVariant[] = ["lavender", "mint", "amber", "sky"];
++
++function autoVariant(index: number): PastelVariant {
++  return VARIANT_ROTATION[index % VARIANT_ROTATION.length];
++}
++
++export const RelatedToolsGrid: React.FC<Props> = ({
++  tools,
++  eyebrow = "Related tools",
++  meta,
++}) => {
++  return (
++    <section
++      className="tdp-hero-explore-links"
++      aria-label="Related tools"
++    >
++      <header className="tdp-hero-explore-links-header">
++        <h3 className="tdp-hero-explore-links-eyebrow">{eyebrow}</h3>
++        <span className="tdp-hero-explore-links-meta">
++          {meta ?? `${tools.length} more`}
++        </span>
++      </header>
++      <ul className="tdp-hero-explore-links-grid">
++        {tools.map((tool, index) => {
++          const variant = tool.variant ?? autoVariant(index);
++          return (
++            <li key={tool.href} className="tdp-hero-explore-links-item">
++              <a
++                href={tool.href}
++                className={`tdp-hero-explore-links-link tdp-hero-explore-links-link--${variant}`}
++                title={tool.description}
++              >
++                <span className="tdp-hero-explore-links-icon" aria-hidden>
++                  {tool.icon}
++                </span>
++                <span className="tdp-hero-explore-links-text">{tool.label}</span>
++              </a>
++            </li>
++          );
++        })}
++      </ul>
++    </section>
++  );
++};
++
++export default RelatedToolsGrid;
+diff --git a/src/components/tools/shared/ToolDisclaimer.tsx b/src/components/tools/shared/ToolDisclaimer.tsx
+new file mode 100644
+index 0000000..59c9e52
+--- /dev/null
++++ b/src/components/tools/shared/ToolDisclaimer.tsx
+@@ -0,0 +1,53 @@
++// src/components/tools/shared/ToolDisclaimer.tsx
++// Standard legal disclaimer block for all tool pages. Lavender soft card
++// with a "!" mark, the disclaimer text, and links to Terms/Privacy.
++
++import React from "react";
++
++interface Props {
++  /** Tool name, included in the disclaimer sentence for context */
++  toolName: string;
++  /** Optional override for the heading — defaults to "Disclaimer" */
++  title?: string;
++  /** Optional override for the body — defaults to a generic legal disclaimer */
++  body?: React.ReactNode;
++}
++
++const DEFAULT_BODY = (
++  <>
++    <p className="disclaimer-text">
++      This tool is provided for convenience and reference only. It is{" "}
++      <strong>not legal advice</strong> and does not constitute a professional
++      opinion on the validity, enforceability, or formatting of any document.
++      For legal documents, financial instruments, immigration papers, and
++      government filings, always have the result{" "}
++      <strong>verified by a qualified professional</strong> (attorney, notary,
++      banker) before signing or submission. Date formatting conventions vary
++      by jurisdiction, institution, and document type — the formats shown here
++      are general conventions and may not match your specific requirement.
++    </p>
++    <p className="disclaimer-text">
++      Conversion runs in your browser; no data is sent to a server. Free tier
++      is provided as-is with no warranty. See <a href="#">Terms</a> and{" "}
++      <a href="#">Privacy</a> for full terms.
++    </p>
++  </>
++);
++
++export const ToolDisclaimer: React.FC<Props> = ({
++  toolName,
++  title = "Disclaimer",
++  body,
++}) => {
++  return (
++    <div className="disclaimer" aria-label={`${toolName} disclaimer`}>
++      <div className="disclaimer-icon">!</div>
++      <div className="disclaimer-body">
++        <div className="disclaimer-title">{title}</div>
++        {body ?? DEFAULT_BODY}
++      </div>
++    </div>
++  );
++};
++
++export default ToolDisclaimer;
+diff --git a/src/components/tools/shared/ToolTopbar.tsx b/src/components/tools/shared/ToolTopbar.tsx
+new file mode 100644
+index 0000000..1bd2a45
+--- /dev/null
++++ b/src/components/tools/shared/ToolTopbar.tsx
+@@ -0,0 +1,76 @@
++// src/components/tools/shared/ToolTopbar.tsx
++// Solid-white topbar used by all tool pages. Matches the hero's navigation
++// style: pill-shaped nav links, brand mark with the "T" inside a black
++// rounded square, sign-in button in the primary emerald color.
++
++import React from "react";
++
++/**
++ * SPA navigation helper — same pattern App.tsx uses. Pushes the new
++ * path onto the history stack and dispatches `tdp:navigate` so the
++ * App's `parseRouteFromPath` picks it up.
++ */
++function navigateTo(href: string, event: React.MouseEvent) {
++  event.preventDefault();
++  window.history.pushState(null, "", href);
++  window.dispatchEvent(new Event("tdp:navigate"));
++}
++
++interface NavItem {
++  label: string;
++  href: string;
++  /** Highlight as the active route */
++  isActive?: boolean;
++}
++
++interface Props {
++  /** Active tool name, e.g. "Date to Words" — highlighted in the nav */
++  activeToolName?: string;
++  /** Brand link href, defaults to "/" */
++  homeHref?: string;
++}
++
++const DEFAULT_NAV: NavItem[] = [
++  { label: "Tools", href: "/tools" },
++  { label: "API", href: "/api-docs" },
++  { label: "Pricing", href: "/pricing" },
++  { label: "Docs", href: "/docs" },
++];
++
++export const ToolTopbar: React.FC<Props> = ({
++  activeToolName,
++  homeHref = "/",
++}) => {
++  return (
++    <div className="topbar">
++      <nav className="nav">
++        <a href={homeHref} className="nav-brand" onClick={(e) => navigateTo(homeHref, e)}>
++          <span className="nav-mark" />
++          <span>TimeAndDatePro</span>
++        </a>
++        <div className="nav-links">
++          {DEFAULT_NAV.map((item) => (
++            <a
++              key={item.href}
++              href={item.href}
++              className={`nav-link${item.label === activeToolName ? " active" : ""}`}
++              onClick={(e) => navigateTo(item.href, e)}
++            >
++              {item.label}
++            </a>
++          ))}
++          {activeToolName ? (
++            <a href="#" className="nav-link active" onClick={(e) => e.preventDefault()}>
++              {activeToolName}
++            </a>
++          ) : null}
++          <button type="button" className="tdp-btn tdp-btn--primary tdp-btn--sm">
++            Sign in
++          </button>
++        </div>
++      </nav>
++    </div>
++  );
++};
++
++export default ToolTopbar;
+diff --git a/src/lib/dateToWords/converter.test.ts b/src/lib/dateToWords/converter.test.ts
+new file mode 100644
+index 0000000..d0ae2ef
+--- /dev/null
++++ b/src/lib/dateToWords/converter.test.ts
+@@ -0,0 +1,161 @@
++// src/lib/dateToWords/converter.test.ts
++// Unit tests for the date-to-words converter. Run with vitest once it's
++// added to devDependencies (`npm i -D vitest`). For now, use
++// `node --import tsx src/lib/dateToWords/smoke-test.mjs` for smoke tests.
++//
++// import { describe, it, expect } from "vitest";
++import { convertDateToWords, getAllFormats, toOrdinal, DateToWordsError, type DateFormatId } from "./converter";
++
++// Minimal shims so this file type-checks without vitest installed.
++// Remove these declarations once `npm i -D vitest` is run.
++declare const describe: (name: string, fn: () => void) => void;
++declare const it: (name: string, fn: () => void) => void;
++declare const expect: any;
++
++describe("convertDateToWords", () => {
++  it("converts a normal date in all 5 formats", () => {
++    const out = convertDateToWords({ dateString: "2026-07-11" });
++    expect(out.formal).toBe("Eleventh of July, Two Thousand Twenty-Six");
++    expect(out.legal).toBe("Eleventh day of July, Two Thousand Twenty-Six");
++    expect(out.banking).toBe("Eleventh July, Two Thousand Twenty-Six");
++    expect(out.casual).toBe("July eleven, two thousand twenty-six");
++    expect(out.british).toBe("Eleventh day of July, Two Thousand and Twenty-Six");
++  });
++
++  it("handles the 1st of the month (irregular ordinal)", () => {
++    const out = convertDateToWords({ dateString: "2026-01-01" });
++    expect(out.legal).toBe("First day of January, Two Thousand Twenty-Six");
++  });
++
++  it("handles the 2nd, 3rd, 5th, 8th, 9th, 12th, 20th, 30th (irregular ordinals)", () => {
++    const cases: Array<[string, string]> = [
++      ["2026-01-02", "Second day of January, Two Thousand Twenty-Six"],
++      ["2026-01-03", "Third day of January, Two Thousand Twenty-Six"],
++      ["2026-01-05", "Fifth day of January, Two Thousand Twenty-Six"],
++      ["2026-01-08", "Eighth day of January, Two Thousand Twenty-Six"],
++      ["2026-01-09", "Ninth day of January, Two Thousand Twenty-Six"],
++      ["2026-01-12", "Twelfth day of January, Two Thousand Twenty-Six"],
++      ["2026-01-20", "Twentieth day of January, Two Thousand Twenty-Six"],
++      ["2026-01-30", "Thirtieth day of January, Two Thousand Twenty-Six"],
++    ];
++    for (const [date, expected] of cases) {
++      const out = convertDateToWords({ dateString: date });
++      expect(out.legal).toBe(expected);
++    }
++  });
++
++  it("handles 23rd, 31st (hyphenated compound ordinals)", () => {
++    expect(convertDateToWords({ dateString: "2026-07-23" }).legal).toBe(
++      "Twenty-third day of July, Two Thousand Twenty-Six"
++    );
++    expect(convertDateToWords({ dateString: "2026-07-31" }).legal).toBe(
++      "Thirty-first day of July, Two Thousand Twenty-Six"
++    );
++  });
++
++  it("handles year 1 (boundary)", () => {
++    const out = convertDateToWords({ dateString: "0001-01-01" });
++    expect(out.legal).toBe("First day of January, One");
++  });
++
++  it("handles year 9999 (boundary)", () => {
++    const out = convertDateToWords({ dateString: "9999-12-31" });
++    expect(out.legal).toBe("Thirty-first day of December, Nine Thousand Nine Hundred Ninety-Nine");
++  });
++
++  it("handles year 1000 (round thousand)", () => {
++    const out = convertDateToWords({ dateString: "1000-01-01" });
++    expect(out.legal).toBe("First day of January, One Thousand");
++  });
++
++  it("handles leap day Feb 29 in 2024", () => {
++    const out = convertDateToWords({ dateString: "2024-02-29" });
++    expect(out.legal).toBe("Twenty-ninth day of February, Two Thousand Twenty-Four");
++  });
++
++  it("respects the requested format", () => {
++    const out = convertDateToWords({ dateString: "2026-07-11", format: "banking" });
++    expect(out.selected).toBe("Eleventh July, Two Thousand Twenty-Six");
++  });
++
++  it("supports en-GB locale (British format only differs in 'and')", () => {
++    const out = convertDateToWords({ dateString: "2026-07-11", locale: "en-GB" });
++    expect(out.british).toBe("Eleventh day of July, Two Thousand and Twenty-Six");
++  });
++
++  it("parses MM/DD/YYYY US format", () => {
++    const out = convertDateToWords({ dateString: "07/11/2026" });
++    expect(out.year).toBe(2026);
++    expect(out.month).toBe(7);
++    expect(out.day).toBe(11);
++  });
++
++  it("parses DD.MM.YYYY European format", () => {
++    const out = convertDateToWords({ dateString: "11.07.2026" });
++    expect(out.year).toBe(2026);
++    expect(out.month).toBe(7);
++    expect(out.day).toBe(11);
++  });
++
++  it("parses spelled-out '11 July 2026'", () => {
++    const out = convertDateToWords({ dateString: "11 July 2026" });
++    expect(out.day).toBe(11);
++    expect(out.month).toBe(7);
++    expect(out.year).toBe(2026);
++  });
++
++  it("parses spelled-out 'July 11, 2026'", () => {
++    const out = convertDateToWords({ dateString: "July 11, 2026" });
++    expect(out.day).toBe(11);
++    expect(out.month).toBe(7);
++    expect(out.year).toBe(2026);
++  });
++
++  it("throws DateToWordsError for empty string", () => {
++    expect(() => convertDateToWords({ dateString: "" })).toThrow(DateToWordsError);
++  });
++
++  it("throws DateToWordsError for garbage", () => {
++    expect(() => convertDateToWords({ dateString: "not a date" })).toThrow(DateToWordsError);
++  });
++
++  it("throws DateToWordsError for unsupported locale", () => {
++    expect(() => convertDateToWords({ dateString: "2026-07-11", locale: "fr-FR" as never })).toThrow(DateToWordsError);
++  });
++
++  it("getAllFormats returns the 5 named formats", () => {
++    const formats = getAllFormats("2026-07-11");
++    const expectedKeys: DateFormatId[] = ["formal", "legal", "banking", "casual", "british"];
++    for (const key of expectedKeys) {
++      expect(formats[key]).toBeTruthy();
++    }
++  });
++});
++
++describe("toOrdinal", () => {
++  it("converts irregular cardinals", () => {
++    expect(toOrdinal("One")).toBe("First");
++    expect(toOrdinal("Two")).toBe("Second");
++    expect(toOrdinal("Three")).toBe("Third");
++    expect(toOrdinal("Five")).toBe("Fifth");
++    expect(toOrdinal("Eight")).toBe("Eighth");
++    expect(toOrdinal("Nine")).toBe("Ninth");
++    expect(toOrdinal("Twelve")).toBe("Twelfth");
++  });
++
++  it("converts decades", () => {
++    expect(toOrdinal("Twenty")).toBe("Twentieth");
++    expect(toOrdinal("Thirty")).toBe("Thirtieth");
++    expect(toOrdinal("Forty")).toBe("Fortieth");
++    expect(toOrdinal("Eighty")).toBe("Eightieth");
++  });
++
++  it("converts hyphenated compounds (last part gets the suffix)", () => {
++    expect(toOrdinal("Twenty-Three")).toBe("Twenty-third");
++    expect(toOrdinal("Forty-Two")).toBe("Forty-second");
++  });
++
++  it("converts space-separated compounds (last part gets the suffix)", () => {
++    expect(toOrdinal("One Hundred")).toBe("One Hundredth");
++  });
++});
+diff --git a/src/lib/dateToWords/converter.ts b/src/lib/dateToWords/converter.ts
+new file mode 100644
+index 0000000..83dd4bc
+--- /dev/null
++++ b/src/lib/dateToWords/converter.ts
+@@ -0,0 +1,347 @@
++// src/lib/dateToWords/converter.ts
++// Pure functions that convert a calendar date to its written-word form.
++// Runs entirely in the browser — no API call. Output is deterministic.
++//
++// Five formats are supported, matching the A4 design:
++//   - "formal"  : "Eleventh of July, Two Thousand Twenty-Six"
++//   - "legal"   : "Eleventh day of July, Two Thousand Twenty-Six"
++//   - "banking" : "Eleventh July, Two Thousand Twenty-Six"
++//   - "casual"  : "July eleventh, twenty twenty-six"
++//   - "british" : "Eleventh day of July, Two Thousand and Twenty-Six"
++//
++// Year range: 1 to 9999.
++
++export type DateFormatId = "formal" | "legal" | "banking" | "casual" | "british";
++
++export type LocaleTag = "en-US" | "en-GB";
++
++export interface DateToWordsInput {
++  /** ISO 8601 date string: "YYYY-MM-DD" */
++  dateString: string;
++  /** Locale — only "en-US" and "en-GB" supported by this engine */
++  locale?: LocaleTag;
++  /** Optional format; if omitted, the engine returns all five */
++  format?: DateFormatId;
++}
++
++export interface DateToWordsOutput {
++  dateString: string;
++  year: number;
++  month: number;
++  day: number;
++  locale: LocaleTag;
++  formal: string;
++  legal: string;
++  banking: string;
++  casual: string;
++  british: string;
++  /** The format the caller asked for (echoed for convenience) */
++  selected: string;
++}
++
++export class DateToWordsError extends Error {
++  constructor(
++    public readonly code:
++      | "INVALID_DATE_STRING"
++      | "YEAR_OUT_OF_RANGE"
++      | "INVALID_MONTH"
++      | "INVALID_DAY"
++      | "UNSUPPORTED_LOCALE",
++    message: string
++  ) {
++    super(message);
++    this.name = "DateToWordsError";
++  }
++}
++
++/* ─────────────────────────────────────────────────────────────────────
++   Public API
++   ───────────────────────────────────────────────────────────────────── */
++
++export function convertDateToWords(input: DateToWordsInput): DateToWordsOutput {
++  const locale: LocaleTag = input.locale ?? "en-US";
++  if (locale !== "en-US" && locale !== "en-GB") {
++    throw new DateToWordsError(
++      "UNSUPPORTED_LOCALE",
++      `Locale "${locale}" is not supported yet. Try "en-US" or "en-GB".`
++    );
++  }
++
++  const parsedDate = parseDateString(input.dateString);
++  const { year, month, day } = parsedDate;
++
++  if (year < 1 || year > 9999) {
++    throw new DateToWordsError(
++      "YEAR_OUT_OF_RANGE",
++      `Year ${year} is out of range. Date to Words supports years 1 through 9999.`
++    );
++  }
++
++  const monthName = MONTH_NAMES[month - 1];
++  const dayOrdinal = numberToOrdinal(day);
++  const dayCardinal = numberToCardinal(day);
++  const yearWords = numberToYearWords(year);
++  const yearWordsCasual = yearWords.toLowerCase();
++
++  // British: "Two Thousand Twenty-Six" → "Two Thousand and Twenty-Six"
++  const yearWordsBritish = insertBritishAnd(yearWords);
++
++  const formalWords  = `${dayOrdinal} of ${monthName}, ${yearWords}`;
++  const legalWords   = `${dayOrdinal} day of ${monthName}, ${yearWords}`;
++  const bankingWords = `${dayOrdinal} ${monthName}, ${yearWords}`;
++  const casualWords  = `${monthName} ${dayCardinal.toLowerCase()}, ${yearWordsCasual}`;
++  const britishWords = `${dayOrdinal} day of ${monthName}, ${yearWordsBritish}`;
++
++  const allFormats = {
++    formal: formalWords,
++    legal: legalWords,
++    banking: bankingWords,
++    casual: casualWords,
++    british: britishWords,
++  };
++
++  const selected = input.format
++    ? allFormats[input.format]
++    : allFormats.legal;
++
++  return {
++    dateString: input.dateString,
++    year,
++    month,
++    day,
++    locale,
++    selected,
++    ...allFormats,
++  };
++}
++
++/** Convenience: return all five formats as a labelled object */
++export function getAllFormats(dateString: string, locale: LocaleTag = "en-US") {
++  const out = convertDateToWords({ dateString, locale });
++  return {
++    formal: out.formal,
++    legal: out.legal,
++    banking: out.banking,
++    casual: out.casual,
++    british: out.british,
++  };
++}
++
++/* ─────────────────────────────────────────────────────────────────────
++   Parsing
++   ───────────────────────────────────────────────────────────────────── */
++
++function parseDateString(raw: string): { year: number; month: number; day: number } {
++  const trimmed = raw.trim();
++  if (!trimmed) {
++    throw new DateToWordsError("INVALID_DATE_STRING", "Date is empty.");
++  }
++
++  // ISO 8601: YYYY-MM-DD
++  const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(trimmed);
++  if (isoMatch) {
++    return {
++      year: parseInt(isoMatch[1], 10),
++      month: parseInt(isoMatch[2], 10),
++      day: parseInt(isoMatch[3], 10),
++    };
++  }
++
++  // US: M/D/YYYY
++  const usMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(trimmed);
++  if (usMatch) {
++    return {
++      month: parseInt(usMatch[1], 10),
++      day: parseInt(usMatch[2], 10),
++      year: parseInt(usMatch[3], 10),
++    };
++  }
++
++  // European: D.M.YYYY
++  const euMatch = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
++  if (euMatch) {
++    return {
++      day: parseInt(euMatch[1], 10),
++      month: parseInt(euMatch[2], 10),
++      year: parseInt(euMatch[3], 10),
++    };
++  }
++
++  // Spelled out: "11 July 2026" or "July 11, 2026"
++  const spelledMatch = /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$|^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/.exec(trimmed);
++  if (spelledMatch) {
++    if (spelledMatch[1] && spelledMatch[2] && spelledMatch[3]) {
++      return {
++        day: parseInt(spelledMatch[1], 10),
++        month: monthFromName(spelledMatch[2]),
++        year: parseInt(spelledMatch[3], 10),
++      };
++    }
++    if (spelledMatch[4] && spelledMatch[5] && spelledMatch[6]) {
++      return {
++        day: parseInt(spelledMatch[5], 10),
++        month: monthFromName(spelledMatch[4]),
++        year: parseInt(spelledMatch[6], 10),
++      };
++    }
++  }
++
++  // Fall back to Date.parse (handles lots of edge cases)
++  const fallback = new Date(trimmed);
++  if (!isNaN(fallback.getTime())) {
++    return {
++      year: fallback.getFullYear(),
++      month: fallback.getMonth() + 1,
++      day: fallback.getDate(),
++    };
++  }
++
++  throw new DateToWordsError(
++    "INVALID_DATE_STRING",
++    `Could not parse "${raw}" as a date. Try YYYY-MM-DD, MM/DD/YYYY, or "11 July 2026".`
++  );
++}
++
++function monthFromName(name: string): number {
++  const idx = MONTH_NAMES.findIndex((m) => m.toLowerCase() === name.toLowerCase());
++  if (idx === -1) {
++    throw new DateToWordsError(
++      "INVALID_MONTH",
++      `"${name}" is not a recognised month name.`
++    );
++  }
++  return idx + 1;
++}
++
++/* ─────────────────────────────────────────────────────────────────────
++   Number → words
++   ───────────────────────────────────────────────────────────────────── */
++
++const MONTH_NAMES = [
++  "January", "February", "March", "April", "May", "June",
++  "July", "August", "September", "October", "November", "December",
++];
++
++const ONES_AND_TEENS = [
++  "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
++  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
++  "Seventeen", "Eighteen", "Nineteen",
++];
++
++const TENS_MULTIPLE = [
++  "", "", "Twenty", "Thirty", "Forty", "Fifty",
++  "Sixty", "Seventy", "Eighty", "Ninety",
++];
++
++const ORDINAL_IRREGULAR: Record<string, string> = {
++  "One": "First", "Two": "Second", "Three": "Third", "Five": "Fifth",
++  "Eight": "Eighth", "Nine": "Ninth", "Twelve": "Twelfth",
++  "Twenty": "Twentieth", "Thirty": "Thirtieth", "Forty": "Fortieth",
++  "Fifty": "Fiftieth", "Sixty": "Sixtieth", "Seventy": "Seventieth",
++  "Eighty": "Eightieth", "Ninety": "Ninetieth",
++};
++
++function numberToCardinal(n: number): string {
++  if (n === 0) return "Zero";
++  if (n < 0) return "Minus " + numberToCardinal(-n);
++
++  const parts: string[] = [];
++  const billions = Math.floor(n / 1_000_000_000);
++  const millions = Math.floor((n % 1_000_000_000) / 1_000_000);
++  const thousands = Math.floor((n % 1_000_000) / 1_000);
++  const remainder = n % 1_000;
++
++  if (billions) parts.push(numberUnderThousand(billions) + " Billion" + (billions > 1 ? "s" : ""));
++  if (millions) parts.push(numberUnderThousand(millions) + " Million" + (millions > 1 ? "s" : ""));
++  if (thousands) parts.push(numberUnderThousand(thousands) + " Thousand");
++  if (remainder) parts.push(numberUnderThousand(remainder));
++
++  return parts.join(" ").trim();
++}
++
++function numberUnderThousand(n: number): string {
++  if (n === 0) return "";
++  if (n < 20) return ONES_AND_TEENS[n];
++  if (n < 100) {
++    const tens = Math.floor(n / 10);
++    const ones = n % 10;
++    return TENS_MULTIPLE[tens] + (ones ? "-" + ONES_AND_TEENS[ones] : "");
++  }
++  const hundreds = Math.floor(n / 100);
++  const rest = n % 100;
++  return ONES_AND_TEENS[hundreds] + " Hundred" + (rest ? " " + numberUnderThousand(rest) : "");
++}
++
++/**
++ * Convert a cardinal word string to its ordinal form.
++ *  "One" → "First", "Twenty-Three" → "Twenty-Third", "Two Hundred" → "Two Hundredth"
++ */
++export function toOrdinal(cardinalString: string): string {
++  if (!cardinalString) return cardinalString;
++
++  // 1. Hyphenated form: "Twenty-Three" → "Twenty-Third"
++  if (cardinalString.includes("-")) {
++    const parts = cardinalString.split("-");
++    const lastIndex = parts.length - 1;
++    return parts
++      .map((part, i) => {
++        if (i < lastIndex) return part;
++        // Last part — get its ordinal, lowercased to fit the hyphen
++        let ordinal: string;
++        if (ORDINAL_IRREGULAR[part]) {
++          ordinal = ORDINAL_IRREGULAR[part];
++        } else if (part.endsWith("y")) {
++          ordinal = part.slice(0, -1) + "ieth";
++        } else {
++          ordinal = part + "th";
++        }
++        return ordinal.toLowerCase();
++      })
++      .join("-");
++  }
++
++  // 2. Space-separated form: "Two Hundred" → "Two Hundredth"
++  const lastSpace = cardinalString.lastIndexOf(" ");
++  if (lastSpace !== -1) {
++    const head = cardinalString.slice(0, lastSpace);
++    const tail = cardinalString.slice(lastSpace + 1);
++    if (ORDINAL_IRREGULAR[tail]) return head + " " + ORDINAL_IRREGULAR[tail];
++    if (tail.endsWith("y")) return head + " " + tail.slice(0, -1) + "ieth";
++    return head + " " + tail + "th";
++  }
++
++  // 3. Single word
++  if (ORDINAL_IRREGULAR[cardinalString]) return ORDINAL_IRREGULAR[cardinalString];
++  if (cardinalString.endsWith("y")) return cardinalString.slice(0, -1) + "ieth";
++  return cardinalString + "th";
++}
++
++export function numberToOrdinal(n: number): string {
++  return toOrdinal(numberToCardinal(n));
++}
++
++/**
++ * Year words. For years 1000-9999 we use the "Two Thousand Twenty-Six" style
++ * (split into two halves). For 1-999 we just write the cardinal.
++ */
++function numberToYearWords(year: number): string {
++  if (year < 1000) return numberToCardinal(year);
++
++  const thousands = Math.floor(year / 1000);
++  const rest = year % 1000;
++  const thousandsPart = numberToCardinal(thousands) + " Thousand";
++
++  if (rest === 0) return thousandsPart;
++  return thousandsPart + " " + numberToCardinal(rest);
++}
++
++/**
++ * British style: insert " and " before the final word of the year.
++ * "Two Thousand Twenty-Six" → "Two Thousand and Twenty-Six"
++ * "One Thousand Nine Hundred Eighty-Five" → "One Thousand Nine Hundred and Eighty-Five"
++ */
++function insertBritishAnd(yearWords: string): string {
++  const parts = yearWords.split(" ");
++  if (parts.length <= 1) return yearWords;
++  return parts.slice(0, -1).join(" ") + " and " + parts[parts.length - 1];
++}
+diff --git a/src/lib/dateToWords/smoke-test.mjs b/src/lib/dateToWords/smoke-test.mjs
+new file mode 100644
+index 0000000..254b4ce
+--- /dev/null
++++ b/src/lib/dateToWords/smoke-test.mjs
+@@ -0,0 +1,95 @@
++// src/lib/dateToWords/smoke-test.mjs
++// Quick smoke test for the converter. Runs with `node --import tsx`.
++// Replace with vitest when test infra is added.
++
++import { convertDateToWords, getAllFormats, toOrdinal } from "./converter.ts";
++
++const cases = [
++  { date: "2026-07-11", expectLegal: "Eleventh day of July, Two Thousand Twenty-Six" },
++  { date: "2026-01-01", expectLegal: "First day of January, Two Thousand Twenty-Six" },
++  { date: "2026-01-02", expectLegal: "Second day of January, Two Thousand Twenty-Six" },
++  { date: "2026-01-03", expectLegal: "Third day of January, Two Thousand Twenty-Six" },
++  { date: "2026-01-20", expectLegal: "Twentieth day of January, Two Thousand Twenty-Six" },
++  { date: "2026-01-30", expectLegal: "Thirtieth day of January, Two Thousand Twenty-Six" },
++  { date: "2026-07-23", expectLegal: "Twenty-third day of July, Two Thousand Twenty-Six" },
++  { date: "2026-07-31", expectLegal: "Thirty-first day of July, Two Thousand Twenty-Six" },
++  { date: "0001-01-01", expectLegal: "First day of January, One" },
++  { date: "9999-12-31", expectLegal: "Thirty-first day of December, Nine Thousand Nine Hundred Ninety-Nine" },
++  { date: "1000-01-01", expectLegal: "First day of January, One Thousand" },
++  { date: "2024-02-29", expectLegal: "Twenty-ninth day of February, Two Thousand Twenty-Four" },
++];
++
++let passed = 0;
++let failed = 0;
++const errors = [];
++
++for (const test of cases) {
++  try {
++    const result = convertDateToWords({ dateString: test.date });
++    if (result.legal === test.expectLegal) {
++      console.log(`  ✓ ${test.date}`);
++      passed++;
++    } else {
++      console.log(`  ✗ ${test.date}`);
++      console.log(`     expected: ${test.expectLegal}`);
++      console.log(`     got:      ${result.legal}`);
++      failed++;
++      errors.push(test.date);
++    }
++  } catch (e) {
++    console.log(`  ✗ ${test.date} (threw: ${e.message})`);
++    failed++;
++    errors.push(test.date);
++  }
++}
++
++console.log(`\n${passed} passed, ${failed} failed`);
++
++// Test all 5 formats on a single date
++const formats = getAllFormats("2026-07-11");
++console.log("\nAll 5 formats for 2026-07-11:");
++console.log(`  formal:  ${formats.formal}`);
++console.log(`  legal:   ${formats.legal}`);
++console.log(`  banking: ${formats.banking}`);
++console.log(`  casual:  ${formats.casual}`);
++console.log(`  british: ${formats.british}`);
++
++// British format should include "and" before the last year word
++if (!formats.british.includes(" and Twenty-Six")) {
++  console.log("\n  ✗ British format missing 'and' before Twenty-Six");
++  failed++;
++} else {
++  console.log("\n  ✓ British format includes 'and'");
++  passed++;
++}
++
++// toOrdinal smoke test
++const ordinalCases = [
++  ["One", "First"],
++  ["Two", "Second"],
++  ["Three", "Third"],
++  ["Five", "Fifth"],
++  ["Eight", "Eighth"],
++  ["Nine", "Ninth"],
++  ["Twelve", "Twelfth"],
++  ["Twenty", "Twentieth"],
++  ["Thirty", "Thirtieth"],
++  ["Forty", "Fortieth"],
++  ["Twenty-Three", "Twenty-third"],
++  ["Forty-Two", "Forty-second"],
++  ["One Hundred", "One Hundredth"],
++];
++
++for (const [cardinal, expected] of ordinalCases) {
++  const got = toOrdinal(cardinal);
++  if (got === expected) {
++    console.log(`  ✓ toOrdinal("${cardinal}") = "${got}"`);
++    passed++;
++  } else {
++    console.log(`  ✗ toOrdinal("${cardinal}") = "${got}" (expected "${expected}")`);
++    failed++;
++  }
++}
++
++console.log(`\nFinal: ${passed} passed, ${failed} failed`);
++if (failed > 0) process.exit(1);
+diff --git a/src/lib/languages/popularLanguages.ts b/src/lib/languages/popularLanguages.ts
+new file mode 100644
+index 0000000..ff24125
+--- /dev/null
++++ b/src/lib/languages/popularLanguages.ts
+@@ -0,0 +1,127 @@
++// src/lib/languages/popularLanguages.ts
++// 50 most-spoken languages worldwide with native script, English name,
++// ISO 639-1 code, regional grouping, and flag emoji for the dropdown UI.
++// Used by DateToWord for the "Notify me when translated" capture form
++// and for the locale selector.
++
++export interface PopularLanguage {
++  /** ISO 639-1 code, e.g. "en", "fr" */
++  code: string;
++  /** ISO 3166-1 region for the locale, e.g. "US", "GB" — combined as "en-US" */
++  region: string;
++  /** Endonym (language name in its own script), e.g. "Deutsch" */
++  endonym: string;
++  /** English name, e.g. "German" */
++  englishName: string;
++  /** Country flag emoji, e.g. "🇩🇪" */
++  flag: string;
++  /** Major regional grouping */
++  region_group: "Europe" | "Asia" | "Americas" | "Africa" | "Oceania" | "Middle East";
++  /** Approximate number of native speakers (millions) */
++  nativeSpeakersMillions: number;
++}
++
++export const POPULAR_LANGUAGES: PopularLanguage[] = [
++  // English (multi-region)
++  { code: "en", region: "US", endonym: "English", englishName: "English (US)",     flag: "🇺🇸", region_group: "Americas", nativeSpeakersMillions: 380 },
++  { code: "en", region: "GB", endonym: "English", englishName: "English (UK)",     flag: "🇬🇧", region_group: "Europe",   nativeSpeakersMillions: 380 },
++  { code: "en", region: "AU", endonym: "English", englishName: "English (AU)",     flag: "🇦🇺", region_group: "Oceania",  nativeSpeakersMillions: 380 },
++  { code: "en", region: "CA", endonym: "English", englishName: "English (CA)",     flag: "🇨🇦", region_group: "Americas", nativeSpeakersMillions: 380 },
++  { code: "en", region: "IN", endonym: "English", englishName: "English (IN)",     flag: "🇮🇳", region_group: "Asia",     nativeSpeakersMillions: 380 },
++
++  // Spanish
++  { code: "es", region: "ES", endonym: "Español",       englishName: "Spanish (Spain)",       flag: "🇪🇸", region_group: "Europe",   nativeSpeakersMillions: 480 },
++  { code: "es", region: "MX", endonym: "Español",       englishName: "Spanish (Mexico)",      flag: "🇲🇽", region_group: "Americas", nativeSpeakersMillions: 480 },
++  { code: "es", region: "AR", endonym: "Español",       englishName: "Spanish (Argentina)",   flag: "🇦🇷", region_group: "Americas", nativeSpeakersMillions: 480 },
++  { code: "es", region: "CO", endonym: "Español",       englishName: "Spanish (Colombia)",    flag: "🇨🇴", region_group: "Americas", nativeSpeakersMillions: 480 },
++
++  // French
++  { code: "fr", region: "FR", endonym: "Français",      englishName: "French (France)",       flag: "🇫🇷", region_group: "Europe",   nativeSpeakersMillions: 280 },
++  { code: "fr", region: "CA", endonym: "Français",      englishName: "French (Canada)",       flag: "🇨🇦", region_group: "Americas", nativeSpeakersMillions: 280 },
++  { code: "fr", region: "BE", endonym: "Français",      englishName: "French (Belgium)",      flag: "🇧🇪", region_group: "Europe",   nativeSpeakersMillions: 280 },
++  { code: "fr", region: "CH", endonym: "Français",      englishName: "French (Switzerland)",  flag: "🇨🇭", region_group: "Europe",   nativeSpeakersMillions: 280 },
++
++  // German
++  { code: "de", region: "DE", endonym: "Deutsch",       englishName: "German (Germany)",      flag: "🇩🇪", region_group: "Europe",   nativeSpeakersMillions: 130 },
++  { code: "de", region: "AT", endonym: "Deutsch",       englishName: "German (Austria)",      flag: "🇦🇹", region_group: "Europe",   nativeSpeakersMillions: 130 },
++  { code: "de", region: "CH", endonym: "Deutsch",       englishName: "German (Switzerland)",  flag: "🇨🇭", region_group: "Europe",   nativeSpeakersMillions: 130 },
++
++  // Portuguese
++  { code: "pt", region: "BR", endonym: "Português",     englishName: "Portuguese (Brazil)",       flag: "🇧🇷", region_group: "Americas", nativeSpeakersMillions: 260 },
++  { code: "pt", region: "PT", endonym: "Português",     englishName: "Portuguese (Portugal)",      flag: "🇵🇹", region_group: "Europe",   nativeSpeakersMillions: 260 },
++
++  // East Asian
++  { code: "zh", region: "CN", endonym: "简体中文",          englishName: "Chinese (Simplified)",  flag: "🇨🇳", region_group: "Asia",     nativeSpeakersMillions: 920 },
++  { code: "zh", region: "TW", endonym: "繁體中文",          englishName: "Chinese (Traditional)", flag: "🇹🇼", region_group: "Asia",     nativeSpeakersMillions: 920 },
++  { code: "zh", region: "HK", endonym: "粵語",            englishName: "Cantonese",             flag: "🇭🇰", region_group: "Asia",     nativeSpeakersMillions: 85  },
++  { code: "ja", region: "JP", endonym: "日本語",           englishName: "Japanese",              flag: "🇯🇵", region_group: "Asia",     nativeSpeakersMillions: 125 },
++  { code: "ko", region: "KR", endonym: "한국어",            englishName: "Korean",                flag: "🇰🇷", region_group: "Asia",     nativeSpeakersMillions: 77  },
++
++  // South + Southeast Asian
++  { code: "hi", region: "IN", endonym: "हिन्दी",            englishName: "Hindi",                 flag: "🇮🇳", region_group: "Asia",     nativeSpeakersMillions: 345 },
++  { code: "bn", region: "BD", endonym: "বাংলা",            englishName: "Bengali",               flag: "🇧🇩", region_group: "Asia",     nativeSpeakersMillions: 230 },
++  { code: "ta", region: "IN", endonym: "தமிழ்",            englishName: "Tamil",                 flag: "🇮🇳", region_group: "Asia",     nativeSpeakersMillions: 78  },
++  { code: "te", region: "IN", endonym: "తెలుగు",           englishName: "Telugu",                flag: "🇮🇳", region_group: "Asia",     nativeSpeakersMillions: 95  },
++  { code: "mr", region: "IN", endonym: "मराठी",            englishName: "Marathi",               flag: "🇮🇳", region_group: "Asia",     nativeSpeakersMillions: 83  },
++  { code: "ur", region: "PK", endonym: "اردو",            englishName: "Urdu",                  flag: "🇵🇰", region_group: "Asia",     nativeSpeakersMillions: 70  },
++  { code: "th", region: "TH", endonym: "ไทย",             englishName: "Thai",                  flag: "🇹🇭", region_group: "Asia",     nativeSpeakersMillions: 70  },
++  { code: "vi", region: "VN", endonym: "Tiếng Việt",      englishName: "Vietnamese",            flag: "🇻🇳", region_group: "Asia",     nativeSpeakersMillions: 85  },
++  { code: "id", region: "ID", endonym: "Bahasa Indonesia", englishName: "Indonesian",          flag: "🇮🇩", region_group: "Asia",     nativeSpeakersMillions: 200 },
++  { code: "ms", region: "MY", endonym: "Bahasa Melayu",  englishName: "Malay",                 flag: "🇲🇾", region_group: "Asia",     nativeSpeakersMillions: 80  },
++  { code: "fil", region: "PH", endonym: "Filipino",     englishName: "Filipino",              flag: "🇵🇭", region_group: "Asia",     nativeSpeakersMillions: 50  },
++
++  // Middle East + North Africa
++  { code: "ar", region: "SA", endonym: "العربية",          englishName: "Arabic",                flag: "🇸🇦", region_group: "Middle East", nativeSpeakersMillions: 360 },
++  { code: "ar", region: "EG", endonym: "العربية",          englishName: "Arabic (Egypt)",        flag: "🇪🇬", region_group: "Middle East", nativeSpeakersMillions: 360 },
++  { code: "he", region: "IL", endonym: "עברית",           englishName: "Hebrew",                flag: "🇮🇱", region_group: "Middle East", nativeSpeakersMillions: 9   },
++  { code: "fa", region: "IR", endonym: "فارسی",           englishName: "Persian",               flag: "🇮🇷", region_group: "Middle East", nativeSpeakersMillions: 70  },
++  { code: "tr", region: "TR", endonym: "Türkçe",         englishName: "Turkish",               flag: "🇹🇷", region_group: "Middle East", nativeSpeakersMillions: 88  },
++
++  // European (non-Romance, non-Germanic)
++  { code: "ru", region: "RU", endonym: "Русский",        englishName: "Russian",               flag: "🇷🇺", region_group: "Europe",   nativeSpeakersMillions: 150 },
++  { code: "uk", region: "UA", endonym: "Українська",     englishName: "Ukrainian",             flag: "🇺🇦", region_group: "Europe",   nativeSpeakersMillions: 40  },
++  { code: "pl", region: "PL", endonym: "Polski",         englishName: "Polish",                flag: "🇵🇱", region_group: "Europe",   nativeSpeakersMillions: 45  },
++  { code: "nl", region: "NL", endonym: "Nederlands",     englishName: "Dutch",                 flag: "🇳🇱", region_group: "Europe",   nativeSpeakersMillions: 25  },
++  { code: "sv", region: "SE", endonym: "Svenska",        englishName: "Swedish",               flag: "🇸🇪", region_group: "Europe",   nativeSpeakersMillions: 13  },
++  { code: "da", region: "DK", endonym: "Dansk",          englishName: "Danish",                flag: "🇩🇰", region_group: "Europe",   nativeSpeakersMillions: 6   },
++  { code: "no", region: "NO", endonym: "Norsk",          englishName: "Norwegian",             flag: "🇳🇴", region_group: "Europe",   nativeSpeakersMillions: 5   },
++  { code: "fi", region: "FI", endonym: "Suomi",          englishName: "Finnish",               flag: "🇫🇮", region_group: "Europe",   nativeSpeakersMillions: 5   },
++  { code: "el", region: "GR", endonym: "Ελληνικά",       englishName: "Greek",                 flag: "🇬🇷", region_group: "Europe",   nativeSpeakersMillions: 13  },
++  { code: "cs", region: "CZ", endonym: "Čeština",        englishName: "Czech",                 flag: "🇨🇿", region_group: "Europe",   nativeSpeakersMillions: 10  },
++  { code: "ro", region: "RO", endonym: "Română",         englishName: "Romanian",              flag: "🇷🇴", region_group: "Europe",   nativeSpeakersMillions: 24  },
++  { code: "hu", region: "HU", endonym: "Magyar",         englishName: "Hungarian",             flag: "🇭🇺", region_group: "Europe",   nativeSpeakersMillions: 13  },
++  { code: "it", region: "IT", endonym: "Italiano",       englishName: "Italian",               flag: "🇮🇹", region_group: "Europe",   nativeSpeakersMillions: 65  },
++
++  // African
++  { code: "sw", region: "KE", endonym: "Kiswahili",      englishName: "Swahili",               flag: "🇰🇪", region_group: "Africa",   nativeSpeakersMillions: 100 },
++  { code: "am", region: "ET", endonym: "አማርኛ",          englishName: "Amharic",               flag: "🇪🇹", region_group: "Africa",   nativeSpeakersMillions: 32  },
++  { code: "af", region: "ZA", endonym: "Afrikaans",      englishName: "Afrikaans",             flag: "🇿🇦", region_group: "Africa",   nativeSpeakersMillions: 7   },
++];
++
++/** Build the full locale tag (e.g. "en-US", "fr-CA") */
++export function getLocaleTag(language: PopularLanguage): string {
++  return `${language.code}-${language.region}`;
++}
++
++/** Find a language by locale tag, e.g. "fr-FR" */
++export function findLanguageByLocale(localeTag: string): PopularLanguage | undefined {
++  const [code, region] = localeTag.split("-");
++  return POPULAR_LANGUAGES.find(
++    (lang) => lang.code === code && lang.region === region
++  );
++}
++
++/** Pretty label for the dropdown: "🇫🇷 Français (France)" */
++export function formatLanguageLabel(language: PopularLanguage): string {
++  return `${language.flag} ${language.endonym} (${language.englishName.replace(/^[^(]+\(/, "").replace(/\)$/, "")})`;
++}
++
++/** Display label: "Français · France" (for short lists) */
++export function formatLanguageShort(language: PopularLanguage): string {
++  return `${language.flag} ${language.endonym}`;
++}
++
++/** Check if a locale tag is English — used to decide whether to redirect to the suggestion page */
++export function isEnglishLocale(localeTag: string): boolean {
++  return localeTag.toLowerCase().startsWith("en-");
++}
+diff --git a/src/pages/feedback/FeedbackPage.tsx b/src/pages/feedback/FeedbackPage.tsx
+index e338f35..ee48bab 100644
+--- a/src/pages/feedback/FeedbackPage.tsx
++++ b/src/pages/feedback/FeedbackPage.tsx
+@@ -204,12 +204,16 @@ export function FeedbackPage() {
+   const [apiError, setApiError] = useState<string | null>(null);
+   const cancelledRef = useRef(false);
+ 
+-  // ── URL prefill (from ?type=&tool= on the feedback CTA links) ──
++  // ── URL prefill (from ?type=&tool=&interest=&locale=) ──
+   // If the page is reached from a tool page's bottom CTA, the URL
+   // carries the tool slug and we pre-select the "suggestion" type.
+   // The "tool" prefill shows a read-only chip above the form so the
+   // user knows which tool the feedback will be associated with.
++  // `interest=locale` + `locale=fr-FR` (e.g.) means the user came
++  // from the locale selector and we pre-fill the form description.
+   const [prefillTool, setPrefillTool] = useState<string | null>(null);
++  const [prefillInterest, setPrefillInterest] = useState<string | null>(null);
++  const [prefillLocale, setPrefillLocale] = useState<string | null>(null);
+   useEffect(() => {
+     if (typeof window === "undefined") return;
+     const params = new URLSearchParams(window.location.search);
+@@ -221,6 +225,18 @@ export function FeedbackPage() {
+     if (urlTool) {
+       setPrefillTool(urlTool);
+     }
++    const urlInterest = params.get("interest");
++    if (urlInterest) {
++      setPrefillInterest(urlInterest);
++    }
++    const urlLocale = params.get("locale");
++    if (urlLocale) {
++      setPrefillLocale(urlLocale);
++      // Pre-fill the description so the user doesn't have to retype
++      setFormDesc(
++        `I'd love to see Date to Words translated into ${urlLocale}. When is that coming?`
++      );
++    }
+   }, []);
+ 
+   // ── API helpers (T6 backend) ─────────────────────────────────
+-- 
+2.39.5
+

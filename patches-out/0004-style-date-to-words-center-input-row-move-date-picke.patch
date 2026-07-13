@@ -1,0 +1,107 @@
+From 26f270298cfd80a87eaf2d31dc015fa60171de22 Mon Sep 17 00:00:00 2001
+From: TimeAndDatePro Agent <agent@timeanddatepro.local>
+Date: Sun, 12 Jul 2026 03:49:13 +0000
+Subject: [PATCH 4/5] style(date-to-words): center input row, move date picker
+ left, right-align actions
+
+- Input row (Date + Language) now centered on the page with a 720px
+  max-width and min/max column sizes for required sizing
+- Date picker trigger moved from right:6px to left:6px (per spec)
+- Date input padding swapped from right to left to make room
+- Output format tabs (NotebookLM pastel) now right-aligned
+- Output action buttons (Copy / Download / Share / Markdown) now
+  right-aligned to match the format tabs
+---
+ src/components/tools/DateToWord.css | 20 +++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/src/components/tools/DateToWord.css b/src/components/tools/DateToWord.css
+index 22aa79b..9e6ae4b 100644
+--- a/src/components/tools/DateToWord.css
++++ b/src/components/tools/DateToWord.css
+@@ -132,12 +132,14 @@
+   font-weight: 500;
+ }
+ 
+-/* ── Input row ────────────────────────────────────────────── */
++/* ── Input row (centered) ─────────────────────────────── */
+ .dtw-input-row {
+   display: grid;
+-  grid-template-columns: 1.4fr 1fr;
++  grid-template-columns: minmax(280px, 380px) minmax(220px, 280px);
+   gap: 12px;
+-  margin-bottom: 20px;
++  margin: 0 auto 20px;
++  justify-content: center;
++  max-width: 720px;
+ }
+ .dtw-field {
+   display: flex;
+@@ -178,6 +180,7 @@
+ /* Date input wrapper: text input + native date picker trigger.
+  * The native picker is visually hidden but kept in the DOM (and
+  * clickable) so the user gets the system calendar widget.
++ * Trigger sits at the LEFT of the input per spec.
+  */
+ .dtw-date-input-wrap {
+   position: relative;
+@@ -185,12 +188,12 @@
+   align-items: stretch;
+ }
+ .dtw-date-input-wrap .dtw-field-input {
+-  padding-right: 44px;
++  padding-left: 44px;
+   flex: 1;
+ }
+ .dtw-date-picker-trigger {
+   position: absolute;
+-  right: 6px;
++  left: 6px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 32px;
+@@ -204,6 +207,7 @@
+   font-size: 14px;
+   transition: all 150ms;
+   user-select: none;
++  z-index: 2;
+ }
+ .dtw-date-picker-trigger:hover {
+   background: var(--color-brand-100);
+@@ -215,7 +219,7 @@
+ }
+ .dtw-date-picker-native {
+   position: absolute;
+-  right: 6px;
++  left: 6px;
+   top: 0;
+   width: 32px;
+   height: 100%;
+@@ -223,7 +227,7 @@
+   cursor: pointer;
+   border: none;
+   background: transparent;
+-  z-index: 1;
++  z-index: 3;
+ }
+ .dtw-date-picker-native::-webkit-calendar-picker-indicator {
+   position: absolute;
+@@ -268,6 +272,7 @@
+   display: flex;
+   gap: 8px;
+   flex-wrap: wrap;
++  justify-content: flex-end;
+ }
+ .dtw-tab {
+   position: relative;
+@@ -390,6 +395,7 @@
+   align-items: center;
+   gap: 8px;
+   flex-wrap: wrap;
++  justify-content: flex-end;
+ }
+ 
+ /* ── Variants ─────────────────────────────────────────────── */
+-- 
+2.39.5
+

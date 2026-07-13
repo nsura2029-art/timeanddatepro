@@ -1,11 +1,12 @@
 // src/components/tools/shared/FeedbackButton.tsx
 // Floating bottom-right "Suggest / Feedback" button + popover form.
 // Standard across all tool pages. Captures suggestions, bug reports,
-// and praise. Persists to localStorage (would POST to /api/v1/feedback
+// and praise. POSTs to /api/v1/captures with localStorage fallback.
 // when the API is wired) and shows a friendly success state.
 
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, X } from "lucide-react";
+import { postCapture } from "../../../lib/api/captures";
 
 type FeedbackType = "suggestion" | "bug" | "praise";
 
@@ -17,6 +18,8 @@ interface CapturedFeedback {
   timestamp: number;
 }
 
+// FEEDBACK_STORAGE_KEY retained as a legacy key for the API client's
+// safe-remove on success. New captures go to /api/v1/captures.
 const FEEDBACK_STORAGE_KEY = "tdp_feedback";
 
 const FEEDBACK_TYPES: { id: FeedbackType; label: string; emoji: string }[] = [
@@ -71,16 +74,15 @@ export const FeedbackButton: React.FC<Props> = ({ pageName, onSubmit }) => {
       page: pageName,
       timestamp: Date.now(),
     };
-    // Persist locally (would POST to /api/v1/feedback in the future)
-    try {
-      const existing = JSON.parse(
-        localStorage.getItem(FEEDBACK_STORAGE_KEY) || "[]"
-      ) as CapturedFeedback[];
-      existing.push(entry);
-      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(existing));
-    } catch {
-      // localStorage may be unavailable (private mode, etc.) — non-fatal
-    }
+    // Fire-and-forget POST to /api/v1/captures. On failure, the API
+    // client falls back to localStorage automatically.
+    void postCapture({
+      type: selectedType,
+      payload: { text: trimmed, email: email.trim() },
+      page: pageName,
+      tool: "date-words",
+      email: email.trim() || undefined,
+    });
     // Console-log for dev visibility
     // eslint-disable-next-line no-console
     console.log("[Feedback]", entry);

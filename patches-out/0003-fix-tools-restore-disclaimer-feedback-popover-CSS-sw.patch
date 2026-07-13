@@ -1,0 +1,454 @@
+From 5b7694743a26584d51d455f508b95cdf3bb1cc16 Mon Sep 17 00:00:00 2001
+From: TimeAndDatePro Agent <agent@timeanddatepro.local>
+Date: Sun, 12 Jul 2026 03:47:10 +0000
+Subject: [PATCH 3/5] fix(tools): restore disclaimer, feedback popover CSS,
+ switch to Lucide icons
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Add missing .disclaimer, .disclaimer-icon, .disclaimer-body,
+  .disclaimer-title, .disclaimer-text styles (lavender soft card)
+- Add missing .feedback-fab, .feedback-trigger, .feedback-popover,
+  .feedback-type, .feedback-textarea, .feedback-input styles
+  (popover was rendering unstyled)
+- Add .tdp-hero-explore-links styles (RelatedToolsGrid component
+  had no CSS, so cards were rendering as plain text)
+- Replace emoji icons with Lucide React:
+  * DateToWord: Clipboard, Download, Share2, Code
+  * FeedbackButton: MessageSquare
+- Robustify Download handler:
+  * appends newline, appends anchor to body, cleans up
+  * shows 'Downloaded .txt' toast confirmation
+- Robustify Share handler:
+  * uses /en/date-words route, encodeURIComponent on date
+  * adds title attributes for tooltips
+- FeedbackButton trigger label toggles 'Suggest / Feedback' ↔ 'Close'
+---
+ src/components/tools/DateToWord.css           | 297 ++++++++++++++++++
+ src/components/tools/DateToWord.tsx           |  31 +-
+ .../tools/shared/FeedbackButton.tsx           |   7 +-
+ 3 files changed, 325 insertions(+), 10 deletions(-)
+
+diff --git a/src/components/tools/DateToWord.css b/src/components/tools/DateToWord.css
+index 8e62fd3..22aa79b 100644
+--- a/src/components/tools/DateToWord.css
++++ b/src/components/tools/DateToWord.css
+@@ -623,6 +623,303 @@
+   to   { opacity: 1; transform: translateY(0); }
+ }
+ 
++/* ── Disclaimer (shared ToolDisclaimer) ─────── */
++.dtw-main .disclaimer {
++  background: var(--color-brand-50);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-2xl);
++  margin-top: 64px;
++  padding: 24px;
++  display: flex;
++  gap: 16px;
++  align-items: flex-start;
++}
++.dtw-main .disclaimer-icon {
++  flex-shrink: 0;
++  width: 32px;
++  height: 32px;
++  background: var(--color-ink);
++  color: #fff;
++  border-radius: 50%;
++  display: grid;
++  place-items: center;
++  font-family: var(--font-family-mono);
++  font-weight: 700;
++  font-size: 14px;
++}
++.dtw-main .disclaimer-body { flex: 1; }
++.dtw-main .disclaimer-title {
++  font-size: 12px;
++  font-weight: 700;
++  color: var(--color-ink);
++  text-transform: uppercase;
++  letter-spacing: 0.08em;
++  margin-bottom: 6px;
++}
++.dtw-main .disclaimer-text {
++  font-size: 13px;
++  line-height: 1.6;
++  color: var(--color-ink-2);
++  margin-bottom: 6px;
++}
++.dtw-main .disclaimer-text:last-child { margin-bottom: 0; }
++.dtw-main .disclaimer-text a {
++  color: var(--color-ink);
++  text-decoration: underline;
++  text-decoration-color: var(--color-muted);
++}
++.dtw-main .disclaimer-text a:hover { text-decoration-color: var(--color-ink); }
++.dtw-main .disclaimer-text strong { color: var(--color-ink); font-weight: 700; }
++
++/* ── Related tools (shared RelatedToolsGrid) ─────── */
++.dtw-main .tdp-hero-explore-links {
++  margin-top: 64px;
++  padding-top: 28px;
++  border-top: 1px solid rgba(48, 39, 82, 0.08);
++  width: 100%;
++}
++.dtw-main .tdp-hero-explore-links-header {
++  display: flex;
++  align-items: baseline;
++  justify-content: space-between;
++  gap: 12px;
++  margin-bottom: 20px;
++}
++.dtw-main .tdp-hero-explore-links-eyebrow {
++  font-family: var(--font-family-sans);
++  font-weight: 700;
++  font-size: 11px;
++  letter-spacing: 0.14em;
++  text-transform: uppercase;
++  color: var(--color-ink);
++  margin: 0;
++}
++.dtw-main .tdp-hero-explore-links-meta { font-size: 11px; font-weight: 500; color: var(--color-muted); }
++.dtw-main .tdp-hero-explore-links-grid {
++  list-style: none;
++  margin: 0;
++  padding: 0;
++  display: grid;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
++  gap: 12px 14px;
++}
++.dtw-main .tdp-hero-explore-links-item { width: 100%; }
++.dtw-main .tdp-hero-explore-links-link {
++  display: flex;
++  align-items: center;
++  gap: 9px;
++  width: 100%;
++  padding: 12px 14px;
++  text-decoration: none;
++  border-radius: 12px;
++  font-size: 13.5px;
++  font-weight: 600;
++  line-height: 1.2;
++  letter-spacing: -0.005em;
++  position: relative;
++  overflow: hidden;
++  isolation: isolate;
++  transition: transform 0.22s var(--motion-ease-out),
++              box-shadow 0.22s var(--motion-ease-out),
++              filter 0.22s var(--motion-ease-out);
++  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 2px 6px -1px rgba(48, 39, 82, 0.08);
++}
++.dtw-main .tdp-hero-explore-links-link::before {
++  content: "";
++  position: absolute;
++  top: 0;
++  left: 12px;
++  right: 12px;
++  height: 1px;
++  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.7) 50%, transparent 100%);
++  pointer-events: none;
++}
++.dtw-main .tdp-hero-explore-links-link:hover {
++  transform: translateY(-2px);
++  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset,
++              0 8px 20px -4px rgba(48, 39, 82, 0.16),
++              0 2px 6px -1px rgba(48, 39, 82, 0.08);
++  filter: saturate(1.1);
++}
++.dtw-main .tdp-hero-explore-links-link--lavender { background: linear-gradient(135deg, #ECE4FF 0%, #E0D4FF 100%); color: #3A2A7A; }
++.dtw-main .tdp-hero-explore-links-link--mint     { background: linear-gradient(135deg, #DDF3E4 0%, #C8EBD4 100%); color: #1C5A3A; }
++.dtw-main .tdp-hero-explore-links-link--amber    { background: linear-gradient(135deg, #FDEAC6 0%, #FBDD9C 100%); color: #6B4912; }
++.dtw-main .tdp-hero-explore-links-link--sky      { background: linear-gradient(135deg, #D9EAFC 0%, #C5DDF9 100%); color: #1C3D6B; }
++.dtw-main .tdp-hero-explore-links-icon {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  width: 28px;
++  height: 28px;
++  border-radius: 8px;
++  background: rgba(255, 255, 255, 0.65);
++  color: inherit;
++  flex-shrink: 0;
++  font-size: 14px;
++  box-shadow: 0 1px 2px rgba(48, 39, 82, 0.08);
++}
++.dtw-main .tdp-hero-explore-links-text {
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  min-width: 0;
++  flex: 1;
++}
++@media (max-width: 1023px) {
++  .dtw-main .tdp-hero-explore-links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
++}
++@media (max-width: 640px) {
++  .dtw-main .tdp-hero-explore-links-grid { grid-template-columns: minmax(0, 1fr); }
++  .dtw-main .tdp-hero-explore-links { margin-top: 24px; padding-top: 18px; }
++  .dtw-main .tdp-hero-explore-links-link { padding: 10px 12px; }
++}
++
++/* ── Feedback FAB (shared FeedbackButton) ───────── */
++.feedback-fab {
++  position: fixed;
++  bottom: 24px;
++  right: 24px;
++  z-index: 50;
++}
++.feedback-trigger {
++  display: inline-flex;
++  align-items: center;
++  gap: 8px;
++  padding: 12px 20px;
++  background: var(--color-ink);
++  color: #fff;
++  border: none;
++  border-radius: var(--radius-pill);
++  font-family: var(--font-family-sans);
++  font-size: 13px;
++  font-weight: 600;
++  cursor: pointer;
++  box-shadow: 0 8px 24px rgba(48, 39, 82, 0.2);
++  transition: all 200ms;
++}
++.feedback-trigger:hover {
++  background: var(--color-brand-600);
++  transform: translateY(-2px);
++  box-shadow: 0 12px 32px rgba(114, 87, 213, 0.3);
++}
++.feedback-trigger-icon { font-size: 16px; display: inline-flex; }
++.feedback-popover {
++  position: absolute;
++  bottom: 56px;
++  right: 0;
++  width: 360px;
++  max-width: calc(100vw - 48px);
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-2xl);
++  box-shadow: var(--shadow-hero);
++  overflow: hidden;
++  transform: translateY(8px) scale(0.95);
++  opacity: 0;
++  pointer-events: none;
++  transition: all 250ms var(--motion-ease-out);
++  transform-origin: bottom right;
++}
++.feedback-popover.open {
++  transform: translateY(0) scale(1);
++  opacity: 1;
++  pointer-events: auto;
++}
++.feedback-popover-body { padding: 0; }
++.feedback-popover-head {
++  padding: 18px 20px 14px;
++  border-bottom: 1px solid rgba(48, 39, 82, 0.06);
++}
++.feedback-popover-title {
++  font-size: 15px;
++  font-weight: 700;
++  color: var(--color-ink);
++  margin-bottom: 4px;
++  display: flex;
++  align-items: center;
++  gap: 8px;
++}
++.feedback-popover-title::before { content: "💡"; }
++.feedback-popover-sub { font-size: 12px; color: var(--color-ink-2); line-height: 1.4; }
++.feedback-type-row { display: flex; gap: 6px; padding: 14px 20px 4px; }
++.feedback-type {
++  flex: 1;
++  padding: 8px 10px;
++  font-size: 12px;
++  font-weight: 600;
++  color: var(--color-ink-2);
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-pill);
++  cursor: pointer;
++  transition: all 150ms;
++  font-family: var(--font-family-sans);
++  text-align: center;
++}
++.feedback-type:hover { background: var(--color-brand-50); }
++.feedback-type.active {
++  background: var(--color-ink);
++  color: #fff;
++  border-color: var(--color-ink);
++}
++.feedback-textarea {
++  display: block;
++  width: calc(100% - 40px);
++  margin: 12px 20px 0;
++  min-height: 80px;
++  padding: 10px 12px;
++  font-family: var(--font-family-sans);
++  font-size: 13px;
++  color: var(--color-ink);
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-md);
++  resize: vertical;
++  outline: none;
++  transition: border-color 150ms, box-shadow 150ms;
++}
++.feedback-textarea:focus {
++  border-color: var(--color-brand-500);
++  box-shadow: var(--shadow-focus);
++}
++.feedback-input {
++  display: block;
++  width: calc(100% - 40px);
++  margin: 8px 20px 0;
++  padding: 10px 12px;
++  font-family: var(--font-family-sans);
++  font-size: 13px;
++  color: var(--color-ink);
++  background: var(--color-surface);
++  border: 1px solid var(--color-border);
++  border-radius: var(--radius-md);
++  outline: none;
++  transition: border-color 150ms, box-shadow 150ms;
++}
++.feedback-input:focus {
++  border-color: var(--color-brand-500);
++  box-shadow: var(--shadow-focus);
++}
++.feedback-actions {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  padding: 14px 20px 18px;
++  margin-top: 4px;
++}
++.feedback-hint { font-size: 11px; color: var(--color-muted); }
++.feedback-success {
++  padding: 28px 20px;
++  text-align: center;
++  color: var(--color-mint-ink);
++  background: var(--color-mint);
++}
++.feedback-success-icon { font-size: 28px; margin-bottom: 8px; display: block; }
++@media (max-width: 480px) {
++  .feedback-fab { bottom: 16px; right: 16px; }
++  .feedback-popover { width: calc(100vw - 32px); }
++}
++
+ /* ── Mobile ───────────────────────────────────────────────── */
+ @media (max-width: 768px) {
+   .dtw-hero { grid-template-columns: 1fr; }
+diff --git a/src/components/tools/DateToWord.tsx b/src/components/tools/DateToWord.tsx
+index 60176bb..03dcf39 100644
+--- a/src/components/tools/DateToWord.tsx
++++ b/src/components/tools/DateToWord.tsx
+@@ -9,6 +9,12 @@
+ // locale is chosen.
+ 
+ import React, { useState, useMemo, useCallback } from "react";
++import {
++  Clipboard,
++  Download,
++  Share2,
++  Code,
++} from "lucide-react";
+ import {
+   convertDateToWords,
+   type DateFormatId,
+@@ -345,34 +351,41 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
+                   handleCopyToClipboard(selectedText, "Copied to clipboard")
+                 }
+               >
+-                📋 Copy
++                <Clipboard size={14} strokeWidth={2.2} />
++                Copy
+               </button>
+               <button
+                 type="button"
+                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
+                 onClick={() => {
+-                  const blob = new Blob([selectedText], { type: "text/plain" });
++                  const blob = new Blob([selectedText + "\n"], { type: "text/plain" });
+                   const url = URL.createObjectURL(blob);
+                   const a = document.createElement("a");
+                   a.href = url;
+                   a.download = `date-${selectedDate}-${selectedFormat}.txt`;
++                  document.body.appendChild(a);
+                   a.click();
++                  document.body.removeChild(a);
+                   URL.revokeObjectURL(url);
+-                  setToastMessage("Downloaded");
++                  setToastMessage("Downloaded .txt");
+                   setTimeout(() => setToastMessage(null), 2200);
+                 }}
++                title={`Save "${selectedText}" as a .txt file`}
+               >
+-                ⬇ Download .txt
++                <Download size={14} strokeWidth={2.2} />
++                Download .txt
+               </button>
+               <button
+                 type="button"
+                 className="tdp-btn tdp-btn--secondary tdp-btn--md"
+                 onClick={() => {
+-                  const shareUrl = `${window.location.origin}/date-words?date=${selectedDate}&format=${selectedFormat}&locale=${selectedLocale}`;
++                  const shareUrl = `${window.location.origin}/en/date-words?date=${encodeURIComponent(selectedDate)}&format=${selectedFormat}&locale=${selectedLocale}`;
+                   handleCopyToClipboard(shareUrl, "Share link copied");
+                 }}
++                title="Copy a shareable link to this conversion"
+               >
+-                ↗ Share link
++                <Share2 size={14} strokeWidth={2.2} />
++                Share link
+               </button>
+               <button
+                 type="button"
+@@ -380,8 +393,10 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
+                 onClick={() =>
+                   handleCopyToClipboard(`**${selectedText}**`, "Markdown copied")
+                 }
++                title="Copy the result formatted as Markdown bold"
+               >
+-                ⎘ Markdown
++                <Code size={14} strokeWidth={2.2} />
++                Markdown
+               </button>
+             </div>
+           </div>
+@@ -400,7 +415,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
+                     }
+                     aria-label={`Copy ${variant.label} variant`}
+                   >
+-                    📋
++                    <Clipboard size={12} strokeWidth={2.2} />
+                   </button>
+                   <button
+                     type="button"
+diff --git a/src/components/tools/shared/FeedbackButton.tsx b/src/components/tools/shared/FeedbackButton.tsx
+index d2c48ed..e3d9dd9 100644
+--- a/src/components/tools/shared/FeedbackButton.tsx
++++ b/src/components/tools/shared/FeedbackButton.tsx
+@@ -5,6 +5,7 @@
+ // when the API is wired) and shows a friendly success state.
+ 
+ import React, { useState, useRef, useEffect } from "react";
++import { MessageSquare, X } from "lucide-react";
+ 
+ type FeedbackType = "suggestion" | "bug" | "praise";
+ 
+@@ -173,8 +174,10 @@ export const FeedbackButton: React.FC<Props> = ({ pageName, onSubmit }) => {
+         aria-expanded={isOpen}
+         aria-haspopup="dialog"
+       >
+-        <span className="feedback-trigger-icon">💬</span>
+-        <span>Suggest / Feedback</span>
++        <span className="feedback-trigger-icon">
++          <MessageSquare size={16} strokeWidth={2.2} />
++        </span>
++        <span>{isOpen ? "Close" : "Suggest / Feedback"}</span>
+       </button>
+     </div>
+   );
+-- 
+2.39.5
+

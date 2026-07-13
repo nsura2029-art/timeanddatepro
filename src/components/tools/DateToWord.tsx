@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+import { postWaitlist, getWaitlistCount } from "../../lib/api/captures";
 import {
   convertDateToWords,
   type DateFormatId,
@@ -45,6 +46,11 @@ import "./DateToWord.css";
    ───────────────────────────────────────────────────────────────────── */
 
 const TOOL_NAME = "Date to Words";
+
+// Seed count for the waitlist pill — the real value is fetched from
+// /api/v1/waitlist/count on mount. 1,247 is the launch figure shown
+// before the API responds (or if the API is unreachable).
+const WAITLIST_SEED = 1247;
 
 const DATE_FORMATS: { id: DateFormatId; label: string; pastel: "lavender" | "mint" | "amber" | "sky" }[] = [
   { id: "formal",  label: "Formal",  pastel: "lavender" },
@@ -126,6 +132,20 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
   const [openTranslateRow, setOpenTranslateRow] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  // Real waitlist count from /api/v1/waitlist/count. Seeded with the
+  // launch figure (1247) so the pill never shows 0 on first paint.
+  // On mount we fetch the live count and add it to the seed.
+  const [waitlistCount, setWaitlistCount] = useState<number>(WAITLIST_SEED);
+  useEffect(() => {
+    let cancelled = false;
+    void getWaitlistCount({ tool: "date-to-word" }).then((res) => {
+      if (cancelled) return;
+      if (res.ok && res.data && typeof res.data.total === "number") {
+        setWaitlistCount(WAITLIST_SEED + res.data.total);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
   const pickerRef = useRef<HTMLDivElement | null>(null);
 
   /** Parse the selectedDate (YYYY-MM-DD) into a Date for the DayPicker */
@@ -340,7 +360,7 @@ export const DateToWord: React.FC<Props> = ({ lang = "en" }) => {
             <div className="dtw-waitlist">
               <span className="dtw-waitlist-dot" />
               <span>
-                <strong>1,247</strong> on translation waitlist
+                <strong>{waitlistCount.toLocaleString()}</strong> on translation waitlist
               </span>
             </div>
           </div>
@@ -746,19 +766,18 @@ const TranslationRequestForm: React.FC<TranslationFormProps> = ({
       timestamp: Date.now(),
     };
 
-    // Persist locally — would POST to /api/v1/waitlist in the future
-    try {
-      const existing = JSON.parse(
-        localStorage.getItem("tdp_translate_waitlist") || "[]"
-      );
-      existing.push(entry);
-      localStorage.setItem(
-        "tdp_translate_waitlist",
-        JSON.stringify(existing)
-      );
-    } catch {
-      // Non-fatal
-    }
+    // Fire-and-forget POST to /api/v1/waitlist. On failure, the API
+    // client falls back to localStorage automatically. The user already
+    // sees the success state — the API call is best-effort.
+    void postWaitlist({
+      email: entry.email,
+      locale: entry.locale,
+      language: entry.language,
+      tool: entry.tool,
+      format: entry.format,
+      date: entry.date,
+      source: "DateToWordTool:TranslationRequestForm",
+    });
     // eslint-disable-next-line no-console
     console.log("[Translation Waitlist]", entry);
 

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design B — Date to Word Converter (Stripe / Notion style)</title>
+  <style>
+    /* ── Reset & base ────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:           #F7F5F0;       /* warm parchment */
+      --surface:      #FFFFFF;
+      --surface-2:    #FBF9F4;
+      --ink:          #1A1A1A;
+      --ink-2:        #3F3F3F;
+      --ink-3:        #6B6B6B;
+      --ink-4:        #A3A3A3;
+      --rule:         #E6E1D6;       /* warm hairline */
+      --rule-strong:  #D4CDB9;
+      --accent:       #635BFF;       /* Stripe-style indigo */
+      --accent-soft:  #EDEBFF;
+      --success:      #0E7C3A;
+      --serif:        "Source Serif 4", "Iowan Old Style", "Apple Garamond", "Baskerville", Georgia, serif;
+      --sans:         "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono:         "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+    }
+    html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Layout: 2-column with sidebar ────────────────── */
+    .shell { max-width: 1180px; margin: 0 auto; padding: 40px 32px 80px; width: 100%; flex: 1; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding-bottom: 64px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+    .nav-mark { width: 26px; height: 26px; background: var(--ink); border-radius: 7px; display: grid; place-items: center; }
+    .nav-mark::before { content: ""; width: 12px; height: 12px; background: var(--bg); border-radius: 50%; }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a { color: var(--ink-3); text-decoration: none; font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: var(--ink); }
+
+    .layout { display: grid; grid-template-columns: 1fr 320px; gap: 64px; align-items: start; }
+
+    /* ── Main column ──────────────────────────────────── */
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: var(--accent-soft); color: var(--accent); border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 28px; }
+    .hero-eyebrow::before { content: ""; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+    h1 { font-family: var(--serif); font-size: 56px; line-height: 1.05; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 18px; }
+    h1 em { font-style: italic; color: var(--ink-2); }
+    .lede { font-size: 18px; line-height: 1.55; color: var(--ink-3); max-width: 540px; margin-bottom: 56px; }
+
+    /* ── Input card ────────────────────────────────────── */
+    .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; }
+    .panel-head { padding: 20px 24px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; }
+    .panel-step { font-size: 12px; color: var(--ink-4); font-family: var(--mono); }
+    .panel-body { padding: 24px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+    .field-input, .field-select { font-family: var(--sans); font-size: 16px; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px; color: var(--ink); outline: none; transition: border-color 120ms, background 120ms; }
+    .field-input:focus, .field-select:focus { border-color: var(--ink); background: var(--surface); }
+    .field-input.mono { font-family: var(--mono); font-size: 15px; }
+
+    .format-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+    .format-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; transition: all 120ms; }
+    .format-item:hover { border-color: var(--rule-strong); }
+    .format-item.checked { border-color: var(--ink); background: var(--surface-2); box-shadow: 0 0 0 1px var(--ink); }
+    .format-item-left { display: flex; align-items: center; gap: 12px; }
+    .format-radio { width: 16px; height: 16px; border: 1.5px solid var(--rule-strong); border-radius: 50%; position: relative; flex-shrink: 0; }
+    .format-item.checked .format-radio { border-color: var(--ink); }
+    .format-item.checked .format-radio::after { content: ""; position: absolute; inset: 3px; background: var(--ink); border-radius: 50%; }
+    .format-item-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+    .format-item-sample { font-size: 12px; color: var(--ink-3); font-family: var(--mono); }
+
+    /* ── Convert CTA ────────────────────────────────────── */
+    .cta-row { display: flex; gap: 12px; margin-top: 24px; align-items: center; }
+    .btn { font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 12px 22px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: all 120ms; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: var(--ink); color: var(--bg); }
+    .btn-primary:hover { background: #2D2D2D; }
+    .btn-ghost { background: transparent; color: var(--ink-2); padding: 12px 16px; }
+    .btn-ghost:hover { color: var(--ink); }
+    .btn-link { background: transparent; color: var(--accent); padding: 12px 0; }
+    .btn-link:hover { text-decoration: underline; }
+    .btn-icon { width: 16px; height: 16px; }
+
+    /* ── Output card ────────────────────────────────────── */
+    .output { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 40px; margin-top: 32px; position: relative; }
+    .output-eyebrow { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .output-eyebrow::before { content: ""; width: 8px; height: 1px; background: var(--ink-3); }
+    .output-eyebrow .fmt-tag { background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-family: var(--mono); }
+    .output-body { font-family: var(--serif); font-size: 44px; line-height: 1.2; font-weight: 400; letter-spacing: -0.015em; color: var(--ink); margin-bottom: 32px; padding: 16px 0 24px; border-bottom: 1px solid var(--rule); }
+    .output-actions { display: flex; gap: 8px; align-items: center; }
+    .output-actions .btn { padding: 8px 14px; font-size: 13px; }
+    .copy-toast { margin-left: auto; font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity 200ms; }
+    .copy-toast.show { opacity: 1; }
+
+    /* ── Variants ───────────────────────────────────────── */
+    .variants { margin-top: 24px; display: flex; flex-direction: column; gap: 4px; }
+    .variant { display: grid; grid-template-columns: 100px 1fr 24px; align-items: center; padding: 12px 14px; border-radius: 8px; cursor: pointer; transition: background 120ms; }
+    .variant:hover { background: var(--surface-2); }
+    .variant-label { font-size: 12px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .variant-text { font-size: 14px; color: var(--ink); font-family: var(--serif); }
+    .variant-copy { opacity: 0; transition: opacity 120ms; color: var(--ink-4); font-size: 14px; }
+    .variant:hover .variant-copy { opacity: 1; }
+
+    /* ── Sidebar ────────────────────────────────────────── */
+    .sidebar { position: sticky; top: 40px; display: flex; flex-direction: column; gap: 24px; }
+    .side-card { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; }
+    .side-card-title { font-size: 12px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .side-card-title .count { font-family: var(--mono); font-size: 11px; color: var(--ink-4); font-weight: 500; }
+
+    .use-list { display: flex; flex-direction: column; gap: 4px; }
+    .use-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background 120ms; }
+    .use-item:hover { background: var(--surface-2); }
+    .use-left { display: flex; align-items: center; gap: 10px; }
+    .use-emoji { font-size: 16px; }
+    .use-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+    .use-arrow { color: var(--ink-4); font-size: 12px; opacity: 0; transition: opacity 120ms; }
+    .use-item:hover .use-arrow { opacity: 1; }
+
+    .meta-list { display: flex; flex-direction: column; gap: 10px; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+    .meta-label { color: var(--ink-3); }
+    .meta-value { color: var(--ink); font-family: var(--mono); }
+
+    /* ── History strip ──────────────────────────────────── */
+    .history { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; margin-top: 32px; }
+    .history-head { padding: 16px 24px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+    .history-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; }
+    .history-link { font-size: 12px; color: var(--accent); text-decoration: none; }
+    .history-row { display: grid; grid-template-columns: 100px 1fr 1fr 80px 24px; align-items: center; padding: 14px 24px; border-bottom: 1px solid var(--rule); cursor: pointer; gap: 16px; }
+    .history-row:last-child { border-bottom: none; }
+    .history-row:hover { background: var(--surface-2); }
+    .history-input { font-family: var(--mono); font-size: 13px; color: var(--ink-2); }
+    .history-text { font-size: 14px; color: var(--ink); }
+    .history-fmt { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .history-time { font-size: 12px; color: var(--ink-4); }
+
+    /* ── SEO content ───────────────────────────────────── */
+    .seo { margin-top: 80px; padding-top: 56px; border-top: 1px solid var(--rule); max-width: 720px; }
+    .seo h2 { font-family: var(--serif); font-size: 32px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 20px; margin-top: 48px; }
+    .seo h2:first-of-type { margin-top: 0; }
+    .seo p { font-size: 16px; line-height: 1.7; color: var(--ink-2); margin-bottom: 16px; }
+    .seo strong { color: var(--ink); font-weight: 600; }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer { border-top: 1px solid var(--rule); padding: 32px; text-align: center; font-size: 13px; color: var(--ink-4); margin-top: 64px; }
+    .footer a { color: var(--ink-3); text-decoration: none; margin: 0 12px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Navigation -->
+    <nav class="nav">
+      <div class="nav-brand">
+        <span class="nav-mark"></span>
+        <span>TimeAndDatePro</span>
+      </div>
+      <div class="nav-links">
+        <a href="#">All tools</a>
+        <a href="#">API</a>
+        <a href="#">Pricing</a>
+        <a href="#">Sign in</a>
+        <a href="#" style="color: var(--ink); font-weight: 600;">Get started →</a>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <!-- ── Main column ────────────────────────────────── -->
+      <main>
+        <div class="hero-eyebrow">Date to Words</div>
+        <h1>Make any date<br><em>speak for itself.</em></h1>
+        <p class="lede">Convert calendar dates to formal written words for legal documents, financial instruments, and official forms. Five formats, 1 to 9999, locale-aware.</p>
+
+        <!-- Input panel -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">1 · Choose a date</span>
+            <span class="panel-step">YYYY-MM-DD</span>
+          </div>
+          <div class="panel-body">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">Date</label>
+                <input class="field-input mono" type="text" value="2026-07-11" />
+              </div>
+              <div class="field">
+                <label class="field-label">Locale</label>
+                <select class="field-select">
+                  <option>English (US)</option>
+                  <option>English (UK)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top: 16px;">
+              <label class="field-label">Output format</label>
+              <div class="format-list">
+                <div class="format-item">
+                  <div class="format-item-left">
+                    <span class="format-radio"></span>
+                    <span class="format-item-name">Formal</span>
+                  </div>
+                  <span class="format-item-sample">Eleventh of July, Two Thousand Twenty-Six</span>
+                </div>
+                <div class="format-item checked">
+                  <div class="format-item-left">
+                    <span class="format-radio"></span>
+                    <span class="format-item-name">Legal</span>
+                  </div>
+                  <span class="format-item-sample">Eleventh day of July, Two Thousand Twenty-Six</span>
+                </div>
+                <div class="format-item">
+                  <div class="format-item-left">
+                    <span class="format-radio"></span>
+                    <span class="format-item-name">Banking</span>
+                  </div>
+                  <span class="format-item-sample">Eleventh July, Two Thousand Twenty-Six</span>
+                </div>
+                <div class="format-item">
+                  <div class="format-item-left">
+                    <span class="format-radio"></span>
+                    <span class="format-item-name">Casual</span>
+                  </div>
+                  <span class="format-item-sample">July eleventh, twenty twenty-six</span>
+                </div>
+                <div class="format-item">
+                  <div class="format-item-left">
+                    <span class="format-radio"></span>
+                    <span class="format-item-name">British</span>
+                  </div>
+                  <span class="format-item-sample">Eleventh day of July, Two Thousand <em>and</em> Twenty-Six</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-row">
+              <button class="btn btn-primary">Convert →</button>
+              <button class="btn btn-ghost">Reset</button>
+              <span style="margin-left: auto; font-size: 12px; color: var(--ink-4);">Takes &lt; 50ms · No tracking</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output card -->
+        <div class="output">
+          <div class="output-eyebrow">
+            <span>Result</span>
+            <span class="fmt-tag">legal</span>
+          </div>
+          <div class="output-body">Eleventh day of July,<br>Two Thousand Twenty-Six</div>
+          <div class="output-actions">
+            <button class="btn btn-primary">📋 Copy</button>
+            <button class="btn btn-ghost">⬇ Download .txt</button>
+            <button class="btn btn-ghost">↗ Share link</button>
+            <span class="copy-toast" id="copyToast">✓ Copied to clipboard</span>
+          </div>
+        </div>
+
+        <!-- All variants -->
+        <div style="margin-top: 32px;">
+          <div class="output-eyebrow" style="margin-bottom: 12px;">
+            <span>All five variants</span>
+          </div>
+          <div class="variants">
+            <div class="variant">
+              <span class="variant-label">Formal</span>
+              <span class="variant-text">Eleventh of July, Two Thousand Twenty-Six</span>
+              <span class="variant-copy">📋</span>
+            </div>
+            <div class="variant">
+              <span class="variant-label">Legal</span>
+              <span class="variant-text">Eleventh day of July, Two Thousand Twenty-Six</span>
+              <span class="variant-copy">📋</span>
+            </div>
+            <div class="variant">
+              <span class="variant-label">Banking</span>
+              <span class="variant-text">Eleventh July, Two Thousand Twenty-Six</span>
+              <span class="variant-copy">📋</span>
+            </div>
+            <div class="variant">
+              <span class="variant-label">Casual</span>
+              <span class="variant-text">July eleventh, twenty twenty-six</span>
+              <span class="variant-copy">📋</span>
+            </div>
+            <div class="variant">
+              <span class="variant-label">British</span>
+              <span class="variant-text">Eleventh day of July, Two Thousand <em>and</em> Twenty-Six</span>
+              <span class="variant-copy">📋</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="history">
+          <div class="history-head">
+            <span class="history-title">Recent conversions</span>
+            <a href="#" class="history-link">View all →</a>
+          </div>
+          <div class="history-row">
+            <span class="history-input">2026-07-11</span>
+            <span class="history-text">First of January, Two Thousand Twenty-Five</span>
+            <span class="history-fmt">legal</span>
+            <span class="history-time">2 min</span>
+            <span style="color: var(--ink-4);">↗</span>
+          </div>
+          <div class="history-row">
+            <span class="history-input">1985-07-11</span>
+            <span class="history-text">Eleventh of July, Nineteen Eighty-Five</span>
+            <span class="history-fmt">formal</span>
+            <span class="history-time">1 hr</span>
+            <span style="color: var(--ink-4);">↗</span>
+          </div>
+          <div class="history-row">
+            <span class="history-input">2100-01-01</span>
+            <span class="history-text">First of January, Twenty-One Hundred</span>
+            <span class="history-fmt">banking</span>
+            <span class="history-time">2d</span>
+            <span style="color: var(--ink-4);">↗</span>
+          </div>
+        </div>
+
+        <!-- SEO content -->
+        <section class="seo">
+          <h2>How to write dates in formal words</h2>
+          <p>Written dates are required for legal documents, financial instruments, and official forms in most jurisdictions. Unlike numeric dates, words <strong>cannot be altered after signing</strong> — making them the standard for contracts, cheques, affidavits, and government records.</p>
+
+          <h2>The legal date format</h2>
+          <p>The legal format — <em>"Eleventh day of July, Two Thousand Twenty-Six"</em> — follows the centuries-old convention of expressing the day as an ordinal, the month by name, and the year in full words. This format eliminates ambiguity from numeric date systems (MM/DD vs DD/MM) and provides a permanent record that resists tampering.</p>
+
+          <h2>How to write a cheque date in words</h2>
+          <p>On a cheque, the date line traditionally uses the <strong>banking format</strong>: <em>"Eleventh July, Two Thousand Twenty-Six"</em>. The day is written as an ordinal, the month by name, and the year spelled out in full. Many banks reject cheques with abbreviated years.</p>
+        </section>
+      </main>
+
+      <!-- ── Sidebar ────────────────────────────────────── -->
+      <aside class="sidebar">
+        <!-- Use cases card -->
+        <div class="side-card">
+          <div class="side-card-title">
+            <span>Use cases</span>
+            <span class="count">5</span>
+          </div>
+          <div class="use-list">
+            <div class="use-item">
+              <div class="use-left">
+                <span class="use-emoji">📜</span>
+                <span class="use-name">Legal & contracts</span>
+              </div>
+              <span class="use-arrow">→</span>
+            </div>
+            <div class="use-item">
+              <div class="use-left">
+                <span class="use-emoji">🏦</span>
+                <span class="use-name">Cheques & drafts</span>
+              </div>
+              <span class="use-arrow">→</span>
+            </div>
+            <div class="use-item">
+              <div class="use-left">
+                <span class="use-emoji">🛂</span>
+                <span class="use-name">Passports & visas</span>
+              </div>
+              <span class="use-arrow">→</span>
+            </div>
+            <div class="use-item">
+              <div class="use-left">
+                <span class="use-emoji">💼</span>
+                <span class="use-name">Board resolutions</span>
+              </div>
+              <span class="use-arrow">→</span>
+            </div>
+            <div class="use-item">
+              <div class="use-left">
+                <span class="use-emoji">💌</span>
+                <span class="use-name">Wedding invites</span>
+              </div>
+              <span class="use-arrow">→</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metadata card -->
+        <div class="side-card">
+          <div class="side-card-title">Today's date</div>
+          <div class="meta-list">
+            <div class="meta-row"><span class="meta-label">ISO</span><span class="meta-value">2026-07-11</span></div>
+            <div class="meta-row"><span class="meta-label">Weekday</span><span class="meta-value">Saturday</span></div>
+            <div class="meta-row"><span class="meta-label">Day of year</span><span class="meta-value">192 / 365</span></div>
+            <div class="meta-row"><span class="meta-label">Week</span><span class="meta-value">28</span></div>
+            <div class="meta-row"><span class="meta-label">Days left</span><span class="meta-value">173</span></div>
+          </div>
+        </div>
+
+        <!-- API card -->
+        <div class="side-card" style="background: var(--ink); color: var(--bg); border-color: var(--ink);">
+          <div class="side-card-title" style="color: var(--bg);">Use the API</div>
+          <div style="font-family: var(--mono); font-size: 12px; line-height: 1.6; color: rgba(247,245,240,0.8); padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 12px;">
+            <div style="color: var(--ink-4);">$</div>curl -X POST /api/v1/tools/date-to-word \<br>
+            &nbsp;&nbsp;-d '{"date":"2026-07-11",<br>
+            &nbsp;&nbsp;"format":"legal"}'
+          </div>
+          <a href="#" style="color: var(--bg); font-size: 13px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">Read API docs →</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">API</a>
+    <a href="#">Changelog</a>
+    <span>·</span>
+    <span>© 2026 TimeAndDatePro</span>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.btn-primary, .variant').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.classList.contains('variant')) return;
+        const t = document.getElementById('copyToast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+      });
+    });
+    document.querySelectorAll('.format-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.format-item').forEach(x => x.classList.remove('checked'));
+        el.classList.add('checked');
+      });
+    });
+  </script>
+</body>
+</html>

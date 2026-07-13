@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date to Words Converter — Free Online Tool | TimeAndDatePro</title>
+  <meta name="description" content="Convert any date (1-9999) to written words for legal documents, cheques, passports, and contracts. Five formats: formal, legal, banking, casual, British. Free, no signup, locale-aware." />
+  <meta name="keywords" content="date to words, date in words, write date in words, legal date format, cheque date, date in words converter, ordinal date, number to words date" />
+  <link rel="canonical" href="https://dateandtime.live/tools/date-to-word" />
+
+  <!-- FAQ Schema (JSON-LD) for rich results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I write a date in formal words?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use the formal format: day + 'of' + month + ',' + year. Example: 'Eleventh of July, Two Thousand Twenty-Six'. This format is accepted on legal documents, contracts, and government forms in most English-speaking jurisdictions."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I write a date on a cheque?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use the banking format on the date line of a cheque: 'Eleventh July, Two Thousand Twenty-Six'. Write the day as an ordinal (Eleventh, not 11), the month by name, and the year spelled out in full. Many banks reject cheques with abbreviated years."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What years does this support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any year from 1 to 9999. Year 1 becomes 'One', year 1985 becomes 'One Thousand Nine Hundred Eighty-Five', and year 9999 becomes 'Nine Thousand Nine Hundred Ninety-Nine'. Negative years (BCE) are not currently supported."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the difference between 'Legal' and 'Formal' format?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Legal format includes the 'day of' connector: 'Eleventh day of July, Two Thousand Twenty-Six'. Formal format omits it: 'Eleventh of July, Two Thousand Twenty-Six'. Both are accepted on legal documents; Legal format is the more traditional American convention."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it support non-English dates?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Currently English (US) and English (UK) are fully supported. The 'and' conjunction in the year (British) is the only UK-specific difference. French, German, Spanish, Italian, Portuguese, and Japanese are planned for Phase 2 (Q1 2027)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the conversion done on my device or a server?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The conversion runs entirely in your browser (client-side). Your dates are never sent to a server. This is faster, works offline once loaded, and keeps any sensitive dates (passport numbers, contract dates) private."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I bulk-convert a list of dates?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — sign in for free, then upload a CSV with up to 10,000 dates. The bulk endpoint returns all five formats per row and supports custom format selection per row. Free tier includes 1,000 conversions/month."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there an API?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. POST /api/v1/tools/date-to-word accepts JSON {date, locale, format} and returns all five variants with metadata. Free tier: 100 requests/day. No auth required. Rate-limit headers included. See API docs for full schema."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- HowTo Schema for 'How it works' section -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to write a date in formal words",
+    "description": "Convert any calendar date to written words in three simple steps.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Enter your date",
+        "text": "Type or paste a date in any common format: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, or spelled out (e.g. '11 July 2026'). The parser auto-detects the format."
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Pick a format",
+        "text": "Choose from five formats: Formal, Legal, Banking, Casual, or British. Each is suited to a different document type — cheques need Banking, contracts need Legal, invitations need Casual."
+        }
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Copy the result",
+        "text": "Click Copy, download as .txt, or share a link. The result is also available in the API response as JSON for developers."
+      }
+    ],
+    "totalTime": "PT5S"
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* beui.dev aesthetic: warm off-white + bold orange accent + confident type */
+      --bg:           #FAF7F2;
+      --surface:      #FFFFFF;
+      --surface-2:    #F2EEE7;
+      --surface-3:    #E8E2D6;
+      --ink:          #0F0E0C;
+      --ink-2:        #3A3631;
+      --ink-3:        #6F6A60;
+      --ink-4:        #A39E92;
+      --rule:         #E2DCCE;
+      --rule-2:       #C9C0AB;
+      /* Bold orange (beui.dev signature) */
+      --accent:       #FF5A1F;
+      --accent-2:     #E84A0F;
+      --accent-soft:  #FFE9DD;
+      --accent-ink:   #2A0F00;
+      /* Functional */
+      --success:      #1F7A3A;
+      --success-bg:   #D8F1DF;
+      /* Type */
+      --sans:         "Inter", -apple-system, system-ui, sans-serif;
+      --serif:        "Fraunces", "Source Serif 4", Georgia, serif;
+      --mono:         "JetBrains Mono", ui-monospace, monospace;
+      --display:      "Fraunces", Georgia, serif;
+      /* Radius (varied for visual rhythm) */
+      --r-sm:         4px;
+      --r:            8px;
+      --r-lg:         12px;
+      --r-xl:         20px;
+      --r-pill:       999px;
+      /* Shadow (subtle but present) */
+      --shadow-sm:    0 1px 2px rgba(15,14,12,0.04), 0 1px 3px rgba(15,14,12,0.06);
+      --shadow-md:    0 2px 8px rgba(15,14,12,0.06), 0 1px 3px rgba(15,14,12,0.04);
+    }
+    html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Nav (compact, beui-style) ──────────────────────── */
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--rule); background: var(--bg); }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; letter-spacing: -0.01em; }
+    .nav-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 8px; position: relative; }
+    .nav-mark::before { content: "T"; position: absolute; inset: 0; display: grid; place-items: center; color: white; font-weight: 700; font-size: 14px; }
+    .nav-links { display: flex; gap: 4px; align-items: center; }
+    .nav-link { color: var(--ink-2); text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: var(--r); transition: all 120ms; }
+    .nav-link:hover { background: var(--surface-2); }
+    .nav-link.cta { background: var(--ink); color: var(--bg); }
+    .nav-link.cta:hover { background: var(--ink-2); }
+
+    /* ── Language consent: floating pill (beui-style) ─── */
+    .lang-pill { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--bg); padding: 10px 14px 10px 18px; border-radius: var(--r-pill); display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-md); font-size: 13px; max-width: calc(100% - 48px); }
+    .lang-pill-icon { font-size: 16px; }
+    .lang-pill-text { color: rgba(255,255,255,0.75); }
+    .lang-pill-text strong { color: white; font-weight: 600; }
+    .lang-pill-actions { display: flex; gap: 4px; }
+    .lang-pill-btn { font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: var(--r-sm); border: none; cursor: pointer; font-family: var(--sans); transition: all 120ms; }
+    .lang-pill-btn-primary { background: var(--accent); color: white; }
+    .lang-pill-btn-primary:hover { background: var(--accent-2); }
+    .lang-pill-btn-ghost { background: transparent; color: rgba(255,255,255,0.7); }
+    .lang-pill-btn-ghost:hover { color: white; background: rgba(255,255,255,0.1); }
+    .lang-pill-close { background: transparent; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 4px; font-size: 16px; line-height: 1; }
+    .lang-pill-close:hover { color: white; }
+
+    /* ── Hero split layout: visual + form ─────────────── */
+    .hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 0; min-height: calc(100vh - 73px); border-bottom: 1px solid var(--rule); }
+
+    /* ── Left: visual date representation ──────────────── */
+    .visual { padding: 64px 56px; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg); position: relative; overflow: hidden; }
+    .visual::before { content: ""; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: var(--accent); border-radius: 50%; opacity: 0.08; filter: blur(80px); }
+    .visual-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 32px; position: relative; }
+    .visual-eyebrow::before { content: ""; width: 24px; height: 1.5px; background: var(--accent); }
+    .visual-display { flex: 1; display: flex; flex-direction: column; justify-content: center; max-width: 560px; position: relative; }
+    .visual-iso { font-family: var(--mono); font-size: 14px; color: var(--ink-3); margin-bottom: 16px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r); display: inline-flex; align-items: center; gap: 8px; width: fit-content; }
+    .visual-iso-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+    .visual-headline { font-family: var(--display); font-size: 88px; line-height: 0.95; font-weight: 400; letter-spacing: -0.04em; color: var(--ink); margin-bottom: 32px; }
+    .visual-headline em { font-style: italic; color: var(--accent); }
+    .visual-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .visual-meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .visual-meta-label { font-size: 11px; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+    .visual-meta-value { font-family: var(--display); font-size: 22px; font-weight: 500; color: var(--ink); letter-spacing: -0.01em; }
+    .visual-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 24px; }
+    .visual-foot-left { font-size: 13px; color: var(--ink-3); }
+    .visual-foot-right { display: flex; gap: 6px; }
+
+    /* ── Right: form panel ─────────────────────────────── */
+    .form-panel { padding: 48px 48px 48px 32px; background: var(--surface); border-left: 1px solid var(--rule); display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+    .form-head { display: flex; align-items: center; justify-content: space-between; }
+    .form-head-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.08em; }
+    .form-head-title-num { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-right: 8px; }
+    .form-head-locale { font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--surface-2); border-radius: var(--r-pill); cursor: pointer; }
+    .form-head-locale:hover { background: var(--surface-3); }
+    .form-locale-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    .form-section { display: flex; flex-direction: column; gap: 8px; }
+    .form-section-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px; }
+    .form-section-label::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+    .form-input, .form-select { font-family: var(--sans); font-size: 18px; font-weight: 500; padding: 16px 18px; background: var(--bg); border: 1.5px solid var(--rule); border-radius: var(--r-lg); color: var(--ink); outline: none; transition: all 120ms; }
+    .form-input.mono { font-family: var(--mono); font-size: 18px; letter-spacing: 0.02em; }
+    .form-input:focus, .form-select:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+    /* Format selector: beui-style grid of large cards */
+    .format-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .format-card { position: relative; cursor: pointer; }
+    .format-card input { position: absolute; opacity: 0; pointer-events: none; }
+    .format-card-body { display: block; padding: 12px 14px; border: 1.5px solid var(--rule); border-radius: var(--r-lg); background: var(--bg); transition: all 120ms; }
+    .format-card:hover .format-card-body { border-color: var(--rule-2); }
+    .format-card input:checked + .format-card-body { border-color: var(--accent); background: var(--accent-soft); }
+    .format-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .format-card-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .format-card-check { width: 14px; height: 14px; border: 1.5px solid var(--rule-2); border-radius: 50%; }
+    .format-card input:checked + .format-card-body .format-card-check { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 2px white; }
+    .format-card-sample { font-size: 11px; color: var(--ink-3); font-family: var(--mono); line-height: 1.3; }
+
+    /* CTA — bold primary */
+    .btn { font-family: var(--sans); font-size: 15px; font-weight: 600; padding: 14px 22px; border-radius: var(--r-lg); border: none; cursor: pointer; transition: all 120ms; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: var(--accent); color: white; width: 100%; }
+    .btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,90,31,0.25); }
+    .btn-secondary { background: var(--surface); color: var(--ink); border: 1.5px solid var(--rule); }
+    .btn-secondary:hover { background: var(--surface-2); border-color: var(--rule-2); }
+
+    /* ── Result card (full width below hero) ───────────── */
+    .result { padding: 64px 32px; background: var(--bg); border-bottom: 1px solid var(--rule); }
+    .result-inner { max-width: 1100px; margin: 0 auto; }
+    .result-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 32px; }
+    .result-head-left { display: flex; flex-direction: column; gap: 4px; }
+    .result-eyebrow { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+    .result-title { font-family: var(--display); font-size: 32px; font-weight: 500; letter-spacing: -0.02em; }
+    .result-actions { display: flex; gap: 8px; }
+    .result-actions .btn { padding: 8px 14px; font-size: 13px; font-weight: 500; }
+
+    .result-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+    .result-main { background: var(--surface); border: 1.5px solid var(--rule); border-radius: var(--r-xl); padding: 40px; }
+    .result-main-eyebrow { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--ink-3); margin-bottom: 16px; }
+    .result-main-fmt { font-family: var(--mono); font-size: 11px; padding: 2px 8px; background: var(--accent); color: white; border-radius: var(--r-sm); }
+    .result-main-text { font-family: var(--display); font-size: 56px; line-height: 1.05; font-weight: 400; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 32px; }
+    .result-main-text em { font-style: italic; color: var(--accent); }
+    .result-main-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .copy-toast { font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 4px; margin-left: auto; opacity: 0; transition: opacity 200ms; }
+    .copy-toast.show { opacity: 1; }
+
+    .result-side { display: flex; flex-direction: column; gap: 12px; }
+    .variant { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: var(--surface); border: 1.5px solid var(--rule); border-radius: var(--r-lg); cursor: pointer; transition: all 120ms; }
+    .variant:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .variant-label { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .variant-text { font-size: 15px; color: var(--ink); font-family: var(--display); }
+
+    /* ── User hook: save prompt ────────────────────────── */
+    .user-hook { background: var(--ink); color: var(--bg); border-radius: var(--r-xl); padding: 32px; margin-top: 24px; display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
+    .user-hook-content { display: flex; flex-direction: column; gap: 4px; }
+    .user-hook-title { font-family: var(--display); font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+    .user-hook-desc { font-size: 14px; color: rgba(255,255,255,0.7); }
+    .user-hook-cta { display: flex; gap: 8px; }
+    .hook-btn { font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: var(--r); cursor: pointer; font-family: var(--sans); border: 1.5px solid transparent; transition: all 120ms; }
+    .hook-btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .hook-btn-primary:hover { background: var(--accent-2); }
+    .hook-btn-ghost { background: transparent; color: white; border-color: rgba(255,255,255,0.2); }
+    .hook-btn-ghost:hover { border-color: white; }
+
+    /* ── Use cases (compact horizontal scroll) ─────────── */
+    .usecases { padding: 64px 32px; background: var(--bg); border-bottom: 1px solid var(--rule); }
+    .usecases-inner { max-width: 1100px; margin: 0 auto; }
+    .usecases-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 32px; }
+    .usecases-title { font-family: var(--display); font-size: 32px; font-weight: 500; letter-spacing: -0.02em; }
+    .usecases-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .usecase { display: flex; flex-direction: column; gap: 8px; padding: 20px; background: var(--surface); border: 1.5px solid var(--rule); border-radius: var(--r-lg); cursor: pointer; transition: all 120ms; position: relative; overflow: hidden; }
+    .usecase::before { content: ""; position: absolute; inset: 0; background: var(--accent); opacity: 0; transition: opacity 200ms; }
+    .usecase:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+    .usecase:hover::before { opacity: 0.04; }
+    .usecase-emoji { font-size: 28px; line-height: 1; }
+    .usecase-name { font-size: 14px; font-weight: 600; color: var(--ink); position: relative; }
+    .usecase-sample { font-family: var(--mono); font-size: 11px; color: var(--ink-3); line-height: 1.4; position: relative; }
+
+    /* ── Related tools (footer) ────────────────────────── */
+    .related { padding: 64px 32px; background: var(--surface); }
+    .related-inner { max-width: 1100px; margin: 0 auto; }
+    .related-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 32px; }
+    .related-title { font-family: var(--display); font-size: 36px; font-weight: 500; letter-spacing: -0.02em; }
+    .related-sub { font-size: 14px; color: var(--ink-3); margin-top: 4px; }
+    .related-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .related-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; background: var(--bg); border: 1.5px solid var(--rule); border-radius: var(--r-lg); transition: all 120ms; cursor: pointer; }
+    .related-card:hover { transform: translateY(-2px); border-color: var(--ink); box-shadow: var(--shadow-md); }
+    .related-icon { font-size: 20px; }
+    .related-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .related-desc { font-size: 11px; color: var(--ink-3); line-height: 1.4; }
+
+    /* ── SEO content + FAQ ────────────────────────────── */
+    .seo { padding: 64px 32px; background: var(--bg); }
+    .seo-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 320px; gap: 64px; }
+    .seo h2 { font-family: var(--display); font-size: 28px; font-weight: 500; letter-spacing: -0.015em; margin-bottom: 12px; margin-top: 32px; }
+    .seo h2:first-child { margin-top: 0; }
+    .seo p { font-size: 16px; line-height: 1.7; color: var(--ink-2); margin-bottom: 12px; }
+    .seo strong { color: var(--ink); font-weight: 600; }
+    .seo em { font-family: var(--display); font-style: italic; color: var(--accent); }
+    .seo-faq { background: var(--surface); border: 1.5px solid var(--rule); border-radius: var(--r-xl); padding: 28px; }
+    .seo-faq-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+    .faq-item { padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 14px; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .faq-a { color: var(--ink-3); line-height: 1.55; }
+
+    /* ── How it works (3 steps) ────────────────────────── */
+    .howitworks { margin-top: 48px; }
+    .howitworks-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; }
+    .howitworks-eyebrow { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .howitworks-title { font-family: var(--display); font-size: 28px; font-weight: 500; letter-spacing: -0.02em; }
+    .howitworks-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .how-step { display: flex; gap: 16px; padding: 24px; background: var(--surface); border: 1.5px solid var(--rule); border-radius: var(--r-xl); }
+    .how-step-num { font-family: var(--display); font-size: 36px; font-weight: 500; color: var(--accent); line-height: 1; }
+    .how-step-content { flex: 1; }
+    .how-step-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .how-step-desc { font-size: 13px; line-height: 1.5; color: var(--ink-3); margin-bottom: 12px; }
+    .how-step-mock { font-family: var(--mono); font-size: 11px; padding: 6px 10px; background: var(--bg); border: 1px solid var(--rule); border-radius: var(--r-sm); color: var(--ink-2); display: inline-block; }
+    .how-step-mock-active { background: var(--accent); color: white; border-color: var(--accent); }
+    .how-step-mock-success { background: var(--success); color: white; border-color: var(--success); }
+
+    /* ── Disclaimer ────────────────────────────────────── */
+    .disclaimer { background: var(--surface-2); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 48px 32px; }
+    .disclaimer-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 20px; align-items: flex-start; }
+    .disclaimer-icon { flex-shrink: 0; width: 36px; height: 36px; background: var(--accent); color: white; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 18px; }
+    .disclaimer-body { flex: 1; }
+    .disclaimer-title { font-family: var(--display); font-size: 20px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .disclaimer-body p { font-size: 14px; line-height: 1.7; color: var(--ink-2); margin-bottom: 8px; }
+    .disclaimer-body p:last-child { margin-bottom: 0; }
+    .disclaimer-body a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 3px; }
+    .disclaimer-body a:hover { text-decoration-color: var(--accent); }
+    .disclaimer-body strong { color: var(--ink); font-weight: 600; }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer { background: var(--ink); color: rgba(255,255,255,0.6); padding: 32px; font-size: 13px; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .footer a { color: rgba(255,255,255,0.6); text-decoration: none; margin: 0 10px; }
+    .footer a:hover { color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Nav (compact) -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="nav-mark"></span>
+      <span>TimeAndDatePro</span>
+    </div>
+    <div class="nav-links">
+      <a class="nav-link" href="#">Tools</a>
+      <a class="nav-link" href="#">API</a>
+      <a class="nav-link" href="#">Pricing</a>
+      <a class="nav-link" href="#">Docs</a>
+      <a class="nav-link cta" href="#">Sign in</a>
+    </div>
+  </nav>
+
+  <!-- Hero split: visual (left) + form (right) -->
+  <section class="hero">
+
+    <!-- Left: visual date display -->
+    <div class="visual">
+      <div class="visual-eyebrow">Date to Words · 01 of 11 tools</div>
+      <div class="visual-display">
+        <div class="visual-iso">
+          <span class="visual-iso-dot"></span>
+          <span>2026-07-11 · Saturday</span>
+        </div>
+        <h1 class="visual-headline">
+          <em>Eleventh</em><br>
+          of July,<br>
+          Two Thousand<br>
+          Twenty-Six
+        </h1>
+        <div class="visual-meta">
+          <div class="visual-meta-item">
+            <div class="visual-meta-label">Day of year</div>
+            <div class="visual-meta-value">192 / 365</div>
+          </div>
+          <div class="visual-meta-item">
+            <div class="visual-meta-label">Week</div>
+            <div class="visual-meta-value">28</div>
+          </div>
+          <div class="visual-meta-item">
+            <div class="visual-meta-label">Era</div>
+            <div class="visual-meta-value">21st c.</div>
+          </div>
+        </div>
+      </div>
+      <div class="visual-foot">
+        <div class="visual-foot-left">Live · Powered by /api/v1/tools/date-to-word</div>
+        <div class="visual-foot-right">
+          <span class="kbd" style="font-family: var(--mono); font-size: 10px; padding: 3px 7px; background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; color: var(--ink-3);">⌘ K</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: form panel -->
+    <div class="form-panel">
+      <div class="form-head">
+        <div class="form-head-title"><span class="form-head-title-num">02</span>Convert</div>
+        <div class="form-head-locale">
+          <span class="form-locale-dot"></span>
+          English (US)
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Date input</div>
+        <input class="form-input mono" type="text" value="2026-07-11" />
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Output format</div>
+        <div class="format-grid">
+          <label class="format-card">
+            <input type="radio" name="format" />
+            <div class="format-card-body">
+              <div class="format-card-top">
+                <span class="format-card-name">Formal</span>
+                <span class="format-card-check"></span>
+              </div>
+              <div class="format-card-sample">Eleventh of July, Two Thousand Twenty-Six</div>
+            </div>
+          </label>
+          <label class="format-card">
+            <input type="radio" name="format" checked />
+            <div class="format-card-body">
+              <div class="format-card-top">
+                <span class="format-card-name">Legal</span>
+                <span class="format-card-check"></span>
+              </div>
+              <div class="format-card-sample">Eleventh day of July, Two Thousand Twenty-Six</div>
+            </div>
+          </label>
+          <label class="format-card">
+            <input type="radio" name="format" />
+            <div class="format-card-body">
+              <div class="format-card-top">
+                <span class="format-card-name">Banking</span>
+                <span class="format-card-check"></span>
+              </div>
+              <div class="format-card-sample">Eleventh July, Two Thousand Twenty-Six</div>
+            </div>
+          </label>
+          <label class="format-card">
+            <input type="radio" name="format" />
+            <div class="format-card-body">
+              <div class="format-card-top">
+                <span class="format-card-name">British</span>
+                <span class="format-card-check"></span>
+              </div>
+              <div class="format-card-sample">Eleventh day of July, Two Thousand and Twenty-Six</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-primary">Convert to words →</button>
+
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); margin-top: -8px;">
+        <span style="color: var(--success);">✓</span>
+        <span>Client-side conversion · 0ms latency · No tracking</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Result + variants -->
+  <section class="result">
+    <div class="result-inner">
+      <div class="result-head">
+        <div class="result-head-left">
+          <div class="result-eyebrow">Result</div>
+          <div class="result-title">All five variants ready</div>
+        </div>
+        <div class="result-actions">
+          <button class="btn btn-secondary">📋 Copy all</button>
+          <button class="btn btn-secondary">⬇ .txt</button>
+          <button class="btn btn-secondary">↗ Share</button>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-main">
+          <div class="result-main-eyebrow">
+            <span>Selected</span>
+            <span class="result-main-fmt">legal</span>
+          </div>
+          <div class="result-main-text">
+            Eleventh <em>day</em> of July,<br>Two Thousand Twenty-Six
+          </div>
+          <div class="result-main-actions">
+            <button class="btn btn-primary" style="width: auto; background: var(--ink);">📋 Copy</button>
+            <button class="btn btn-secondary">⬇ Download .txt</button>
+            <button class="btn btn-secondary">↗ Share link</button>
+            <button class="btn btn-secondary">⎘ Markdown</button>
+            <span class="copy-toast" id="copyToast">✓ Copied</span>
+          </div>
+        </div>
+
+        <div class="result-side">
+          <div class="variant">
+            <div class="variant-label">Formal</div>
+            <div class="variant-text">Eleventh of July, Two Thousand Twenty-Six</div>
+          </div>
+          <div class="variant">
+            <div class="variant-label">Banking</div>
+            <div class="variant-text">Eleventh July, Two Thousand Twenty-Six</div>
+          </div>
+          <div class="variant">
+            <div class="variant-label">Casual</div>
+            <div class="variant-text">July eleventh, twenty twenty-six</div>
+          </div>
+          <div class="variant">
+            <div class="variant-label">British</div>
+            <div class="variant-text">Eleventh day of July, Two Thousand <em>and</em> Twenty-Six</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- How it works: 3 steps -->
+      <div class="howitworks">
+        <div class="howitworks-head">
+          <div class="howitworks-eyebrow">How it works</div>
+          <h3 class="howitworks-title">Three steps. Five seconds.</h3>
+        </div>
+        <div class="howitworks-row">
+          <div class="how-step">
+            <div class="how-step-num">01</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Type a date</div>
+              <div class="how-step-desc">Any format works. YYYY-MM-DD, MM/DD/YYYY, or written out — we auto-detect.</div>
+              <div class="how-step-mock">2026-07-11</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">02</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Pick a format</div>
+              <div class="how-step-desc">Legal for contracts. Banking for cheques. Casual for invites. Five options.</div>
+              <div class="how-step-mock how-step-mock-active">legal · selected</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-num">03</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Copy the result</div>
+              <div class="how-step-desc">One click copies. Or download as .txt, share a link, or hit the API.</div>
+              <div class="how-step-mock how-step-mock-success">copied to clipboard</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User hook: save prompt -->
+      <div class="user-hook">
+        <div class="user-hook-content">
+          <div class="user-hook-title">Save this and your next 99 conversions</div>
+          <div class="user-hook-desc">Sign in to sync history across devices, share conversion links, and unlock bulk CSV upload for up to 10,000 dates at once.</div>
+        </div>
+        <div class="user-hook-cta">
+          <button class="hook-btn hook-btn-ghost">Maybe later</button>
+          <button class="hook-btn hook-btn-primary">Sign in →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Use cases -->
+  <section class="usecases">
+    <div class="usecases-inner">
+      <div class="usecases-head">
+        <div class="usecases-title">Where it gets used</div>
+        <a href="#" style="font-size: 13px; color: var(--ink-3); text-decoration: none;">All examples →</a>
+      </div>
+      <div class="usecases-grid">
+        <div class="usecase">
+          <div class="usecase-emoji">📜</div>
+          <div class="usecase-name">Legal & contracts</div>
+          <div class="usecase-sample">"Eleventh day of July, Two Thousand Twenty-Six"</div>
+        </div>
+        <div class="usecase">
+          <div class="usecase-emoji">🏦</div>
+          <div class="usecase-name">Cheques & drafts</div>
+          <div class="usecase-sample">"Eleventh July, Two Thousand Twenty-Six"</div>
+        </div>
+        <div class="usecase">
+          <div class="usecase-emoji">🛂</div>
+          <div class="usecase-name">Passports & visas</div>
+          <div class="usecase-sample">DOB: 11 July 1985</div>
+        </div>
+        <div class="usecase">
+          <div class="usecase-emoji">💼</div>
+          <div class="usecase-name">Board resolutions</div>
+          <div class="usecase-sample">"…held on 11 July 2026"</div>
+        </div>
+        <div class="usecase">
+          <div class="usecase-emoji">💌</div>
+          <div class="usecase-name">Wedding invites</div>
+          <div class="usecase-sample">"…celebrate on July eleventh"</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related tools -->
+  <section class="related">
+    <div class="related-inner">
+      <div class="related-head">
+        <div>
+          <div class="related-title">Pairs well with</div>
+          <div class="related-sub">The rest of the 11-tool workspace for full document prep.</div>
+        </div>
+        <a href="#" style="font-size: 13px; color: var(--ink-3); text-decoration: none;">All 11 tools →</a>
+      </div>
+      <div class="related-grid">
+        <a class="related-card" href="#">
+          <div class="related-icon">🔁</div>
+          <div class="related-name">Word to Date</div>
+          <div class="related-desc">Parse "twenty-six" → 2026</div>
+        </a>
+        <a class="related-card" href="#">
+          <div class="related-icon">➕</div>
+          <div class="related-name">Date Math</div>
+          <div class="related-desc">+ / − business days</div>
+        </a>
+        <a class="related-card" href="#">
+          <div class="related-icon">↔️</div>
+          <div class="related-name">Date Difference</div>
+          <div class="related-desc">Days between two dates</div>
+        </a>
+        <a class="related-card" href="#">
+          <div class="related-icon">⏱️</div>
+          <div class="related-name">Countdown</div>
+          <div class="related-desc">Ticker to any future date</div>
+        </a>
+        <a class="related-card" href="#">
+          <div class="related-icon">🌐</div>
+          <div class="related-name">TZ Converter</div>
+          <div class="related-desc">Same date in 200+ zones</div>
+        </a>
+        <a class="related-card" href="#">
+          <div class="related-icon">🎂</div>
+          <div class="related-name">Age Calculator</div>
+          <div class="related-desc">"26 years, 3 months"</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEO content -->
+  <section class="seo">
+    <div class="seo-inner">
+      <div>
+        <h2>How to write a date in formal words</h2>
+        <p>Written dates are required for legal documents, financial instruments, and official forms in most jurisdictions. Unlike numeric dates, words <strong>cannot be altered after signing</strong> — making them the standard for contracts, cheques, affidavits, and government records.</p>
+        <h2>The legal date format</h2>
+        <p>The legal format — <em>"Eleventh day of July, Two Thousand Twenty-Six"</em> — follows the centuries-old convention of expressing the day as an ordinal, the month by name, and the year in full words. This format eliminates ambiguity from numeric date systems and provides a permanent record that resists tampering.</p>
+        <h2>How to write a cheque date</h2>
+        <p>On a cheque, the date line traditionally uses the <strong>banking format</strong>: <em>"Eleventh July, Two Thousand Twenty-Six"</em>. The day is written as an ordinal, the month by name, and the year spelled out in full. Many banks reject cheques with abbreviated years.</p>
+      </div>
+      <aside class="seo-faq">
+        <div class="seo-faq-title">FAQ</div>
+        <div class="faq-item">
+          <div class="faq-q">How do I write a cheque date?</div>
+          <div class="faq-a">Banking format: <em>"Eleventh July, Two Thousand Twenty-Six"</em>.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What's the legal format?</div>
+          <div class="faq-a"><em>"Eleventh day of July, Two Thousand Twenty-Six"</em> with the "day of" connector.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Years before 1000?</div>
+          <div class="faq-a">Yes. Year 1 = "One". Year 9999 = "Nine Thousand Nine Hundred Ninety-Nine".</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Other languages?</div>
+          <div class="faq-a">English (US/UK) now. French, German, Spanish, Japanese in Phase 2.</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Disclaimer -->
+  <section class="disclaimer">
+    <div class="disclaimer-inner">
+      <div class="disclaimer-icon">!</div>
+      <div class="disclaimer-body">
+        <div class="disclaimer-title">Disclaimer</div>
+        <p>This tool is provided for convenience and reference only. It is <strong>not legal advice</strong> and does not constitute a professional opinion on the validity, enforceability, or formatting of any document. For legal documents, financial instruments, immigration papers, and government filings, always have the result <strong>verified by a qualified professional</strong> (attorney, notary, banker) before signing or submission. Date formatting conventions vary by jurisdiction, institution, and document type — the formats shown here are general conventions and may not match your specific requirement.</p>
+        <p>Conversion runs in your browser; no data is sent to a server. Free tier is provided as-is with no warranty. See <a href="#">Terms</a> and <a href="#">Privacy</a> for full terms.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Language consent (floating pill, beui-style) -->
+  <div class="lang-pill">
+    <span class="lang-pill-icon">🌐</span>
+    <span class="lang-pill-text">Detected: <strong>English (United States)</strong> · Switch anytime</span>
+    <div class="lang-pill-actions">
+      <button class="lang-pill-btn lang-pill-btn-primary">Use English (US)</button>
+      <button class="lang-pill-btn lang-pill-btn-ghost">Other</button>
+    </div>
+    <button class="lang-pill-close">×</button>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© 2026 TimeAndDatePro · v2.1</span>
+      <span>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">API docs</a>
+        <a href="#">Changelog</a>
+        <a href="#">Status</a>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.btn-primary, .variant, .usecase').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        if (el.classList.contains('usecase')) return;
+        const t = document.getElementById('copyToast');
+        if (t && el.classList.contains('btn-primary')) {
+          t.classList.add('show');
+          setTimeout(() => t.classList.remove('show'), 2000);
+        }
+      });
+    });
+    document.querySelectorAll('.format-card').forEach((c) => {
+      c.addEventListener('click', () => {
+        document.querySelectorAll('.format-card input').forEach((i) => i.checked = false);
+        c.querySelector('input').checked = true;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date to Words Converter — Free Online Tool | TimeAndDatePro</title>
+  <meta name="description" content="Convert any date (1-9999) to written words for legal documents, cheques, passports, and contracts. Five formats: formal, legal, banking, casual, British. Free, no signup, locale-aware." />
+  <meta name="keywords" content="date to words, date in words, write date in words, legal date format, cheque date, date in words converter, ordinal date, number to words date" />
+  <link rel="canonical" href="https://dateandtime.live/tools/date-to-word" />
+
+  <!-- FAQ Schema (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "How do I write a date in formal words?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Use the formal format: day + 'of' + month + ',' + year. Example: 'Eleventh of July, Two Thousand Twenty-Six'." } },
+      { "@type": "Question", "name": "How do I write a date on a cheque?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Banking format: 'Eleventh July, Two Thousand Twenty-Six'." } },
+      { "@type": "Question", "name": "What years does this support?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Year 1 to 9999." } },
+      { "@type": "Question", "name": "Legal vs Formal?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Legal includes 'day of'. Formal omits it." } },
+      { "@type": "Question", "name": "Non-English dates?",
+        "acceptedAnswer": { "@type": "Answer", "text": "English (US/UK) now. French, German, Spanish, Japanese — sign up for early access." } },
+      { "@type": "Question", "name": "Client or server?",
+        "acceptedAnswer": { "@type": "Answer", "text": "100% client-side. No data leaves your device." } },
+      { "@type": "Question", "name": "Bulk convert?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — sign in for free, up to 10,000 dates via CSV." } },
+      { "@type": "Question", "name": "API?",
+        "acceptedAnswer": { "@type": "Answer", "text": "POST /api/v1/tools/date-to-word. 100 req/day free." } }
+    ]
+  }
+  </script>
+
+  <!-- HowTo Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to write a date in formal words",
+    "description": "Convert any calendar date to written words in three simple steps.",
+    "step": [
+      { "@type": "HowToStep", "position": 1, "name": "Enter your date",
+        "text": "Type or paste a date in any common format: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, or written out. The parser auto-detects the format." },
+      { "@type": "HowToStep", "position": 2, "name": "Pick a format",
+        "text": "Choose from five formats: Formal, Legal, Banking, Casual, or British. Each is suited to a different document type." },
+      { "@type": "HowToStep", "position": 3, "name": "Copy the result",
+        "text": "Click Copy, download as .txt, share a link, or hit the API. Translation to other languages is coming soon." }
+    ],
+    "totalTime": "PT5S"
+  }
+  </script>
+
+  <style>
+    /* ── Reset ────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ════════════════════════════════════════════════════════════════
+       DESIGN TOKENS — copied as-is from src/styles/tokens.css
+       (single source of truth across all tool pages)
+       ════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Base colors */
+      --color-page:        #F8F7FF;
+      --color-surface:     #FFFFFF;
+      --color-ink:         #202438;
+      --color-ink-2:       #595D70;
+      --color-muted:       #74778A;
+      --color-border:      #E1DCF1;
+      --color-border-2:    #E5E7EF;
+
+      /* Brand */
+      --color-brand-50:    #F6F3FF;
+      --color-brand-100:   #EEE9FF;
+      --color-brand-200:   #DED7FF;
+      --color-brand-300:   #C5B7F7;
+      --color-brand-400:   #9F87EB;
+      --color-brand-500:   #7257D5;
+      --color-brand-600:   #6044BD;
+      --color-brand-700:   #4E3699;
+      --color-brand-800:   #3B2876;
+
+      /* Semantic */
+      --color-mint:        #DBF4EA;
+      --color-mint-ink:    #216650;
+      --color-mint-2:      #DDF8EC;
+      --color-mint-3:      #BAF1D8;
+      --color-peach:       #FFE8D6;
+      --color-amber:       #E49B00;
+      --color-info:        #E8EFFF;
+      --color-info-2:      #EDF0FF;
+      --color-info-3:      #D5DCFF;
+      --color-info-accent: #6467F2;
+      --color-info-ink:    #31358F;
+      --color-emerald-500: #10B981;
+      --color-emerald-600: #059669;
+      --color-emerald-700: #047857;
+
+      /* Type */
+      --font-family-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+                          BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+      /* Radius */
+      --radius-sm:   0.5rem;
+      --radius-md:   0.75rem;
+      --radius-lg:   1rem;
+      --radius-xl:   1.125rem;
+      --radius-2xl:  1.5rem;
+      --radius-3xl:  1.75rem;
+      --radius-4xl:  2rem;
+      --radius-pill: 999px;
+
+      /* Shadow */
+      --shadow-sm:    0 6px 18px rgba(48, 39, 82, 0.07);
+      --shadow-md:    0 16px 36px rgba(74, 52, 142, 0.09);
+      --shadow-hero:  0 26px 70px rgba(74, 52, 142, 0.14);
+      --shadow-focus: 0 0 0 3px rgba(114, 87, 213, 0.25);
+
+      /* Motion */
+      --motion-duration-fast: 150ms;
+      --motion-duration-base: 200ms;
+      --motion-duration-slow: 320ms;
+      --motion-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+      --motion-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    html, body { background: var(--color-surface); color: var(--color-ink); font-family: var(--font-family-sans); -webkit-font-smoothing: antialiased; }
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Subtle top stripe — lavender→mint (matches hero, non-glassy) */
+    body::before { content: ""; display: block; height: 3px; background: linear-gradient(90deg, #ECE4FF 0%, #DDF3E4 33%, #FDEAC6 66%, #D9EAFC 100%); }
+
+    /* ── Page shell (matches hero max-width) ──────────── */
+    .page { max-width: 1120px; margin: 0 auto; padding: 0 28px 80px; width: 100%; flex: 1; }
+
+    /* ════════════════════════════════════════════════════════════════
+       TOPBAR — solid white, no blur (matches hero topbar)
+       ════════════════════════════════════════════════════════════════ */
+    .topbar { background: var(--color-surface); border-bottom: 1px solid rgba(48, 39, 82, 0.08); margin: 0 -28px 24px; padding: 0 28px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: var(--font-weight-bold, 750); font-size: 15px; color: var(--color-ink); text-decoration: none; }
+    .nav-mark { width: 24px; height: 24px; background: var(--color-ink); border-radius: 6px; position: relative; }
+    .nav-mark::before { content: ""; position: absolute; inset: 4px; background: var(--color-surface); border-radius: 50%; }
+    .nav-mark::after { content: ""; position: absolute; top: 50%; left: 50%; width: 2px; height: 6px; background: var(--color-ink); transform: translate(-50%, -50%); border-radius: 1px; }
+    .nav-links { display: flex; gap: 4px; align-items: center; }
+    .nav-link { color: var(--color-ink-2); text-decoration: none; font-size: 14px; font-weight: 500; padding: 7px 12px; border-radius: var(--radius-pill); transition: all 150ms; }
+    .nav-link:hover { background: var(--color-brand-50); color: var(--color-ink); }
+    .nav-link.active { color: var(--color-brand-600); background: var(--color-brand-50); }
+
+    /* ════════════════════════════════════════════════════════════════
+       BUTTONS — copied as-is from .tdp-btn in landingHorizon.css
+       ════════════════════════════════════════════════════════════════ */
+    .tdp-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .tdp-btn:focus-visible { outline: 2px solid var(--color-emerald-500); outline-offset: 2px; }
+    .tdp-btn:active { transform: scale(0.98); }
+    .tdp-btn--primary { background: var(--color-emerald-600); color: #fff; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 12px -4px rgba(15, 23, 42, 0.05); }
+    .tdp-btn--primary:hover { background: var(--color-emerald-700); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(5, 150, 105, 0.25); }
+    .tdp-btn--accent { background: var(--color-info-accent); color: #fff; box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.4); }
+    .tdp-btn--accent:hover { background: #4F46E5; box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.5); }
+    .tdp-btn--secondary { background: #fff; color: var(--color-ink); border-color: #e2e8f0; }
+    .tdp-btn--secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .tdp-btn--sm { height: 32px; padding: 0 12px; font-size: 12px; }
+    .tdp-btn--md { height: 40px; padding: 0 16px; font-size: 13px; }
+    .tdp-btn--lg { height: 48px; padding: 0 24px; font-size: 15px; }
+
+    /* ════════════════════════════════════════════════════════════════
+       LANGUAGE CONSENT — solid dark banner (no blur)
+       ════════════════════════════════════════════════════════════════ */
+    .lang-banner { background: var(--color-ink); color: #fff; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 13px; margin: 0 -28px 24px; }
+    .lang-banner-text { color: rgba(255,255,255,0.75); }
+    .lang-banner-text strong { color: #fff; font-weight: 600; }
+    .lang-banner-text a { color: rgba(255,255,255,0.9); text-decoration: underline; }
+    .lang-btn { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #fff; cursor: pointer; transition: background 150ms; font-family: var(--font-family-sans); }
+    .lang-btn:hover { background: rgba(255,255,255,0.1); }
+    .lang-btn-primary { background: #fff; color: var(--color-ink); border-color: #fff; }
+    .lang-btn-primary:hover { background: rgba(255,255,255,0.9); }
+    .lang-btn-close { border: none; background: transparent; opacity: 0.5; padding: 4px 6px; }
+    .lang-btn-close:hover { opacity: 1; }
+
+    /* ════════════════════════════════════════════════════════════════
+       HERO
+       ════════════════════════════════════════════════════════════════ */
+    .hero { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; margin-bottom: 32px; padding-top: 16px; }
+    .hero-left { max-width: 720px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: var(--color-mint); border: 1px solid #BAF1D8; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; color: var(--color-mint-ink); margin-bottom: 16px; }
+    .eyebrow-dot { width: 6px; height: 6px; background: var(--color-emerald-500); border-radius: 50%; position: relative; }
+    .eyebrow-dot::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: var(--color-emerald-500); opacity: 0.3; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.5); opacity: 0; } }
+    h1 { font-size: 48px; line-height: 1.05; font-weight: var(--font-weight-extrabold, 850); letter-spacing: -0.035em; margin-bottom: 14px; color: var(--color-ink); }
+    h1 .accent { color: var(--color-brand-600); position: relative; }
+    h1 .accent::after { content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 8px; background: var(--color-brand-100); z-index: -1; border-radius: 2px; }
+    .lede { font-size: 17px; line-height: 1.55; color: var(--color-ink-2); }
+    .hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .kbd-hint { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted); }
+    .kbd { font-family: var(--font-family-mono); font-size: 11px; padding: 2px 6px; background: var(--color-brand-50); border: 1px solid var(--color-border); border-radius: 4px; color: var(--color-ink-2); font-weight: 500; }
+    .waitlist-stat { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--color-info); border: 1px solid var(--color-info-3); border-radius: var(--radius-pill); font-size: 12px; color: var(--color-info-ink); }
+    .waitlist-dot { width: 6px; height: 6px; background: var(--color-emerald-500); border-radius: 50%; }
+    .waitlist-stat strong { color: var(--color-info-ink); font-weight: 700; }
+
+    /* ════════════════════════════════════════════════════════════════
+       TOOL CARD
+       ════════════════════════════════════════════════════════════════ */
+    .tool { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-3xl); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .tool-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid rgba(48, 39, 82, 0.06); background: var(--color-surface); }
+    .tool-head-left { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: var(--font-weight-bold, 750); color: var(--color-ink); }
+    .tool-step { font-size: 10px; font-weight: 700; color: var(--color-brand-600); font-family: var(--font-family-mono); padding: 2px 8px; background: var(--color-brand-50); border-radius: 4px; letter-spacing: 0.05em; }
+    .tool-head-right { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-muted); }
+    .tool-body { padding: 24px; }
+
+    /* Inputs */
+    .input-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label { font-size: 12px; font-weight: 600; color: var(--color-ink-2); display: flex; align-items: center; justify-content: space-between; }
+    .field-label-hint { font-size: 11px; color: var(--color-muted); font-family: var(--font-family-mono); }
+    .field-input, .field-select { font-family: var(--font-family-sans); font-size: 15px; padding: 11px 13px; background: var(--color-surface); border: 1px solid var(--color-border-2); border-radius: var(--radius-md); color: var(--color-ink); outline: none; transition: border-color 150ms, box-shadow 150ms; width: 100%; }
+    .field-input.mono { font-family: var(--font-family-mono); font-size: 15px; }
+    .field-input:focus, .field-select:focus { border-color: var(--color-brand-500); box-shadow: var(--shadow-focus); }
+
+    /* ════════════════════════════════════════════════════════════════
+       NOTEBOOKLM PASTEL TABS — each format gets its own pastel color
+       when selected. Matches hero's pastel card variants.
+       ════════════════════════════════════════════════════════════════ */
+    .tabs-section { margin-top: 4px; }
+    .tabs-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .tabs-label { font-size: 12px; font-weight: 600; color: var(--color-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
+    .tabs-popular { font-size: 11px; color: var(--color-muted); display: flex; align-items: center; gap: 6px; }
+    .tabs-popular-dot { width: 4px; height: 4px; background: var(--color-amber); border-radius: 50%; }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      position: relative;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-ink-2);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      border-radius: var(--radius-pill);
+      transition: transform 220ms var(--motion-ease-out),
+                  box-shadow 220ms var(--motion-ease-out),
+                  filter 220ms var(--motion-ease-out);
+      font-family: var(--font-family-sans);
+      white-space: nowrap;
+    }
+    .tab:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(48, 39, 82, 0.08); filter: saturate(1.1); }
+    /* Each selected tab gets the NotebookLM pastel variant */
+    .tab.active { color: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(48, 39, 82, 0.15); }
+    .tab.active[data-variant="lavender"] { background: linear-gradient(135deg, #ECE4FF 0%, #E0D4FF 100%); color: #3A2A7A; box-shadow: 0 6px 18px rgba(106, 80, 220, 0.25); }
+    .tab.active[data-variant="mint"]     { background: linear-gradient(135deg, #DDF3E4 0%, #C8EBD4 100%); color: #1C5A3A; box-shadow: 0 6px 18px rgba(60, 168, 100, 0.25); }
+    .tab.active[data-variant="amber"]    { background: linear-gradient(135deg, #FDEAC6 0%, #FBDD9C 100%); color: #6B4912; box-shadow: 0 6px 18px rgba(228, 155, 0, 0.25); }
+    .tab.active[data-variant="sky"]      { background: linear-gradient(135deg, #D9EAFC 0%, #C5DDF9 100%); color: #1C3D6B; box-shadow: 0 6px 18px rgba(100, 103, 242, 0.25); }
+    .tab-check { display: none; }
+    .tab.active .tab-check { display: inline; margin-left: 4px; }
+
+    /* CTA row (uses tdp-btn) */
+    .cta-row { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(48, 39, 82, 0.06); }
+    .cta-spacer { flex: 1; }
+
+    /* ════════════════════════════════════════════════════════════════
+       RESULT CARD
+       ════════════════════════════════════════════════════════════════ */
+    .output { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-3xl); margin-top: 24px; overflow: hidden; box-shadow: var(--shadow-sm); }
+    .output-eyebrow { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid rgba(48, 39, 82, 0.06); background: var(--color-surface); }
+    .output-eyebrow-left { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--color-ink-2); text-transform: uppercase; letter-spacing: 0.08em; }
+    .output-fmt-tag { font-family: var(--font-family-mono); font-size: 10px; padding: 2px 8px; background: var(--color-ink); color: #fff; border-radius: 4px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+    .output-eyebrow-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--color-muted); }
+    .output-locale-dot { color: var(--color-emerald-500); }
+    .output-body { padding: 36px 24px; }
+    .output-text { font-size: 36px; line-height: 1.2; font-weight: 500; letter-spacing: -0.025em; color: var(--color-ink); margin-bottom: 24px; }
+    .output-text .break { color: var(--color-muted); font-weight: 400; }
+    .output-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* Variant rows */
+    .variants { border-top: 1px solid rgba(48, 39, 82, 0.06); }
+    .variant-row { display: grid; grid-template-columns: 80px 1fr auto auto; align-items: center; gap: 16px; padding: 14px 24px; transition: background 150ms; }
+    .variant-row:hover { background: var(--color-brand-50); }
+    .variant-label { font-size: 11px; font-weight: 700; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .variant-text { font-size: 14px; color: var(--color-ink); }
+
+    /* Translate CTA — eye-catching per variant, uses accent button style */
+    .variant-translate {
+      padding: 6px 14px;
+      background: var(--color-info);
+      border: 1px solid var(--color-info-3);
+      border-radius: var(--radius-pill);
+      color: var(--color-info-ink);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 150ms;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-family-sans);
+      white-space: nowrap;
+      position: relative;
+    }
+    .variant-translate:hover { background: var(--color-info-accent); color: #fff; border-color: var(--color-info-accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(100, 103, 242, 0.25); }
+    .variant-translate::after { content: ""; position: absolute; top: -3px; right: -3px; width: 6px; height: 6px; background: var(--color-amber); border-radius: 50%; border: 2px solid var(--color-surface); animation: pulse 2s ease-in-out infinite; }
+    .variant-translate.open { background: var(--color-info-accent); color: #fff; border-color: var(--color-info-accent); }
+    .variant-translate.open::after { display: none; }
+
+    /* Translation capture form */
+    .translate-form-wrap { max-height: 0; overflow: hidden; transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .translate-form-wrap.open { max-height: 280px; }
+    .translate-form { padding: 18px 24px 22px; background: var(--color-brand-50); border-top: 1px solid var(--color-brand-200); display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center; }
+    .translate-form-head { grid-column: 1 / -1; font-size: 12px; color: var(--color-ink-2); display: flex; align-items: center; gap: 8px; }
+    .translate-form-head strong { color: var(--color-ink); font-weight: 700; }
+    .translate-form-select, .translate-form-input { font-family: var(--font-family-sans); font-size: 13px; padding: 9px 12px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-ink); outline: none; transition: border-color 150ms, box-shadow 150ms; width: 100%; }
+    .translate-form-select:focus, .translate-form-input:focus { border-color: var(--color-brand-500); box-shadow: var(--shadow-focus); }
+    .translate-form-foot { grid-column: 1 / -1; font-size: 11px; color: var(--color-muted); display: flex; align-items: center; justify-content: space-between; }
+    .translate-form-foot a { color: var(--color-brand-600); text-decoration: none; }
+    .translate-form-foot a:hover { text-decoration: underline; }
+    .translate-success { padding: 14px 24px; background: var(--color-mint); border-top: 1px solid var(--color-mint-3); color: var(--color-mint-ink); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .translate-success-dot { width: 8px; height: 8px; background: var(--color-emerald-500); border-radius: 50%; }
+
+    /* ════════════════════════════════════════════════════════════════
+       HOW IT WORKS — 3 steps
+       ════════════════════════════════════════════════════════════════ */
+    .howitworks { margin-top: 80px; }
+    .howitworks-head { margin-bottom: 32px; text-align: center; }
+    .howitworks-eyebrow { font-size: 11px; font-weight: 700; color: var(--color-brand-600); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 6px; }
+    .howitworks-title { font-size: 32px; font-weight: var(--font-weight-extrabold, 850); letter-spacing: -0.025em; }
+    .howitworks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--color-border); border-radius: var(--radius-2xl); background: var(--color-surface); overflow: hidden; }
+    .how-step { padding: 28px; border-right: 1px solid rgba(48, 39, 82, 0.06); }
+    .how-step:last-child { border-right: none; }
+    .how-step-num { font-family: var(--font-family-mono); font-size: 11px; color: var(--color-muted); margin-bottom: 16px; letter-spacing: 0.08em; }
+    .how-step-title { font-size: 18px; font-weight: var(--font-weight-bold, 750); color: var(--color-ink); margin-bottom: 6px; }
+    .how-step-desc { font-size: 13px; line-height: 1.55; color: var(--color-ink-2); margin-bottom: 16px; }
+    .how-step-mock { font-family: var(--font-family-mono); font-size: 12px; padding: 8px 12px; background: var(--color-brand-50); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-ink-2); display: inline-block; }
+    .how-step-mock.success { background: var(--color-mint); color: var(--color-mint-ink); border-color: var(--color-mint-3); }
+    .how-step-mock.accent { background: var(--color-info); color: var(--color-info-ink); border-color: var(--color-info-3); }
+
+    /* ════════════════════════════════════════════════════════════════
+       DISCLAIMER
+       ════════════════════════════════════════════════════════════════ */
+    .disclaimer { background: var(--color-brand-50); border: 1px solid var(--color-border); border-radius: var(--radius-2xl); margin-top: 64px; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
+    .disclaimer-icon { flex-shrink: 0; width: 32px; height: 32px; background: var(--color-ink); color: #fff; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-family-mono); font-weight: 700; font-size: 14px; }
+    .disclaimer-body { flex: 1; }
+    .disclaimer-title { font-size: 12px; font-weight: 700; color: var(--color-ink); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .disclaimer-text { font-size: 13px; line-height: 1.6; color: var(--color-ink-2); margin-bottom: 6px; }
+    .disclaimer-text:last-child { margin-bottom: 0; }
+    .disclaimer-text a { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-muted); }
+    .disclaimer-text a:hover { text-decoration-color: var(--color-ink); }
+    .disclaimer-text strong { color: var(--color-ink); font-weight: 700; }
+
+    /* ════════════════════════════════════════════════════════════════
+       HERO EXPLORE LINKS — copied as-is from .tdp-hero-explore-links
+       (used for related tools across all tool pages)
+       ════════════════════════════════════════════════════════════════ */
+    .tdp-hero-explore-links { margin-top: 64px; padding-top: 28px; border-top: 1px solid rgba(48, 39, 82, 0.08); width: 100%; }
+    .tdp-hero-explore-links-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+    .tdp-hero-explore-links-eyebrow { font-family: var(--font-family-sans); font-weight: 700; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ink); margin: 0; }
+    .tdp-hero-explore-links-meta { font-size: 11px; font-weight: 500; color: var(--color-muted); }
+    .tdp-hero-explore-links-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; }
+    .tdp-hero-explore-links-item { width: 100%; }
+    .tdp-hero-explore-links-link { display: flex; align-items: center; gap: 9px; width: 100%; padding: 12px 14px; text-decoration: none; border-radius: 12px; font-size: 13.5px; font-weight: 600; line-height: 1.2; letter-spacing: -0.005em; position: relative; overflow: hidden; isolation: isolate; transition: transform 0.22s var(--motion-ease-out), box-shadow 0.22s var(--motion-ease-out), filter 0.22s var(--motion-ease-out); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 2px 6px -1px rgba(48, 39, 82, 0.08); }
+    .tdp-hero-explore-links-link::before { content: ""; position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.7) 50%, transparent 100%); pointer-events: none; }
+    .tdp-hero-explore-links-link:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 8px 20px -4px rgba(48, 39, 82, 0.16), 0 2px 6px -1px rgba(48, 39, 82, 0.08); filter: saturate(1.1); }
+    .tdp-hero-explore-links-link--lavender { background: linear-gradient(135deg, #ECE4FF 0%, #E0D4FF 100%); color: #3A2A7A; }
+    .tdp-hero-explore-links-link--mint { background: linear-gradient(135deg, #DDF3E4 0%, #C8EBD4 100%); color: #1C5A3A; }
+    .tdp-hero-explore-links-link--amber { background: linear-gradient(135deg, #FDEAC6 0%, #FBDD9C 100%); color: #6B4912; }
+    .tdp-hero-explore-links-link--sky { background: linear-gradient(135deg, #D9EAFC 0%, #C5DDF9 100%); color: #1C3D6B; }
+    .tdp-hero-explore-links-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 255, 255, 0.65); color: inherit; flex-shrink: 0; box-shadow: 0 1px 2px rgba(48, 39, 82, 0.08); }
+    .tdp-hero-explore-links-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+
+    /* ════════════════════════════════════════════════════════════════
+       FEEDBACK BUTTON — standard for all tool pages
+       Floating bottom-right, opens popover with form
+       ════════════════════════════════════════════════════════════════ */
+    .feedback-fab { position: fixed; bottom: 24px; right: 24px; z-index: 50; }
+    .feedback-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; background: var(--color-ink); color: #fff; border: none; border-radius: var(--radius-pill); font-family: var(--font-family-sans); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(48, 39, 82, 0.2); transition: all 200ms; }
+    .feedback-trigger:hover { background: var(--color-brand-600); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(114, 87, 213, 0.3); }
+    .feedback-trigger-icon { font-size: 16px; }
+    .feedback-popover { position: absolute; bottom: 56px; right: 0; width: 360px; max-width: calc(100vw - 48px); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-2xl); box-shadow: var(--shadow-hero); overflow: hidden; transform: translateY(8px) scale(0.95); opacity: 0; pointer-events: none; transition: all 250ms var(--motion-ease-out); }
+    .feedback-popover.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+    .feedback-popover-head { padding: 20px 20px 12px; border-bottom: 1px solid rgba(48, 39, 82, 0.06); }
+    .feedback-popover-title { font-size: 15px; font-weight: 700; color: var(--color-ink); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+    .feedback-popover-title::before { content: "💡"; }
+    .feedback-popover-sub { font-size: 12px; color: var(--color-ink-2); }
+    .feedback-popover-body { padding: 16px 20px 20px; }
+    .feedback-type-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .feedback-type { flex: 1; padding: 8px 10px; font-size: 12px; font-weight: 600; color: var(--color-ink-2); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-pill); cursor: pointer; transition: all 150ms; font-family: var(--font-family-sans); text-align: center; }
+    .feedback-type:hover { background: var(--color-brand-50); }
+    .feedback-type.active { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+    .feedback-textarea { width: 100%; min-height: 80px; padding: 10px 12px; font-family: var(--font-family-sans); font-size: 13px; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); resize: vertical; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+    .feedback-textarea:focus { border-color: var(--color-brand-500); box-shadow: var(--shadow-focus); }
+    .feedback-input { width: 100%; padding: 10px 12px; font-family: var(--font-family-sans); font-size: 13px; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none; transition: border-color 150ms, box-shadow 150ms; margin-top: 8px; }
+    .feedback-input:focus { border-color: var(--color-brand-500); box-shadow: var(--shadow-focus); }
+    .feedback-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+    .feedback-hint { font-size: 11px; color: var(--color-muted); }
+    .feedback-success { padding: 20px; text-align: center; color: var(--color-mint-ink); background: var(--color-mint); }
+    .feedback-success-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 24px; z-index: 100; padding: 12px 18px; background: var(--color-ink); color: #fff; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(8px); transition: all 200ms; pointer-events: none; box-shadow: 0 8px 24px rgba(48, 39, 82, 0.2); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-dot { width: 6px; height: 6px; background: var(--color-emerald-500); border-radius: 50%; }
+
+    /* Footer */
+    .footer { margin: 64px -28px -80px; padding: 24px 28px; border-top: 1px solid rgba(48, 39, 82, 0.08); background: var(--color-surface); }
+    .footer-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--color-muted); }
+    .footer a { color: var(--color-muted); text-decoration: none; margin: 0 10px; }
+    .footer a:hover { color: var(--color-ink); }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .page { padding: 0 20px 60px; }
+      .topbar, .lang-banner { margin: 0 -20px 20px; padding: 0 20px; }
+      .hero { grid-template-columns: 1fr; }
+      h1 { font-size: 32px; }
+      .input-row { grid-template-columns: 1fr; }
+      .howitworks-grid { grid-template-columns: 1fr; }
+      .how-step { border-right: none; border-bottom: 1px solid rgba(48, 39, 82, 0.06); }
+      .how-step:last-child { border-bottom: none; }
+      .translate-form { grid-template-columns: 1fr; }
+      .variant-row { grid-template-columns: 70px 1fr; gap: 8px; }
+      .variant-row > *:nth-child(n+3) { grid-column: 2; }
+      .tdp-hero-explore-links-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .feedback-fab { bottom: 16px; right: 16px; }
+      .feedback-popover { width: calc(100vw - 32px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- Topbar (solid white, no blur) -->
+    <div class="topbar">
+      <nav class="nav">
+        <a class="nav-brand" href="/">
+          <span class="nav-mark"></span>
+          <span>TimeAndDatePro</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="#">Tools</a>
+          <a class="nav-link active" href="#">Date to Words</a>
+          <a class="nav-link" href="#">API</a>
+          <a class="nav-link" href="#">Pricing</a>
+          <button class="tdp-btn tdp-btn--primary tdp-btn--sm">Sign in</button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Language consent (no blur) -->
+    <div class="lang-banner">
+      <span>🌐</span>
+      <span class="lang-banner-text">Detected: <strong>English (United States)</strong> · <a href="#">Switch language</a></span>
+      <div class="lang-banner-actions">
+        <button class="lang-btn lang-btn-primary">Use English (US)</button>
+        <button class="lang-btn lang-btn-close">✕</button>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-left">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> Date to Words · v2.1</div>
+        <h1>Any date, written <span class="accent">properly.</span></h1>
+        <p class="lede">Convert calendar dates to formal written words for legal documents, cheques, and official forms. Five formats, 1 to 9999, locale-aware.</p>
+      </div>
+      <div class="hero-right">
+        <div class="waitlist-stat">
+          <span class="waitlist-dot"></span>
+          <span><strong id="waitlistCount">1,247</strong> on translation waitlist</span>
+        </div>
+        <div class="kbd-hint">
+          Press <span class="kbd">⌘</span> <span class="kbd">K</span> for shortcuts
+        </div>
+      </div>
+    </div>
+
+    <!-- Tool card -->
+    <div class="tool">
+      <div class="tool-head">
+        <div class="tool-head-left">
+          <span class="tool-step">01</span>
+          <span>Convert a date to words</span>
+        </div>
+        <div class="tool-head-right">
+          <span>Client-side · 0ms</span>
+        </div>
+      </div>
+
+      <div class="tool-body">
+        <div class="input-row">
+          <div class="field">
+            <label class="field-label">
+              <span>Date</span>
+              <span class="field-label-hint">auto-detect</span>
+            </label>
+            <input class="field-input mono" type="text" value="2026-07-11" id="dateInput" />
+          </div>
+          <div class="field">
+            <label class="field-label">
+              <span>Locale</span>
+              <span class="field-label-hint">en-US</span>
+            </label>
+            <select class="field-select">
+              <option>🇺🇸 English (US)</option>
+              <option>🇬🇧 English (UK)</option>
+              <option>🇫🇷 Français (early access)</option>
+              <option>🇩🇪 Deutsch (early access)</option>
+              <option>🇪🇸 Español (early access)</option>
+              <option>🇯🇵 日本語 (early access)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              <span>Calendar</span>
+              <span class="field-label-hint">gregorian</span>
+            </label>
+            <select class="field-select">
+              <option>Gregorian (default)</option>
+              <option>Julian (legacy)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- NotebookLM pastel tabs -->
+        <div class="tabs-section">
+          <div class="tabs-head">
+            <span class="tabs-label">Output format</span>
+            <span class="tabs-popular"><span class="tabs-popular-dot"></span> Legal is most popular for contracts</span>
+          </div>
+          <div class="tabs" id="formatTabs">
+            <button class="tab" data-variant="lavender" data-format="formal">Formal <span class="tab-check">✓</span></button>
+            <button class="tab active" data-variant="mint" data-format="legal">Legal <span class="tab-check">✓</span></button>
+            <button class="tab" data-variant="amber" data-format="banking">Banking <span class="tab-check">✓</span></button>
+            <button class="tab" data-variant="sky" data-format="casual">Casual <span class="tab-check">✓</span></button>
+            <button class="tab" data-variant="lavender" data-format="british">British <span class="tab-check">✓</span></button>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <button class="tdp-btn tdp-btn--primary tdp-btn--lg">Convert to words →</button>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--md">Reset</button>
+          <div class="cta-spacer"></div>
+          <span class="kbd-hint"><span class="kbd">↵</span> Enter</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result card -->
+    <div class="output">
+      <div class="output-eyebrow">
+        <div class="output-eyebrow-left">
+          <span>Result</span>
+          <span class="output-fmt-tag">legal</span>
+        </div>
+        <div class="output-eyebrow-right">
+          <span class="output-locale-dot">●</span> en-US · UTC-4
+        </div>
+      </div>
+      <div class="output-body">
+        <div class="output-text">Eleventh day of July,<br><span class="break">Two Thousand Twenty-Six</span></div>
+        <div class="output-actions">
+          <button class="tdp-btn tdp-btn--primary tdp-btn--md" id="copyBtn">📋 Copy</button>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--md">⬇ Download .txt</button>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--md">↗ Share link</button>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--md">⎘ Markdown</button>
+        </div>
+      </div>
+
+      <div class="variants">
+        <div class="variant-row">
+          <span class="variant-label">Formal</span>
+          <span class="variant-text">Eleventh of July, Two Thousand Twenty-Six</span>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--sm">📋</button>
+          <button class="variant-translate" data-row="1">🌐 Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-1">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Formal</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="tdp-btn tdp-btn--accent tdp-btn--md">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Legal</span>
+          <span class="variant-text">Eleventh day of July, Two Thousand Twenty-Six</span>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--sm">📋</button>
+          <button class="variant-translate" data-row="2">🌐 Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-2">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Legal</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="tdp-btn tdp-btn--accent tdp-btn--md">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Banking</span>
+          <span class="variant-text">Eleventh July, Two Thousand Twenty-Six</span>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--sm">📋</button>
+          <button class="variant-translate" data-row="3">🌐 Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-3">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Banking</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="tdp-btn tdp-btn--accent tdp-btn--md">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">Casual</span>
+          <span class="variant-text">July eleventh, twenty twenty-six</span>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--sm">📋</button>
+          <button class="variant-translate" data-row="4">🌐 Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-4">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>Casual</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="tdp-btn tdp-btn--accent tdp-btn--md">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="variant-row">
+          <span class="variant-label">British</span>
+          <span class="variant-text">Eleventh day of July, Two Thousand <em>and</em> Twenty-Six</span>
+          <button class="tdp-btn tdp-btn--secondary tdp-btn--sm">📋</button>
+          <button class="variant-translate" data-row="5">🌐 Translate</button>
+        </div>
+        <div class="translate-form-wrap" id="tf-5">
+          <div class="translate-form">
+            <div class="translate-form-head">
+              <span>🌐</span>
+              <span>Get the <strong>British</strong> version in another language. Drop your email — we'll notify you when it's ready.</span>
+            </div>
+            <select class="translate-form-select">
+              <option>🇫🇷 Français</option>
+              <option>🇩🇪 Deutsch</option>
+              <option>🇪🇸 Español</option>
+              <option>🇮🇹 Italiano</option>
+              <option>🇵🇹 Português</option>
+              <option>🇯🇵 日本語</option>
+              <option>🇨🇳 中文</option>
+              <option>🇸🇦 العربية</option>
+              <option>🇮🇳 हिन्दी</option>
+            </select>
+            <input class="translate-form-input" type="email" placeholder="you@example.com" />
+            <button class="tdp-btn tdp-btn--accent tdp-btn--md">Notify me</button>
+            <div class="translate-form-foot">
+              <span>Used only for translation launch. Unsubscribe anytime.</span>
+              <a href="#">Why sign up? →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="translate-success" id="translateSuccess" style="display: none;">
+          <span class="translate-success-dot"></span>
+          <span><strong>You're on the list!</strong> We'll email you the moment <span id="successLang">French</span> translations are live. No spam, no follow-up.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="howitworks">
+      <div class="howitworks-head">
+        <div class="howitworks-eyebrow">How it works</div>
+        <div class="howitworks-title">Three steps. Five seconds.</div>
+      </div>
+      <div class="howitworks-grid">
+        <div class="how-step">
+          <div class="how-step-num">STEP 01</div>
+          <div class="how-step-title">Type a date</div>
+          <div class="how-step-desc">Any format works. YYYY-MM-DD, MM/DD/YYYY, or written out — we auto-detect.</div>
+          <div class="how-step-mock">2026-07-11</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">STEP 02</div>
+          <div class="how-step-title">Pick a format</div>
+          <div class="how-step-desc">Legal for contracts. Banking for cheques. Casual for invites. Five options.</div>
+          <div class="how-step-mock accent">legal · selected</div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">STEP 03</div>
+          <div class="how-step-title">Copy the result</div>
+          <div class="how-step-desc">One click copies. Or download as .txt, share a link, or hit the API.</div>
+          <div class="how-step-mock success">✓ copied to clipboard</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <div class="disclaimer-icon">!</div>
+      <div class="disclaimer-body">
+        <div class="disclaimer-title">Disclaimer</div>
+        <p class="disclaimer-text">This tool is provided for convenience and reference only. It is <strong>not legal advice</strong> and does not constitute a professional opinion on the validity, enforceability, or formatting of any document. For legal documents, financial instruments, immigration papers, and government filings, always have the result <strong>verified by a qualified professional</strong> (attorney, notary, banker) before signing or submission. Date formatting conventions vary by jurisdiction, institution, and document type — the formats shown here are general conventions and may not match your specific requirement.</p>
+        <p class="disclaimer-text">Conversion runs in your browser; no data is sent to a server. Free tier is provided as-is with no warranty. See <a href="#">Terms</a> and <a href="#">Privacy</a> for full terms.</p>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         RELATED TOOLS — copied as-is from .tdp-hero-explore-links
+         (hero's component, same look & feel across all tool pages)
+         ════════════════════════════════════════════════════════════ -->
+    <section class="tdp-hero-explore-links" aria-label="Related tools">
+      <header class="tdp-hero-explore-links-header">
+        <h3 class="tdp-hero-explore-links-eyebrow">Related tools</h3>
+        <span class="tdp-hero-explore-links-meta">8 more</span>
+      </header>
+      <ul class="tdp-hero-explore-links-grid">
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--lavender">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🔁</span>
+            <span class="tdp-hero-explore-links-text">Word to Date</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--mint">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>➕</span>
+            <span class="tdp-hero-explore-links-text">Date Math</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--amber">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>↔️</span>
+            <span class="tdp-hero-explore-links-text">Date Difference</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--sky">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>⏱️</span>
+            <span class="tdp-hero-explore-links-text">Countdown</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--lavender">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🌐</span>
+            <span class="tdp-hero-explore-links-text">TZ Converter</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--mint">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🎂</span>
+            <span class="tdp-hero-explore-links-text">Age Calculator</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--amber">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>📅</span>
+            <span class="tdp-hero-explore-links-text">12-Month Calendar</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--sky">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>📆</span>
+            <span class="tdp-hero-explore-links-text">Week Number</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--lavender">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🌅</span>
+            <span class="tdp-hero-explore-links-text">Sunrise & Sunset</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--mint">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>⏲️</span>
+            <span class="tdp-hero-explore-links-text">Stopwatch</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--amber">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🕐</span>
+            <span class="tdp-hero-explore-links-text">Unix Timestamp</span>
+          </a>
+        </li>
+        <li class="tdp-hero-explore-links-item">
+          <a href="#" class="tdp-hero-explore-links-link tdp-hero-explore-links-link--sky">
+            <span class="tdp-hero-explore-links-icon" aria-hidden>🌍</span>
+            <span class="tdp-hero-explore-links-text">DST Tracker</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>© 2026 TimeAndDatePro · v2.1 · Made for legal clarity</span>
+      <span>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">API docs</a>
+        <a href="#">Changelog</a>
+        <a href="#">Status</a>
+      </span>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════════════════════════
+       FEEDBACK BUTTON — standard across all tool pages
+       ════════════════════════════════════════════════════════════ -->
+  <div class="feedback-fab">
+    <div class="feedback-popover" id="feedbackPopover">
+      <div class="feedback-popover-body" id="feedbackBody">
+        <div class="feedback-popover-head" style="padding: 0 0 12px; border: none;">
+          <div class="feedback-popover-title">Suggest or report</div>
+          <div class="feedback-popover-sub">Tell us what's missing or what broke. We read every submission.</div>
+        </div>
+        <div class="feedback-type-row">
+          <button class="feedback-type active" data-type="suggestion">💡 Suggestion</button>
+          <button class="feedback-type" data-type="bug">🐛 Bug</button>
+          <button class="feedback-type" data-type="praise">❤️ Love it</button>
+        </div>
+        <textarea class="feedback-textarea" id="feedbackText" placeholder="What's on your mind?"></textarea>
+        <input class="feedback-input" type="email" placeholder="Email (optional, for follow-up)" />
+        <div class="feedback-actions">
+          <span class="feedback-hint">Or email <a href="mailto:hello@dateandtime.live" style="color: var(--color-brand-600);">hello@dateandtime.live</a></span>
+          <button class="tdp-btn tdp-btn--primary tdp-btn--sm" id="feedbackSubmit">Send</button>
+        </div>
+      </div>
+      <div class="feedback-success" id="feedbackSuccess" style="display: none;">
+        <span class="feedback-success-icon">✓</span>
+        <strong>Thanks — we got it.</strong>
+        <div style="font-size: 12px; margin-top: 4px; opacity: 0.85;">We'll follow up if we need more info.</div>
+      </div>
+    </div>
+    <button class="feedback-trigger" id="feedbackTrigger">
+      <span class="feedback-trigger-icon">💬</span>
+      <span>Suggest / Feedback</span>
+    </button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg">Copied to clipboard</span>
+  </div>
+
+  <script>
+    /* ── NotebookLM pastel tabs ─────────────────────────── */
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector('.output-fmt-tag').textContent = tab.dataset.format;
+      });
+    });
+
+    /* ── Per-variant translate form toggle ─────────────── */
+    document.querySelectorAll('.variant-translate').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = btn.dataset.row;
+        const wrap = document.getElementById('tf-' + row);
+        const isOpen = wrap.classList.contains('open');
+        document.querySelectorAll('.translate-form-wrap').forEach((w) => w.classList.remove('open'));
+        document.querySelectorAll('.variant-translate').forEach((b) => { b.classList.remove('open'); b.textContent = '🌐 Translate'; });
+        if (!isOpen) {
+          wrap.classList.add('open');
+          btn.classList.add('open');
+          btn.textContent = '✕ Close';
+        }
+      });
+    });
+
+    /* ── Translate form submit ─────────────────────────── */
+    document.querySelectorAll('.translate-form-submit').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const form = e.target.closest('.translate-form');
+        const lang = form.querySelector('select').value;
+        const email = form.querySelector('input').value;
+        const langName = lang.split(' ')[1] || 'translation';
+        console.log('[Translation Waitlist]', { lang: langName, email, ts: Date.now() });
+        const list = JSON.parse(localStorage.getItem('tdp_translate_waitlist') || '[]');
+        list.push({ lang: langName, email, ts: Date.now() });
+        localStorage.setItem('tdp_translate_waitlist', JSON.stringify(list));
+        const counter = document.getElementById('waitlistCount');
+        const current = parseInt(counter.textContent.replace(/,/g, ''));
+        counter.textContent = (current + 1).toLocaleString();
+        document.getElementById('successLang').textContent = langName;
+        document.getElementById('translateSuccess').style.display = 'flex';
+        document.querySelectorAll('.translate-form-wrap').forEach((w) => w.classList.remove('open'));
+        document.querySelectorAll('.variant-translate').forEach((b) => { b.classList.remove('open'); b.textContent = '🌐 Translate'; });
+        showToast(`Added to ${langName} waitlist`);
+      });
+    });
+
+    /* ── Copy + toast ───────────────────────────────────── */
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+    document.getElementById('copyBtn').addEventListener('click', () => showToast('Copied to clipboard'));
+    document.querySelectorAll('.variant-row .tdp-btn').forEach((b) => b.addEventListener('click', () => showToast('Copied')));
+
+    /* ── Lang banner dismiss ───────────────────────────── */
+    document.querySelector('.lang-btn-close')?.addEventListener('click', (e) => {
+      e.target.closest('.lang-banner').style.display = 'none';
+    });
+
+    /* ── Feedback FAB ───────────────────────────────────── */
+    const fab = document.getElementById('feedbackTrigger');
+    const popover = document.getElementById('feedbackPopover');
+    fab.addEventListener('click', () => {
+      popover.classList.toggle('open');
+    });
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.feedback-fab')) popover.classList.remove('open');
+    });
+    // Feedback type selector
+    document.querySelectorAll('.feedback-type').forEach((t) => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.feedback-type').forEach((x) => x.classList.remove('active'));
+        t.classList.add('active');
+      });
+    });
+    // Submit
+    document.getElementById('feedbackSubmit').addEventListener('click', () => {
+      const text = document.getElementById('feedbackText').value;
+      const email = document.querySelector('.feedback-input').value;
+      const type = document.querySelector('.feedback-type.active')?.dataset.type;
+      if (!text.trim()) { showToast('Add a message first'); return; }
+      console.log('[Feedback]', { type, text, email, ts: Date.now(), page: 'date-to-word' });
+      const list = JSON.parse(localStorage.getItem('tdp_feedback') || '[]');
+      list.push({ type, text, email, page: 'date-to-word', ts: Date.now() });
+      localStorage.setItem('tdp_feedback', JSON.stringify(list));
+      document.getElementById('feedbackBody').style.display = 'none';
+      document.getElementById('feedbackSuccess').style.display = 'block';
+      setTimeout(() => {
+        popover.classList.remove('open');
+        setTimeout(() => {
+          document.getElementById('feedbackBody').style.display = 'block';
+          document.getElementById('feedbackSuccess').style.display = 'none';
+          document.getElementById('feedbackText').value = '';
+          document.querySelector('.feedback-input').value = '';
+        }, 300);
+      }, 1800);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# .dev.vars — local secrets for wrangler dev
+# Copy this to .dev.vars (which is gitignored) and fill in your values.
+#
+# .dev.vars is loaded automatically by `wrangler dev` and provides
+# environment variables to your Worker at runtime.
+#
+# For local development, you DON'T need any of these — wrangler dev
+# uses a local simulator for D1, KV, and auth. These are only needed
+# for `wrangler deploy` to the real Cloudflare account.
+#
+# Format: KEY=value (one per line, no quotes needed for simple values)
+
+# Cloudflare API token (Account → Workers R2 D1 → Edit)
+# Get from: https://dash.cloudflare.com/profile/api-tokens
+# Required scopes: Account.Workers Scripts:Edit, Account.D1:Edit
+CLOUDFLARE_API_TOKEN=cfat_your_token_here
+
+# Cloudflare Account ID (right sidebar on Cloudflare dashboard)
+CLOUDFLARE_ACCOUNT_ID=your_account_id_here
+
+# Optional: GitHub PAT for auto-pushing to origin during deploy
+# TIMEANDDATEPRO_PAT=ghp_your_pat_here

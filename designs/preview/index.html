@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date to Word — Design Comparison | TimeAndDatePro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0A0A0A;
+      --panel: #141414;
+      --panel-2: #1C1C1C;
+      --line: #262626;
+      --line-2: #2E2E2E;
+      --ink: #FAFAF9;
+      --ink-2: #A3A3A3;
+      --ink-3: #6B6B6B;
+      --accent: #6366F1;
+      --accent-2: #818CF8;
+    }
+    html, body { background: var(--bg); color: var(--ink); font-family: "Inter", -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 48px 32px 96px; }
+    header { margin-bottom: 40px; display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
+    .title { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .sub { font-size: 15px; color: var(--ink-2); }
+    .meta { display: flex; gap: 16px; font-size: 12px; color: var(--ink-3); font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .meta-dot { width: 6px; height: 6px; background: var(--accent-2); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+    .legend-card { padding: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+    .legend-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; padding: 3px 8px; background: var(--accent); color: white; border-radius: 4px; text-transform: uppercase; margin-bottom: 10px; }
+    .legend-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .legend-style { font-size: 13px; color: var(--ink-2); margin-bottom: 12px; }
+    .legend-feats { display: flex; flex-wrap: wrap; gap: 6px; }
+    .legend-feat { font-size: 11px; padding: 4px 8px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; color: var(--ink-2); }
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .preview { display: flex; flex-direction: column; gap: 12px; }
+    .preview-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+    .preview-head-left { display: flex; align-items: center; gap: 12px; }
+    .preview-num { font-family: "JetBrains Mono", monospace; font-size: 11px; padding: 3px 8px; background: var(--accent); color: white; border-radius: 4px; font-weight: 600; }
+    .preview-name { font-size: 14px; font-weight: 600; }
+    .preview-name-sub { font-size: 12px; color: var(--ink-3); margin-left: 8px; }
+    .preview-actions { display: flex; gap: 6px; }
+    .preview-link { font-size: 12px; padding: 6px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 6px; color: var(--ink); text-decoration: none; transition: all 120ms; font-weight: 500; }
+    .preview-link:hover { background: var(--accent); border-color: var(--accent); color: white; }
+    .preview-link.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .preview-link.primary:hover { background: var(--accent-2); }
+    .preview-frame { width: 100%; height: 1400px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+    .spec-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--line); }
+    .spec-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    .spec-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+    .spec-table { font-size: 12px; width: 100%; }
+    .spec-table tr td { padding: 6px 0; border-bottom: 1px solid var(--line); color: var(--ink-2); }
+    .spec-table tr td:first-child { color: var(--ink-3); width: 40%; }
+    .spec-table tr td:last-child { color: var(--ink); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+    .schema-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 24px; }
+    .schema-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+    .schema-code { background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 16px; font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.6; color: var(--accent-2); overflow-x: auto; max-height: 300px; }
+    @media (max-width: 1024px) { .preview-grid, .legend, .spec-row { grid-template-columns: 1fr; } .preview-frame { height: 1100px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1 class="title">Date to Word — design comparison</h1>
+        <p class="sub">Two premium SaaS treatments. Pick the one to ship.</p>
+      </div>
+      <div class="meta">
+        <span class="meta-dot"></span>
+        <span>2 designs · both ship-ready</span>
+      </div>
+    </header>
+
+    <div class="legend">
+      <div class="legend-card">
+        <div class="legend-tag">A2 · 21st.dev</div>
+        <div class="legend-name">Linear minimal</div>
+        <div class="legend-style">Single-column, Inter, indigo accent, dot grid background, sticky topbar</div>
+        <div class="legend-feats">
+          <span class="legend-feat">Language banner top</span>
+          <span class="legend-feat">Format chips</span>
+          <span class="legend-feat">Variant list</span>
+          <span class="legend-feat">FAQ sidebar</span>
+          <span class="legend-feat">5 use cases</span>
+        </div>
+      </div>
+      <div class="legend-card">
+        <div class="legend-tag">C · beui.dev</div>
+        <div class="legend-name">Editorial bold</div>
+        <div class="legend-style">Split hero, Fraunces serif, orange accent, floating consent pill</div>
+        <div class="legend-feats">
+          <span class="legend-feat">Floating lang pill</span>
+          <span class="legend-feat">Format cards 2×2</span>
+          <span class="legend-feat">88px display headline</span>
+          <span class="legend-feat">Day-of-year meta</span>
+          <span class="legend-feat">Single-row tools grid</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-grid">
+      <div class="preview">
+        <div class="preview-head">
+          <div class="preview-head-left">
+            <span class="preview-num">A2</span>
+            <span class="preview-name">21st.dev minimal</span>
+            <span class="preview-name-sub">Linear aesthetic</span>
+          </div>
+          <div class="preview-actions">
+            <a class="preview-link" href="./date-to-word-a2/" target="_blank">Open ↗</a>
+            <a class="preview-link primary" href="./date-to-word-a2/" target="_blank">Full preview</a>
+          </div>
+        </div>
+        <iframe class="preview-frame" src="./date-to-word-a2/" loading="lazy"></iframe>
+      </div>
+
+      <div class="preview">
+        <div class="preview-head">
+          <div class="preview-head-left">
+            <span class="preview-num">C</span>
+            <span class="preview-name">beui.dev bold</span>
+            <span class="preview-name-sub">Editorial split</span>
+          </div>
+          <div class="preview-actions">
+            <a class="preview-link" href="./date-to-word-c/" target="_blank">Open ↗</a>
+            <a class="preview-link primary" href="./date-to-word-c/" target="_blank">Full preview</a>
+          </div>
+        </div>
+        <iframe class="preview-frame" src="./date-to-word-c/" loading="lazy"></iframe>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="spec-row">
+      <div class="spec-card">
+        <div class="spec-title">A2 · spec sheet</div>
+        <table class="spec-table">
+          <tr><td>Type system</td><td>Inter, 56px display</td></tr>
+          <tr><td>Accent</td><td>Indigo #4F46E5</td></tr>
+          <tr><td>Background</td><td>#FAFAF9 + dot grid</td></tr>
+          <tr><td>Radius scale</td><td>6 / 10 / 14 / 20 / 999</td></tr>
+          <tr><td>Language UI</td><td>Top banner</td></tr>
+          <tr><td>Format selector</td><td>Pill chips (5)</td></tr>
+          <tr><td>Result display</td><td>Single 40px block + 5 variant rows</td></tr>
+          <tr><td>Related tools</td><td>3×2 cards</td></tr>
+          <tr><td>Use cases</td><td>5-card row</td></tr>
+          <tr><td>FAQ layout</td><td>Inline sidebar (right column)</td></tr>
+          <tr><td>User hook</td><td>Indigo soft card</td></tr>
+          <tr><td>Consent pattern</td><td>21st dark top strip</td></tr>
+        </table>
+      </div>
+      <div class="spec-card">
+        <div class="spec-title">C · spec sheet</div>
+        <table class="spec-table">
+          <tr><td>Type system</td><td>Fraunces 88px + Inter</td></tr>
+          <tr><td>Accent</td><td>Orange #FF5A1F</td></tr>
+          <tr><td>Background</td><td>#FAF7F2 warm off-white</td></tr>
+          <tr><td>Radius scale</td><td>4 / 8 / 12 / 20 / 999</td></tr>
+          <tr><td>Language UI</td><td>Floating bottom pill</td></tr>
+          <tr><td>Format selector</td><td>2×2 cards w/ sample</td></tr>
+          <tr><td>Result display</td><td>56px + 4 variants sidebar</td></tr>
+          <tr><td>Related tools</td><td>6×1 compact row</td></tr>
+          <tr><td>Use cases</td><td>5-card row w/ emoji</td></tr>
+          <tr><td>FAQ layout</td><td>Inline sidebar (right column)</td></tr>
+          <tr><td>User hook</td><td>Dark "save" card</td></tr>
+          <tr><td>Consent pattern</td><td>beui floating pill</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schema sample -->
+    <div class="schema-card">
+      <div class="schema-title">FAQ Schema (JSON-LD) — both designs embed this in &lt;head&gt;</div>
+      <pre class="schema-code">{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How do I write a date in formal words?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Use the formal format: day + 'of' + month + ',' + year. Example: 'Eleventh of July, Two Thousand Twenty-Six'." } },
+    { "@type": "Question", "name": "How do I write a date on a cheque?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Banking format: 'Eleventh July, Two Thousand Twenty-Six'." } },
+    { "@type": "Question", "name": "What years does this support?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Year 1 to 9999." } },
+    { "@type": "Question", "name": "Legal vs Formal?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Legal includes 'day of'. Formal omits it." } },
+    { "@type": "Question", "name": "Non-English dates?",
+      "acceptedAnswer": { "@type": "Answer", "text": "English (US/UK) now. FR/DE/ES/JA in Phase 2." } },
+    { "@type": "Question", "name": "Client or server?",
+      "acceptedAnswer": { "@type": "Answer", "text": "100% client-side. No data leaves your device." } },
+    { "@type": "Question", "name": "Bulk convert?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — sign in for free, up to 10,000 dates via CSV." } },
+    { "@type": "Question", "name": "API?",
+      "acceptedAnswer": { "@type": "Answer", "text": "POST /api/v1/tools/date-to-word. 100 req/day free." } }
+  ]
+}</pre>
+    </div>
+  </div>
+</body>
+</html>

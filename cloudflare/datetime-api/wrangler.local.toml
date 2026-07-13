@@ -1,0 +1,32 @@
+# wrangler.local.toml — local dev config
+# Use this for `wrangler dev --config wrangler.local.toml` to run the Worker
+# on http://localhost:8787 with the same D1 + KV bindings as dev.
+
+# Copy this file to wrangler.local.toml and fill in your local values:
+#   cp wrangler.local.toml.example wrangler.local.toml
+#
+# Then run:
+#   npx wrangler dev --config wrangler.local.toml --env dev
+#
+# The Worker will be available at http://localhost:8787
+
+name = "datetime-api-local"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.dev]
+name = "datetime-api-local-dev"
+# D1 database (same as dev, read-only is fine for local testing)
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "timeanddatepro-full"
+database_id = "c401ffb6-51db-49e6-991f-b5695f9e6a7d"
+
+# ── Local secrets (put in .dev.vars, NOT in this file) ──────
+# .dev.vars is gitignored. Format:
+# CLOUDFLARE_API_TOKEN=cfat_xxxxx
+# CLOUDFLARE_ACCOUNT_ID=f0de6c4b68becd81e60507ecf9410199
+#
+# These are only needed for `wrangler deploy`. For `wrangler dev` you
+# don't need them — the local server uses mock auth.
