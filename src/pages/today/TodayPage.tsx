@@ -8,7 +8,9 @@ import {
   useConvert, useRates, useCodes, usePair,
 } from "../../lib/currency/hooks";
 import { LiveDot } from "../../components/common/LiveDot";
+import { RateAlertForm } from "../../components/alerts/RateAlertForm";
 import "./TodayPage.css";
+import "../../components/alerts/RateAlertForm.css";
 
 const MAJOR_CURRENCIES = [
   { code: "USD", name: "US Dollar", country: "US" },
@@ -188,6 +190,17 @@ function TodayPage() {
         </span>
         <span className="tdp-today-alert-link">· View</span>
       </div>
+
+      {/* ── Rate alert subscription form ─────────────── */}
+      <RateAlertForm
+        from={from}
+        to={to}
+        fromFlag={fromFlag}
+        toFlag={toFlag}
+        fromName={fromInfo?.name}
+        toName={toInfo?.name}
+        currentRate={data?.rate}
+      />
 
       {/* ── Footer ────────────────────────────────────────── */}
       <div className="tdp-today-footer">
